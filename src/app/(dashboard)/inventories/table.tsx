@@ -4,22 +4,32 @@ import { ColumnDef } from "@tanstack/react-table";
 import Dropdown from "@/components/custom/dropdown/Dropdown";
 import Icon from "@/components/custom/Icon";
 import { Badge } from "@/components/ui/badge";
+import { ROLES } from "@/interface/roles";
 
 type ActionsFuncType = {
   onAdd: (id: string, extraData?: IUnknown) => void;
   onTransfer: (id: string, extraData?: IUnknown) => void;
+  userRole: ROLES;
 };
 
-export const getColumns = ({ onAdd, onTransfer }: ActionsFuncType) => {
+export const getColumns = ({
+  onAdd,
+  onTransfer,
+  userRole,
+}: ActionsFuncType) => {
   const actions: {
     label: string;
     action?: (id: string, hooks?: IUnknown, extraData?: IUnknown) => void;
     disable?: (id: string, extraData?: IUnknown) => boolean;
+    hide?: (id: string, extraData?: IUnknown) => boolean;
   }[] = [
     {
       label: "Ajouter",
       action: (id, _, extraData) => {
         onAdd(id, extraData);
+      },
+      hide(id, extraData) {
+        return userRole !== ROLES.ADMIN || extraData?.location;
       },
     },
     {
@@ -37,7 +47,7 @@ export const getColumns = ({ onAdd, onTransfer }: ActionsFuncType) => {
       cell: ({ row }) => {
         const rowData = row.original;
 
-        return rowData.location?.name;
+        return rowData.location?.name || "Depot";
       },
     },
     {

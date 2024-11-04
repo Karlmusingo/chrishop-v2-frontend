@@ -72,16 +72,18 @@ const AddProduct: FC<AddProductProps> = ({ callback }) => {
         container: "w-full ",
       }}
       trigger={
-        <Button
-          icon="Plus"
-          type="button"
-          disabled={userRole !== ROLES.ADMIN}
-          onClick={() => {
-            setOpened(true);
-          }}
-        >
-          Add Product
-        </Button>
+        userRole === ROLES.ADMIN && (
+          <Button
+            icon="Plus"
+            type="button"
+            disabled={userRole !== ROLES.ADMIN}
+            onClick={() => {
+              setOpened(true);
+            }}
+          >
+            Add Product
+          </Button>
+        )
       }
     >
       <Form {...form}>

@@ -6,6 +6,8 @@ export const profileSchema = z.strictObject({
   lastName: z.string().min(3).max(80).optional(),
   phoneNumber: z.string().optional(),
   email: z.string().optional(),
+  role: z.string().optional(),
+  location: z.string().optional(),
 });
 
 export type UpdateProfileSchemaType = z.infer<typeof profileSchema>;

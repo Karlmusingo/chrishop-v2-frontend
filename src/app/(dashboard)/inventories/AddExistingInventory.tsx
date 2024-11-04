@@ -55,6 +55,7 @@ const AddExistingInventory: FC<AddExistingInventoryProps> = ({
   }
 
   const handleSubmit = (values: AddExistingInventoriesSchemaType) => {
+    console.log("values :>> ", values);
     mutate({
       id: `${inventoryData?.id}/add`,
       data: {
@@ -72,7 +73,10 @@ const AddExistingInventory: FC<AddExistingInventoryProps> = ({
     form.setValue("brand", inventoryData?.product?.brand);
     form.setValue("color", inventoryData?.product?.color);
     form.setValue("size", inventoryData?.product?.size);
-    form.setValue("collarColor", inventoryData?.product?.collarColor);
+    form.setValue(
+      "collarColor",
+      inventoryData?.product?.collarColor || undefined
+    );
     // @ts-ignore
     form.setValue("quantity", inventoryData?.quantity?.toString());
     // @ts-ignore

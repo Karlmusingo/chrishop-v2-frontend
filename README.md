@@ -45,6 +45,11 @@
 - Sales summary at the boutique
 - Stock d'alerte
 
+## TODO
+
+- limit the access to users based on their role
+- Fix order creation
+
 ## Transfer
 
 - Shops should be able to transfer good from one shop to another.

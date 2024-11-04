@@ -75,7 +75,10 @@ const TransferInventory: FC<TransferInventoryProps> = ({
     form.setValue("brand", inventoryData?.product?.brand);
     form.setValue("color", inventoryData?.product?.color);
     form.setValue("size", inventoryData?.product?.size);
-    form.setValue("collarColor", inventoryData?.product?.collarColor);
+    form.setValue(
+      "collarColor",
+      inventoryData?.product?.collarColor || undefined
+    );
     // @ts-ignore
     form.setValue("quantity", inventoryData?.quantity?.toString());
     // @ts-ignore
@@ -84,7 +87,7 @@ const TransferInventory: FC<TransferInventoryProps> = ({
 
   return (
     <Modal
-      title="Ajouter du stock"
+      title="Transferer du stock"
       description=""
       onClose={() => onClose?.()}
       isOpened={isOpen || false}
@@ -207,7 +210,7 @@ const TransferInventory: FC<TransferInventoryProps> = ({
           </div>
 
           <Button type="submit" className="w-full" loading={isPending}>
-            Ajouter
+            Transferer
           </Button>
         </form>
       </Form>

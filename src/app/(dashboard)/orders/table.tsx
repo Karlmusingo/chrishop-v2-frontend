@@ -7,9 +7,10 @@ import Icon from "@/components/custom/Icon";
 type ActionsFuncType = {
   onEdit: (id: string, extraData?: IUnknown) => void;
   onView: (id: string, extraData?: IUnknown) => void;
+  profile?: IUnknown;
 };
 
-export const getColumns = ({ onEdit, onView }: ActionsFuncType) => {
+export const getColumns = ({ onEdit, onView, profile }: ActionsFuncType) => {
   const actions: {
     label: string;
     action?: (id: string, hooks?: IUnknown, extraData?: IUnknown) => void;
@@ -23,7 +24,9 @@ export const getColumns = ({ onEdit, onView }: ActionsFuncType) => {
     },
     {
       label: "Editer",
-      disable: (id, extraData) => extraData?.status !== "PENDING",
+      disable: (id, extraData) =>
+        extraData?.status !== "PENDING" ||
+        extraData.locationId !== profile?.locationId,
       action: (id, _, extraData) => {
         onEdit(id, extraData);
       },

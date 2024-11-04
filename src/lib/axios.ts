@@ -20,7 +20,7 @@ const responseHandler = (response: any) => response.data;
 
 const errorHandler = (error: any) => {
   if (error.response) {
-    // if (error.response?.status === 401) removeToken();
+    if (error.response?.status === 401) removeToken();
 
     return Promise.reject({
       ...error,
@@ -37,7 +37,6 @@ const errorHandler = (error: any) => {
 
 const requestConfig = async (req: InternalAxiosRequestConfig) => {
   const token = await getToken();
-  console.log("token :>> ", token);
 
   req.headers.Authorization = token;
 

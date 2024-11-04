@@ -5,7 +5,7 @@ import Button from "@/components/custom/Button";
 import { Switch } from "@/components/ui/switch";
 import { savePDF } from "@progress/kendo-react-pdf";
 
-import { FC, useRef, useState } from "react";
+import { FC, useEffect, useRef, useState } from "react";
 
 import { IUnknown } from "@/interface/Iunknown";
 import { useUpdateMutation } from "@/hooks/api/common/update";
@@ -26,6 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useGetSingle } from "@/hooks/api/common/getSingle";
 
 interface ViewOrderProps {
   callback?: () => void;
@@ -37,7 +38,7 @@ interface ViewOrderProps {
 const ViewOrder: FC<ViewOrderProps> = ({
   callback,
   onClose,
-  orderData,
+  orderData: order,
   isOpen = false,
 }) => {
   const [isPaid, setIsPaid] = useState(false);
@@ -67,6 +68,19 @@ const ViewOrder: FC<ViewOrderProps> = ({
     queryKey: "change-order-status",
     endpoint: "orders",
   });
+
+  const {
+    data,
+    isPending: isPendingGet,
+    refetch,
+  } = useGetSingle({
+    queryKey: "get-order",
+    endpoint: `orders/${order?.orderId}`,
+    id: order?.orderId,
+    enabled: !!order?.orderId,
+  });
+
+  const singleOrder = data?.data;
 
   const onCheckChange = (check: boolean) => {
     if (check) {
@@ -104,6 +118,15 @@ const ViewOrder: FC<ViewOrderProps> = ({
       },
     });
   };
+
+  useEffect(() => {
+    if (order && order.orderId && !order.id && !singleOrder) {
+      // get the order
+      refetch();
+    }
+  }, [order]);
+
+  const orderData: IUnknown = singleOrder ?? order;
 
   const totalInvoicePrice = orderData?.orderItems?.reduce(
     (acc: number, curr: IUnknown) => acc + curr.totalPrice,
@@ -148,8 +171,7 @@ const ViewOrder: FC<ViewOrderProps> = ({
                   Boutique: {orderData?.location?.name}
                 </h2>
               </div>
-              {/* <Table className=" border-collapse [&_td]:border-x [&_th]:border-x">
-                <TableHeader className="border-b"> */}
+
               <Table className="border-collapse [&_td]:border-x [&_th]:border-x [&_td]:p-1 [&_th]:p-1">
                 <TableHeader className="border-b bg-black text-white">
                   <TableRow>

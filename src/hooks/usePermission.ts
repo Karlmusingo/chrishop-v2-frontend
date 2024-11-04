@@ -5,6 +5,7 @@ import { intersection, isEmpty, keys } from "lodash";
 
 import { useGetProfile } from "./api/users/profile";
 import { RolesType } from "@/interface/roles";
+import { IUnknown } from "@/interface/Iunknown";
 
 export type permissionType = {
   roles: boolean;
@@ -16,6 +17,7 @@ interface usePermissionReturnType {
   canAccess: boolean;
   permissions: permissionType;
   userRole: RolesType;
+  data: IUnknown;
 }
 
 export const usePermission = (): usePermissionReturnType => {
@@ -57,5 +59,6 @@ export const usePermission = (): usePermissionReturnType => {
     canAccess: memoizedReturn.roles && memoizedReturn.status,
     permissions: memoizedReturn,
     userRole: data?.role,
+    data,
   };
 };

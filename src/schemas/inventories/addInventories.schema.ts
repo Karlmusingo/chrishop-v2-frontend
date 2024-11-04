@@ -6,18 +6,26 @@ import { z } from "zod";
 import { validateNumber } from "./inventories.schema";
 
 export const addExistingInventoriesSchema = z.object({
-  type: z.nativeEnum(ProductType, {
-    message: "Veiller selectionner le type",
-  }),
-  brand: z.nativeEnum(ProductBrand, {
-    message: "Veiller selectionner la marque",
-  }),
-  color: z.nativeEnum(ProductColors, {
-    message: "Veillez selectionner la couleur",
-  }),
-  size: z.nativeEnum(ProductSize, {
-    message: "Veillez selectionner la taille",
-  }),
+  type: z
+    .nativeEnum(ProductType, {
+      message: "Veiller selectionner le type",
+    })
+    .optional(),
+  brand: z
+    .nativeEnum(ProductBrand, {
+      message: "Veiller selectionner la marque",
+    })
+    .optional(),
+  color: z
+    .nativeEnum(ProductColors, {
+      message: "Veillez selectionner la couleur",
+    })
+    .optional(),
+  size: z
+    .nativeEnum(ProductSize, {
+      message: "Veillez selectionner la taille",
+    })
+    .optional(),
   collarColor: z.nativeEnum(ProductColors).optional(),
   quantity: z.any().optional(),
   price: z.any().optional(),

@@ -15,6 +15,8 @@ import { IUnknown } from "@/interface/Iunknown";
 import AddOrder from "./AddOrder";
 import { useGetProfile } from "@/hooks/api/users/profile";
 import ViewOrder from "./ViewOrder";
+import { usePermission } from "@/hooks/usePermission";
+import { ROLES } from "@/interface/roles";
 
 interface OrdersPageProps {}
 
@@ -29,7 +31,8 @@ const OrdersPage: FC<OrdersPageProps> = () => {
   const [onViewModal, setOnViewModal] = useState(false);
   const [orderData, setOrderData] = useState<IUnknown>({});
 
-  const { data: profileData } = useGetProfile();
+  const { userRole, data: profileData } = usePermission();
+
   const { data: inventoryData } = useGetList({
     queryKey: "get-inventories",
     endpoint: "/inventories",
@@ -46,9 +49,11 @@ const OrdersPage: FC<OrdersPageProps> = () => {
         <h2 className=" text-[1.2em] font-semibold">Ventes</h2>
         <p className=" text-sm text-slate-500">Manage the orders here</p>
       </div>
-      <div className="flex gap-4 mt-12">
-        <LocationFilter depot={false} />
-      </div>
+      {userRole === ROLES.ADMIN && (
+        <div className="flex gap-4 mt-12">
+          <LocationFilter depot={false} />
+        </div>
+      )}
 
       <ViewOrder
         callback={refetch}
@@ -62,6 +67,7 @@ const OrdersPage: FC<OrdersPageProps> = () => {
       <div className="py-4">
         <DataList
           columns={getColumns({
+            profile: profileData,
             onEdit(id, extraData) {
               setOnEditModal(true);
               setOrderData(extraData || {});
@@ -89,9 +95,10 @@ const OrdersPage: FC<OrdersPageProps> = () => {
               callback={() => {
                 refetch();
               }}
-              moveToNext={() => {
+              moveToNext={(data?: IUnknown) => {
                 setOnEditModal(false);
                 setOnViewModal(true);
+                setOrderData(data || {});
               }}
             />
           }

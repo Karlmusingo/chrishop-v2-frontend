@@ -46,7 +46,7 @@ interface AddOrderProps {
   orderData?: IUnknown;
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
-  moveToNext?: () => void;
+  moveToNext?: (data?: IUnknown) => void;
 }
 
 type FormSchemaPlusProductIdType = AddOrderSchemaType & {
@@ -72,7 +72,7 @@ const AddOrder: FC<AddOrderProps> = ({
       queryKey: "update-order",
       endpoint: "orders",
     });
-  const { userRole } = usePermission();
+  const { data: profile } = usePermission();
 
   const [orders, setOrders] = useState<FormSchemaPlusProductIdType[]>([]);
 
@@ -101,9 +101,10 @@ const AddOrder: FC<AddOrderProps> = ({
     }
   }, [orderData]);
 
-  function callbackOnSuccess() {
+  function callbackOnSuccess(data?: IUnknown) {
+    console.log("data callbackOnSuccess:>> ", data);
     form.reset();
-    moveToNext?.();
+    moveToNext?.(data);
 
     callback?.();
   }
@@ -225,7 +226,7 @@ const AddOrder: FC<AddOrderProps> = ({
         <Button
           icon="Plus"
           type="button"
-          disabled={userRole !== ROLES.ADMIN}
+          disabled={!profile?.location}
           onClick={() => {
             setIsOpen(true);
           }}

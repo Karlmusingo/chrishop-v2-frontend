@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useEffect } from "react";
+import { FC, useEffect, useState } from "react";
 
 import { useTable } from "@/hooks/useTable";
 
@@ -16,6 +16,7 @@ import {
   profileSchema,
   UpdateProfileSchemaType,
 } from "@/schemas/user/profile.schema";
+import UpdatePassword from "./UpdatePassword";
 
 interface ProfilePageProps {}
 
@@ -25,6 +26,8 @@ const ProfilePage: FC<ProfilePageProps> = () => {
     queryKey: "update-profile",
     endpoint: `users/profile`,
   });
+
+  const [openUpdatePassword, setOpenUpdatePassword] = useState(false);
 
   const form = useForm<UpdateProfileSchemaType>({
     resolver: zodResolver(profileSchema),
@@ -37,12 +40,16 @@ const ProfilePage: FC<ProfilePageProps> = () => {
 
     form.setValue("email", profile?.email || undefined);
     form.setValue("phoneNumber", profile?.phoneNumber || undefined);
+    form.setValue("role", profile?.role || undefined);
+    form.setValue("location", profile?.location?.name || undefined);
   }, [profile]);
 
   const handleSubmit = (values: UpdateProfileSchemaType) => {
     mutate({
       data: {
         ...values,
+        role: undefined,
+        location: undefined,
       },
       onSuccess: {
         message: `Profile updated successfully`,
@@ -53,7 +60,7 @@ const ProfilePage: FC<ProfilePageProps> = () => {
   const {} = useTable({ title: "" });
 
   return (
-    <div>
+    <div className="pl-52">
       <div>
         <h2 className=" text-[1.2em] font-semibold">Profile </h2>
         <p className=" text-sm text-slate-500">Manage your profile here.</p>
@@ -96,11 +103,32 @@ const ProfilePage: FC<ProfilePageProps> = () => {
                       control={form.control}
                     />
                   </div>
+                  <Input
+                    name="role"
+                    label="Role"
+                    disabled={true}
+                    control={form.control}
+                  />
+                  <Input
+                    name="location"
+                    label="Boutique"
+                    disabled={true}
+                    control={form.control}
+                  />
                 </div>
 
                 {error && <div className="text-red-500">{error.message}</div>}
 
-                <div className="flex flex-col items-end">
+                <div className="flex justify-between items-end">
+                  <UpdatePassword
+                    open={openUpdatePassword}
+                    setOpen={setOpenUpdatePassword}
+                    showTrigger={true}
+                    callback={() => {
+                      setOpenUpdatePassword(false);
+                      // router.push("/");
+                    }}
+                  />
                   <Button type="submit" loading={isPending}>
                     Save profile
                   </Button>

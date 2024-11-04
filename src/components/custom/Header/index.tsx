@@ -109,9 +109,11 @@ export function Header() {
             <DropdownMenuItem>
               <Link href={"/profile"}>Profile</Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Link href={"/users"}>Utilisateurs</Link>
-            </DropdownMenuItem>
+            {data?.role === UserRoles.ADMIN && (
+              <DropdownMenuItem>
+                <Link href={"/users"}>Utilisateurs</Link>
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={signOut}>Deconnexion</DropdownMenuItem>
           </DropdownMenuContent>

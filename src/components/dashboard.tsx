@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -29,15 +29,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { IUnknown } from "@/interface/Iunknown";
 import LocationFilter from "./custom/LocationFilter";
+import { ROLES } from "@/interface/roles";
 
 ChartJS.register(
   CategoryScale,
@@ -52,8 +46,10 @@ ChartJS.register(
 
 export function DashboardComponent({
   dashboardData,
+  userRole,
 }: {
   dashboardData: IUnknown;
+  userRole: ROLES;
 }) {
   const dailySales = {
     labels: dashboardData?.dailySales?.map((item: IUnknown) => item.day) || [],
@@ -132,9 +128,11 @@ export function DashboardComponent({
 
   return (
     <div className="p-4 space-y-4">
-      <div className="flex justify-between items-center">
-        <LocationFilter depot={false} />
-      </div>
+      {userRole === ROLES.ADMIN && (
+        <div className="flex justify-between items-center">
+          <LocationFilter depot={false} />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>

@@ -155,16 +155,18 @@ const AddInventory: FC<AddInventoryProps> = ({ callback, products }) => {
         container: "w-full max-h-[90vh] overflow-y-auto sm:max-w-[700px]",
       }}
       trigger={
-        <Button
-          icon="Plus"
-          type="button"
-          disabled={userRole !== ROLES.ADMIN}
-          onClick={() => {
-            setOpened(true);
-          }}
-        >
-          Ajouter du stock
-        </Button>
+        userRole === ROLES.ADMIN && (
+          <Button
+            icon="Plus"
+            type="button"
+            disabled={userRole !== ROLES.ADMIN}
+            onClick={() => {
+              setOpened(true);
+            }}
+          >
+            Ajouter du stock
+          </Button>
+        )
       }
     >
       <Form {...form}>

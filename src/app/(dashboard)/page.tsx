@@ -1,6 +1,7 @@
 "use client";
 import { DashboardComponent } from "@/components/dashboard";
 import { useGetList } from "@/hooks/api/common/getAll";
+import { usePermission } from "@/hooks/usePermission";
 import { useQueryString } from "@/hooks/useQueryString";
 
 export default function Home() {
@@ -11,12 +12,13 @@ export default function Home() {
     endpoint: "/dashboard",
     filter: { ...getQueryObject() },
   });
+  const { userRole } = usePermission();
 
   const dashboardData = data?.data || {};
 
   return (
     <main className="min-h-screen">
-      <DashboardComponent dashboardData={dashboardData} />
+      <DashboardComponent userRole={userRole} dashboardData={dashboardData} />
     </main>
   );
 }

@@ -15,6 +15,8 @@ import LocationFilter from "@/components/custom/LocationFilter";
 import TransferInventory from "./TransferInventory";
 import { IUnknown } from "@/interface/Iunknown";
 import AddExistingInventory from "./AddExistingInventory";
+import { usePermission } from "@/hooks/usePermission";
+import { ROLES } from "@/interface/roles";
 
 interface InventoriesPageProps {}
 
@@ -29,6 +31,7 @@ const InventoriesPage: FC<InventoriesPageProps> = () => {
   const [addExistingModalOpened, setAddExistingOpened] = useState(false);
   const [inventoryData, setInventoryData] = useState<IUnknown>({});
 
+  const { userRole } = usePermission();
   const { data: productData } = useGetList({
     queryKey: "get-products",
     endpoint: "/products",
@@ -43,7 +46,6 @@ const InventoriesPage: FC<InventoriesPageProps> = () => {
   const products = productData?.data || [];
   const locations = locationData?.data || [];
 
-  console.log({ inventories });
   const {} = useTable({ title: "" });
   return (
     <div>
@@ -51,9 +53,11 @@ const InventoriesPage: FC<InventoriesPageProps> = () => {
         <h2 className=" text-[1.2em] font-semibold">Inventories</h2>
         <p className=" text-sm text-slate-500">Manage the Inventories here</p>
       </div>
-      <div className="flex gap-4 mt-12">
-        <LocationFilter />
-      </div>
+      {userRole === ROLES.ADMIN && (
+        <div className="flex gap-4 mt-12">
+          <LocationFilter />
+        </div>
+      )}
 
       <TransferInventory
         callback={refetch}
@@ -72,6 +76,7 @@ const InventoriesPage: FC<InventoriesPageProps> = () => {
       <div className="py-4">
         <DataList
           columns={getColumns({
+            userRole,
             onAdd(id, extraData) {
               setAddExistingOpened(true);
               setInventoryData(extraData || {});

@@ -32,10 +32,14 @@ export default function Login() {
       data: values,
       onSuccess: {
         callback: (data) => {
-          console.log(data);
+          console.log({ data });
           localStorage.setItem("token", data?.token);
-
           form.reset();
+
+          if (data?.isFirstLogin) {
+            return router.replace("/?firstLogin=true");
+          }
+
           router.replace("/");
         },
         message: "Logged in successfully",

@@ -66,16 +66,18 @@ const AddLocation: FC<AddLocationProps> = ({ callback }) => {
           container: "w-full ",
         }}
         trigger={
-          <Button
-            icon="Plus"
-            type="button"
-            disabled={userRole !== ROLES.ADMIN}
-            onClick={() => {
-              setOpened(true);
-            }}
-          >
-            Add Boutique
-          </Button>
+          userRole === ROLES.ADMIN && (
+            <Button
+              icon="Plus"
+              type="button"
+              disabled={userRole !== ROLES.ADMIN}
+              onClick={() => {
+                setOpened(true);
+              }}
+            >
+              Add Boutique
+            </Button>
+          )
         }
       >
         <div className=" flex gap-0 ">
