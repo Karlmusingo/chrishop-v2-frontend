@@ -6,7 +6,6 @@ import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
-  getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 
@@ -67,7 +66,6 @@ export function TableView<TData, TValue>({
     data: tableData,
     columns: tableColumns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     manualPagination: true,
   });
 

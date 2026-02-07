@@ -7,7 +7,7 @@ export const addUserSchema = z.strictObject({
   phoneNumber: z.string(),
   email: z.string(),
   role: z.string(),
-  location: z.string().uuid().optional(),
+  location: z.string().optional(),
 });
 
 export type AddUserSchemaType = z.infer<typeof addUserSchema>;

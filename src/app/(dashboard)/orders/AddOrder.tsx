@@ -17,9 +17,19 @@ import { ProductColors } from "@/constants/colors";
 import { ProductSize } from "@/constants/sizes";
 
 import { usePermission } from "@/hooks/usePermission";
+import { ROLES } from "@/interface/roles";
 import { toOptions } from "@/lib/toOptions";
+import { useConvex, useQuery } from "convex/react";
 
 import { DialogFooter } from "@/components/ui/dialog";
+import {
+  Select as SelectUI,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Pencil, Trash } from "lucide-react";
 import {
   Table,
@@ -41,7 +51,6 @@ import { api } from "../../../../convex/_generated/api";
 
 interface AddOrderProps {
   callback?: () => void;
-  inventories: IUnknown[];
   orderData?: IUnknown;
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
@@ -56,20 +65,26 @@ type FormSchemaPlusProductIdType = AddOrderSchemaType & {
 
 const AddOrder: FC<AddOrderProps> = ({
   callback,
-  inventories,
   orderData,
   isOpen,
   setIsOpen,
   moveToNext,
 }) => {
+  const convex = useConvex();
   const { mutate: createMutate, isPending } = useMutationWithToast(
-    api.functions.orders.create
+    api.functions.orders.create,
   );
   const { mutate: updateMutate, isPending: isPendingUpdate } =
     useMutationWithToast(api.functions.orders.update);
   const { data: profile } = usePermission();
+  const isAdmin = profile?.role === ROLES.ADMIN;
+  const locations =
+    useQuery(api.functions.locations.list, isAdmin ? {} : "skip") ?? [];
 
   const [orders, setOrders] = useState<FormSchemaPlusProductIdType[]>([]);
+  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
+    null,
+  );
 
   const form = useForm<AddOrderSchemaType>({
     resolver: zodResolver(addOrderSchema),
@@ -91,7 +106,7 @@ const AddOrder: FC<AddOrderProps> = ({
           productId: item.productId,
           price: item.unitPrice,
           total: item.totalPrice,
-        }))
+        })),
       );
     }
   }, [orderData]);
@@ -102,9 +117,14 @@ const AddOrder: FC<AddOrderProps> = ({
     callback?.();
   }
 
+  const getLocationId = () => {
+    return isAdmin ? selectedLocationId : profile?.locationId;
+  };
+
   const handleSubmit = () => {
-    if (!profile?.locationId) {
-      toast.error("You must be assigned to a location");
+    const locationId = getLocationId();
+    if (!locationId) {
+      toast.error("Veuillez sélectionner une boutique");
       return;
     }
 
@@ -117,12 +137,12 @@ const AddOrder: FC<AddOrderProps> = ({
             quantity: item.quantity,
           })),
           userId: profile._id as any,
-          locationId: profile.locationId as any,
+          locationId: locationId as any,
         },
         {
           successMessage: "Order updated successfully",
           onSuccess: callbackOnSuccess,
-        }
+        },
       );
     }
 
@@ -133,48 +153,49 @@ const AddOrder: FC<AddOrderProps> = ({
           quantity: item.quantity,
         })),
         userId: profile._id as any,
-        locationId: profile.locationId as any,
+        locationId: locationId as any,
       },
       {
         successMessage: "Order created successfully",
         onSuccess: callbackOnSuccess,
-      }
+      },
     );
   };
 
-  function onAddOrder(values: AddOrderSchemaType) {
-    const findMatchingProduct = () => {
-      return inventories.find((item) => {
-        const product = item.product;
-        const baseCondition =
-          product.type === values.type &&
-          product.brand === values.brand &&
-          product.color === values.color &&
-          product.size === values.size;
+  async function onAddOrder(values: AddOrderSchemaType) {
+    const locationId = getLocationId();
+    if (!locationId) {
+      toast.error("Veuillez sélectionner une boutique");
+      return;
+    }
 
-        const extraCondition = typeValue?.includes("polo")
-          ? product.collarColor === values.collarColor
-          : true;
-
-        return baseCondition && extraCondition;
-      });
-    };
-
-    const inventory = findMatchingProduct();
+    const inventory = await convex.query(
+      api.functions.inventories.findByProductAttributes,
+      {
+        type: values.type,
+        brand: values.brand,
+        color: values.color,
+        size: values.size,
+        ...(typeValue?.includes("polo") && values.collarColor
+          ? { collarColor: values.collarColor }
+          : {}),
+        locationId: locationId as any,
+      },
+    );
 
     if (!inventory || inventory.quantity <= 0) {
       toast.error("Ce produit n'a pas d'inventaire");
       return;
     }
 
-    if (orders.find((item) => item.productId === inventory?.productId)) {
+    if (orders.find((item) => item.productId === inventory.productId)) {
       toast.error("Ce produit est déjà dans la liste");
       return;
     }
 
     if (inventory.quantity < values.quantity) {
       toast.error(
-        "Quantité insuffisante, quantité disponible: " + inventory.quantity
+        "Quantité insuffisante, quantité disponible: " + inventory.quantity,
       );
       return;
     }
@@ -229,7 +250,7 @@ const AddOrder: FC<AddOrderProps> = ({
         <Button
           icon="Plus"
           type="button"
-          disabled={!profile?.location}
+          disabled={!profile?.location && profile?.role !== "ADMIN"}
           onClick={() => {
             setIsOpen(true);
           }}
@@ -238,6 +259,30 @@ const AddOrder: FC<AddOrderProps> = ({
         </Button>
       }
     >
+      {isAdmin && (
+        <div className="grid gap-1 mb-4">
+          <Label>Boutique</Label>
+          <SelectUI
+            value={selectedLocationId ?? undefined}
+            onValueChange={(val) => {
+              setSelectedLocationId(val);
+              setOrders([]);
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Sélectionnez une boutique" />
+            </SelectTrigger>
+            <SelectContent>
+              {locations.map((loc: any) => (
+                <SelectItem key={loc._id} value={loc._id}>
+                  {loc.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </SelectUI>
+        </div>
+      )}
+
       <Form {...form}>
         <form
           className="grid gap-4 py-4 rounded-lg border p-6"

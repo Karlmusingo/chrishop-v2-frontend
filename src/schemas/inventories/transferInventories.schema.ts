@@ -26,7 +26,7 @@ export const transferInventoriesSchema = z.object({
       message: "Veillez selectionner la boutique",
       required_error: "Veillez selectionner la boutique",
     })
-    .uuid(),
+    .min(1, "Veillez selectionner la boutique"),
   transferQuantity: z
     .string({
       invalid_type_error: "La quantité doit être un nombre supérieur à 0",

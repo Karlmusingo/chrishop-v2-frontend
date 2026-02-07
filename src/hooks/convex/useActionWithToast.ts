@@ -28,12 +28,14 @@ export function useActionWithToast<
             description: "The record should be visible on your catalogue.",
           });
         }
-        options?.onSuccess?.(result);
+        await options?.onSuccess?.(result);
         return result;
       } catch (err: any) {
-        const errorMsg =
+        const rawMsg =
           err?.message || err?.data?.message || "An error occurred";
-        setError(err);
+      const match = rawMsg.match(/Uncaught Error:\s*(.+?)(?:\s+at\s+|$)/);
+      const errorMsg = match ? match[1] : rawMsg;
+        setError(new Error(errorMsg));
         toast.error(errorMsg);
         options?.onError?.();
         throw err;

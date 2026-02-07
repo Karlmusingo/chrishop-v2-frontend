@@ -19,6 +19,7 @@ import { ProductSize } from "@/constants/sizes";
 import { usePermission } from "@/hooks/usePermission";
 import { ROLES } from "@/interface/roles";
 import { toOptions } from "@/lib/toOptions";
+import { useConvex } from "convex/react";
 
 import { DialogFooter } from "@/components/ui/dialog";
 import { Pencil, Trash } from "lucide-react";
@@ -41,14 +42,14 @@ import { api } from "../../../../convex/_generated/api";
 
 interface AddInventoryProps {
   callback?: () => void;
-  products: IUnknown[];
 }
 
 type FormSchemaPlusProductIdType = AddInventoriesSchemaType & {
   productId: string;
 };
 
-const AddInventory: FC<AddInventoryProps> = ({ callback, products }) => {
+const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
+  const convex = useConvex();
   const { mutate, isPending } = useMutationWithToast(
     api.functions.inventories.create
   );
@@ -85,24 +86,19 @@ const AddInventory: FC<AddInventoryProps> = ({ callback, products }) => {
     );
   };
 
-  function onAddInventory(values: AddInventoriesSchemaType) {
-    const findMatchingProduct = () => {
-      return products.find((product) => {
-        const baseCondition =
-          product.type === values.type &&
-          product.brand === values.brand &&
-          product.color === values.color &&
-          product.size === values.size;
-
-        const extraCondition = typeValue?.includes("polo")
-          ? product.collarColor === values.collarColor
-          : true;
-
-        return baseCondition && extraCondition;
-      });
-    };
-
-    const product = findMatchingProduct();
+  async function onAddInventory(values: AddInventoriesSchemaType) {
+    const product = await convex.query(
+      api.functions.products.findByAttributes,
+      {
+        type: values.type,
+        brand: values.brand,
+        color: values.color,
+        size: values.size,
+        ...(typeValue?.includes("polo") && values.collarColor
+          ? { collarColor: values.collarColor }
+          : {}),
+      }
+    );
 
     if (!product) {
       toast.error("Produit non trouvé");

@@ -9,6 +9,8 @@ export const list = query({
     color: v.optional(v.string()),
     size: v.optional(v.string()),
     collarColor: v.optional(v.string()),
+    page: v.optional(v.number()),
+    perPage: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     let products = await ctx.db.query("products").collect();
@@ -35,7 +37,47 @@ export const list = query({
       products = products.filter((p) => p.collarColor === args.collarColor);
     }
 
-    return products;
+    const page = args.page ?? 1;
+    const perPage = args.perPage ?? 10;
+    const total = products.length;
+    const lastPage = Math.max(1, Math.ceil(total / perPage));
+    const currentPage = Math.max(1, Math.min(page, lastPage));
+    const startIndex = (currentPage - 1) * perPage;
+    const data = products.slice(startIndex, startIndex + perPage);
+
+    return {
+      data,
+      meta: {
+        total,
+        lastPage,
+        currentPage,
+        perPage,
+        prev: currentPage > 1 ? currentPage - 1 : null,
+        next: currentPage < lastPage ? currentPage + 1 : null,
+      },
+    };
+  },
+});
+
+export const findByAttributes = query({
+  args: {
+    type: v.string(),
+    brand: v.string(),
+    color: v.string(),
+    size: v.string(),
+    collarColor: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const nameParts = [args.type, args.brand, args.color, args.size];
+    if (args.collarColor) {
+      nameParts.push(args.collarColor);
+    }
+    const name = nameParts.join("|");
+
+    return await ctx.db
+      .query("products")
+      .withIndex("by_name", (q) => q.eq("name", name))
+      .first();
   },
 });
 

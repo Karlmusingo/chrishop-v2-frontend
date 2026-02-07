@@ -18,6 +18,8 @@ export default function Login() {
     api.functions.authActions.login,
   );
 
+  console.log("error :>> ", error);
+
   const form = useForm<LoginSchemaType>({
     resolver: zodResolver(loginSchema),
   });
@@ -56,7 +58,7 @@ export default function Login() {
             }
           }
 
-          form.reset();
+          // form.reset();
           if (data?.isFirstLogin) {
             return router.replace("/?firstLogin=true");
           }

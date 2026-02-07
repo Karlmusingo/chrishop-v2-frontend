@@ -10,10 +10,9 @@ interface defaultMeta {
 
 export interface fullMetaType extends defaultMeta {
   total: number;
-  lastPage: string;
-  currentPage: string;
-  perPage: string;
-  page: string;
+  lastPage: number;
+  currentPage: number;
+  perPage: number;
   prev: number | null;
   next: number | null;
 }

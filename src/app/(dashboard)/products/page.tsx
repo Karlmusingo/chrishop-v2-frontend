@@ -1,9 +1,10 @@
 "use client";
 
-import { FC } from "react";
+import { FC, useEffect } from "react";
 
 import { useQueryString } from "@/hooks/useQueryString";
 import { useTable } from "@/hooks/useTable";
+import { useMetaStore } from "@/hooks/zustand/useMetaStore";
 
 import { DataList } from "@/components/custom/list/DataList";
 
@@ -19,14 +20,26 @@ const ProductsPage: FC<ProductsPageProps> = () => {
   const { getQueryObject } = useQueryString();
   const queryObj = getQueryObject();
 
-  const products =
-    useQuery(api.functions.products.list, {
-      search: queryObj.search as string | undefined,
-      type: queryObj.type as string | undefined,
-      brand: queryObj.brand as string | undefined,
-      color: queryObj.color as string | undefined,
-      size: queryObj.size as string | undefined,
-    }) ?? [];
+  const page = Number(queryObj.page) || 1;
+  const perPage = Number(queryObj.perPage) || 10;
+
+  const result = useQuery(api.functions.products.list, {
+    search: queryObj.search as string | undefined,
+    type: queryObj.type as string | undefined,
+    brand: queryObj.brand as string | undefined,
+    color: queryObj.color as string | undefined,
+    size: queryObj.size as string | undefined,
+    page,
+    perPage,
+  });
+
+  const { setData } = useMetaStore();
+
+  useEffect(() => {
+    if (result?.meta) {
+      setData(result.meta as any);
+    }
+  }, [result?.meta, setData]);
 
   const {} = useTable({ title: "" });
   return (
@@ -39,8 +52,8 @@ const ProductsPage: FC<ProductsPageProps> = () => {
       <div className="py-4">
         <DataList
           columns={getColumns({})}
-          data={(products || []) as any[]}
-          state={{ loading: products === undefined }}
+          data={(result?.data || []) as any[]}
+          state={{ loading: result === undefined }}
           filter={{
             options: { tab: [] },
             filterKey: "filter_status",

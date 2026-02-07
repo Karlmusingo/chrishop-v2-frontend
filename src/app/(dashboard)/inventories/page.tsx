@@ -39,7 +39,6 @@ const InventoriesPage: FC<InventoriesPageProps> = () => {
       userRole: userRole,
     }) ?? [];
 
-  const products = useQuery(api.functions.products.list, {}) ?? [];
   const locations = useQuery(api.functions.locations.list, {}) ?? [];
 
   const [transferModalOpened, setTransferOpened] = useState(false);
@@ -90,7 +89,7 @@ const InventoriesPage: FC<InventoriesPageProps> = () => {
             options: { tab: ["IN_STOCK", "LOW_STOCK", "OUT_OF_STOCK"] },
             filterKey: "status",
           }}
-          action={<AddInventory products={products} />}
+          action={<AddInventory />}
         />
       </div>
     </div>

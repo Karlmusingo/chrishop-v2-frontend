@@ -36,7 +36,7 @@ export function ListPagination<TData>({
   const searchParams = useSearchParams();
   const page = searchParams.get("page");
   const perPage = searchParams.get("perPage");
-  const { pushQuery } = useQueryString();
+  const { pushQuery, pushQueryObject } = useQueryString();
 
   const { meta } = useMetaStore();
 
@@ -62,11 +62,11 @@ export function ListPagination<TData>({
     },
 
     setPerPage(value: string) {
-      pushQuery("perPage", value);
+      pushQueryObject({ perPage: value, page: "1" });
     },
   };
 
-  if (!meta.total && !meta.page) {
+  if (!meta.total && !meta.currentPage) {
     return null;
   }
 

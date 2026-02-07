@@ -11,8 +11,8 @@ export const sendEmail = internalAction({
     text: v.optional(v.string()),
   },
   handler: async (_ctx, args) => {
-    const Mailjet = await import("node-mailjet");
-    const mailjet = new Mailjet.Client({
+    const { default: Mailjet } = await import("node-mailjet");
+    const mailjet = new Mailjet({
       apiKey: process.env.MAILJET_API_KEY || "",
       apiSecret: process.env.MAILJET_SECRET_KEY || "",
     });

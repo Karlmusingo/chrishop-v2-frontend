@@ -32,13 +32,6 @@ const OrdersPage: FC<OrdersPageProps> = () => {
       userRole: userRole,
     }) ?? [];
 
-  const inventories =
-    useQuery(api.functions.inventories.list, {
-      location: profileData?.locationId as string | undefined,
-      userLocationId: profileData?.locationId,
-      userRole: userRole,
-    }) ?? [];
-
   const [onEditModal, setOnEditModal] = useState(false);
   const [onViewModal, setOnViewModal] = useState(false);
   const [orderData, setOrderData] = useState<IUnknown>({});
@@ -91,7 +84,6 @@ const OrdersPage: FC<OrdersPageProps> = () => {
                 setOrderData({});
                 setOnEditModal(open);
               }}
-              inventories={inventories}
               moveToNext={(data?: IUnknown) => {
                 setOnEditModal(false);
                 setOnViewModal(true);

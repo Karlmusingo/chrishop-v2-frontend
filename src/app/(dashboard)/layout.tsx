@@ -17,13 +17,28 @@ const DashboardLayout: FC<PropsWithChildren> = ({ children }) => {
   const { firstLogin } = getQueryObject();
 
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
+    if (!authLoading && !isLoading && !isAuthenticated) {
       router.replace("/login");
     }
+  }, [isAuthenticated, authLoading, isLoading]);
+
+  useEffect(() => {
     if (isSuccess && firstLogin === "true") {
       setOpenUpdatePassword(true);
     }
-  }, [isSuccess, isLoading, isAuthenticated, authLoading]);
+  }, [isSuccess, firstLogin]);
+
+  if (authLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="animate-spin h-8 w-8 rounded-full border-4 border-gray-300 border-t-black" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="h-screen">

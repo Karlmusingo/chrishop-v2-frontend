@@ -98,6 +98,46 @@ export const list = query({
   },
 });
 
+export const findByProductAttributes = query({
+  args: {
+    type: v.string(),
+    brand: v.string(),
+    color: v.string(),
+    size: v.string(),
+    collarColor: v.optional(v.string()),
+    locationId: v.id("locations"),
+  },
+  handler: async (ctx, args) => {
+    const nameParts = [args.type, args.brand, args.color, args.size];
+    if (args.collarColor) {
+      nameParts.push(args.collarColor);
+    }
+    const name = nameParts.join("|");
+
+    const product = await ctx.db
+      .query("products")
+      .withIndex("by_name", (q) => q.eq("name", name))
+      .first();
+
+    if (!product) return null;
+
+    const inventory = await ctx.db
+      .query("inventories")
+      .withIndex("by_productId_locationId", (q) =>
+        q.eq("productId", product._id).eq("locationId", args.locationId)
+      )
+      .first();
+
+    if (!inventory) return null;
+
+    return {
+      ...inventory,
+      product,
+      status: computeStatus(inventory.quantity),
+    };
+  },
+});
+
 export const get = query({
   args: { id: v.id("inventories") },
   handler: async (ctx, args) => {

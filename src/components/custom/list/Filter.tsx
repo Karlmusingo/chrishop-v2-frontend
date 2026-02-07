@@ -36,7 +36,7 @@ const ListFilter: FC<TableFilterProps> = ({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentFilter = searchParams.get(filterKey as string);
-  const { pushQuery, createQueryString } = useQueryString();
+  const { pushQuery, pushQueryObject, createQueryString } = useQueryString();
 
   const table = useTable();
 
@@ -94,7 +94,7 @@ const ListFilter: FC<TableFilterProps> = ({
         )}
 
         <Search
-          onChange={(ev) => pushQuery("search", ev.target.value)}
+          onChange={(ev) => pushQueryObject({ search: ev.target.value, page: "1" })}
           defaultValue={searchParams.get("search") as string}
           className=" ml-auto"
           placeholder={searchPlaceholder}

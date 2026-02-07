@@ -27,7 +27,7 @@ interface AddStaffProps {
 
 const AddUser: FC<AddStaffProps> = ({ callback }) => {
   const { mutate, isPending, error, isError } = useActionWithToast(
-    api.functions.usersActions.create
+    api.functions.usersActions.create,
   );
 
   const locations = useQuery(api.functions.locations.list, {}) ?? [];
@@ -65,7 +65,7 @@ const AddUser: FC<AddStaffProps> = ({ callback }) => {
       {
         successMessage: `${values.role} created successfully`,
         onSuccess: callbackOnSuccess,
-      }
+      },
     );
   };
 
