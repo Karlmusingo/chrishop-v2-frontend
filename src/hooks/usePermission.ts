@@ -58,7 +58,7 @@ export const usePermission = (): usePermissionReturnType => {
   return {
     canAccess: memoizedReturn.roles && memoizedReturn.status,
     permissions: memoizedReturn,
-    userRole: data?.role,
-    data,
+    userRole: data?.role as RolesType,
+    data: data as IUnknown,
   };
 };

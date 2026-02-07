@@ -8,12 +8,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "../../../../convex/_generated/api";
 
 export default function Login() {
   const router = useRouter();
+  const { signIn } = useAuthActions();
   const { mutate, isPending, error } = useActionWithToast(
-    api.functions.authActions.login
+    api.functions.authActions.login,
   );
 
   const form = useForm<LoginSchemaType>({
@@ -21,17 +23,46 @@ export default function Login() {
   });
 
   const handleSubmit = async (values: LoginSchemaType) => {
-    await mutate(
+    // Step 1: Validate credentials, check status, get isFirstLogin
+    const data = await mutate(
       { email: values.email, password: values.password },
       {
-        onSuccess: (data) => {
+        onSuccess: async (data) => {
+          try {
+            // Step 2: Create Convex Auth session
+            // Use "signUp" for first-time users (no auth account yet),
+            // "signIn" for returning users (auth account exists)
+            const flow = data?.isFirstLogin ? "signUp" : "signIn";
+            await signIn("password", {
+              email: values.email,
+              password: values.password,
+              flow,
+            });
+          } catch {
+            // If signIn fails (auth account might not exist yet), try signUp
+            try {
+              await signIn("password", {
+                email: values.email,
+                password: values.password,
+                flow: "signUp",
+              });
+            } catch {
+              // If signUp also fails (account already exists), try signIn again
+              await signIn("password", {
+                email: values.email,
+                password: values.password,
+                flow: "signIn",
+              });
+            }
+          }
+
           form.reset();
           if (data?.isFirstLogin) {
             return router.replace("/?firstLogin=true");
           }
           router.replace("/");
         },
-      }
+      },
     );
   };
 

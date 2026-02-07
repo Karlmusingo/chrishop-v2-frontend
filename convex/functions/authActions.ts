@@ -17,11 +17,11 @@ export const login = action({
   },
   handler: async (ctx, args): Promise<{
     id: Id<"users">;
-    email: string;
-    phoneNumber: string;
-    role: string;
+    email?: string;
+    phoneNumber?: string;
+    role?: string;
     locationId?: Id<"locations">;
-    isFirstLogin: boolean;
+    isFirstLogin?: boolean;
   }> => {
     const user = await ctx.runQuery(internal.functions.auth.getUserByEmail, {
       email: args.email,
@@ -29,6 +29,10 @@ export const login = action({
 
     if (!user) {
       throw new Error("User not found");
+    }
+
+    if (!user.salt || !user.passwordHash) {
+      throw new Error("Invalid user credentials configuration");
     }
 
     if (

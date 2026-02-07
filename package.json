@@ -6,7 +6,8 @@
     "dev": "next dev -p 9000",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "seed": "npx convex run functions/seed:seedAdmin \"$(cat convex/seedData.json)\""
   },
   "dependencies": {
     "@auth/core": "^0.37.4",

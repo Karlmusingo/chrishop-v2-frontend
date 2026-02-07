@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { authTables } from "@convex-dev/auth/server";
 
 export const roleValidator = v.union(
   v.literal("ADMIN"),
@@ -26,20 +27,30 @@ export const orderStatusValidator = v.union(
 );
 
 export default defineSchema({
+  ...authTables,
   users: defineTable({
-    firstName: v.string(),
+    // Convex Auth fields
+    name: v.optional(v.string()),
+    image: v.optional(v.string()),
+    email: v.optional(v.string()),
+    emailVerificationTime: v.optional(v.number()),
+    phone: v.optional(v.string()),
+    phoneVerificationTime: v.optional(v.number()),
+    isAnonymous: v.optional(v.boolean()),
+    // Custom fields
+    firstName: v.optional(v.string()),
     middleName: v.optional(v.string()),
-    lastName: v.string(),
-    email: v.string(),
-    phoneNumber: v.string(),
-    passwordHash: v.string(),
-    salt: v.string(),
-    role: roleValidator,
-    status: userStatusValidator,
-    isFirstLogin: v.boolean(),
+    lastName: v.optional(v.string()),
+    phoneNumber: v.optional(v.string()),
+    passwordHash: v.optional(v.string()),
+    salt: v.optional(v.string()),
+    role: v.optional(roleValidator),
+    status: v.optional(userStatusValidator),
+    isFirstLogin: v.optional(v.boolean()),
     locationId: v.optional(v.id("locations")),
   })
-    .index("by_email", ["email"])
+    .index("email", ["email"])
+    .index("phone", ["phone"])
     .index("by_phoneNumber", ["phoneNumber"])
     .index("by_role", ["role"]),
 

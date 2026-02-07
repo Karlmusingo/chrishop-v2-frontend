@@ -76,13 +76,14 @@ export const updatePassword = action({
     newPassword: v.string(),
   },
   handler: async (ctx, args): Promise<{ success: boolean }> => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity || !identity.email) throw new Error("Unauthenticated");
+    const user = await ctx.runQuery(
+      internal.functions.users.getAuthenticatedUser
+    );
+    if (!user) throw new Error("Unauthenticated");
 
-    const user = await ctx.runQuery(internal.functions.users.getUserByEmail, {
-      email: identity.email,
-    });
-    if (!user) throw new Error("User not found");
+    if (!user.salt || !user.passwordHash) {
+      throw new Error("Invalid user credentials configuration");
+    }
 
     if (
       generatePasswordHash(args.password, user.salt) !== user.passwordHash

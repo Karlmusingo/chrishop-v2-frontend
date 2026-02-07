@@ -4,20 +4,15 @@ import {
   ActionCtx,
 } from "../_generated/server";
 import { Doc } from "../_generated/dataModel";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 export async function getCurrentUser(
   ctx: QueryCtx | MutationCtx
 ): Promise<Doc<"users"> | null> {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity) return null;
+  const userId = await getAuthUserId(ctx);
+  if (!userId) return null;
 
-  const email = identity.email;
-  if (!email) return null;
-
-  return await ctx.db
-    .query("users")
-    .withIndex("by_email", (q) => q.eq("email", email))
-    .first();
+  return await ctx.db.get(userId);
 }
 
 export async function requireCurrentUser(
@@ -34,7 +29,7 @@ export function requireRole(
   user: Doc<"users">,
   allowedRoles: Array<Doc<"users">["role"]>
 ) {
-  if (!allowedRoles.includes(user.role)) {
+  if (!user.role || !allowedRoles.includes(user.role)) {
     throw new Error("Forbidden: insufficient role");
   }
 }

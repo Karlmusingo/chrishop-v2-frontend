@@ -6,6 +6,7 @@ import {
   internalMutation,
 } from "../_generated/server";
 import { roleValidator, userStatusValidator } from "../schema";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const list = query({
   args: {
@@ -26,9 +27,9 @@ export const list = query({
       const search = args.search.toLowerCase();
       users = users.filter(
         (u) =>
-          u.firstName.toLowerCase().includes(search) ||
+          u.firstName?.toLowerCase().includes(search) ||
           (u.middleName && u.middleName.toLowerCase().includes(search)) ||
-          u.lastName.toLowerCase().includes(search)
+          u.lastName?.toLowerCase().includes(search),
       );
     }
 
@@ -38,7 +39,7 @@ export const list = query({
           ? await ctx.db.get(user.locationId)
           : null;
         return { ...user, location };
-      })
+      }),
     );
 
     return usersWithLocation;
@@ -48,19 +49,13 @@ export const list = query({
 export const getProfile = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity || !identity.email) return null;
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
 
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .first();
-
+    const user = await ctx.db.get(userId);
     if (!user) return null;
 
-    const location = user.locationId
-      ? await ctx.db.get(user.locationId)
-      : null;
+    const location = user.locationId ? await ctx.db.get(user.locationId) : null;
 
     return { ...user, location };
   },
@@ -74,14 +69,8 @@ export const updateProfile = mutation({
     phoneNumber: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity || !identity.email) throw new Error("Unauthenticated");
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .first();
-    if (!user) throw new Error("User not found");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
 
     const patch: Record<string, string> = {};
     if (args.firstName !== undefined) patch.firstName = args.firstName;
@@ -89,8 +78,17 @@ export const updateProfile = mutation({
     if (args.middleName !== undefined) patch.middleName = args.middleName;
     if (args.phoneNumber !== undefined) patch.phoneNumber = args.phoneNumber;
 
-    await ctx.db.patch(user._id, patch);
+    await ctx.db.patch(userId, patch);
     return { success: true };
+  },
+});
+
+export const getAuthenticatedUser = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    return await ctx.db.get(userId);
   },
 });
 
@@ -100,7 +98,7 @@ export const getUserByEmail = internalQuery({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("users")
-      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .withIndex("email", (q) => q.eq("email", args.email))
       .first();
   },
 });
@@ -110,9 +108,7 @@ export const getUserByPhone = internalQuery({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("users")
-      .withIndex("by_phoneNumber", (q) =>
-        q.eq("phoneNumber", args.phoneNumber)
-      )
+      .withIndex("by_phoneNumber", (q) => q.eq("phoneNumber", args.phoneNumber))
       .first();
   },
 });

@@ -17,6 +17,7 @@ import type * as functions_inventories from "../functions/inventories.js";
 import type * as functions_locations from "../functions/locations.js";
 import type * as functions_orders from "../functions/orders.js";
 import type * as functions_products from "../functions/products.js";
+import type * as functions_seed from "../functions/seed.js";
 import type * as functions_users from "../functions/users.js";
 import type * as functions_usersActions from "../functions/usersActions.js";
 import type * as http from "../http.js";
@@ -39,6 +40,7 @@ declare const fullApi: ApiFromModules<{
   "functions/locations": typeof functions_locations;
   "functions/orders": typeof functions_orders;
   "functions/products": typeof functions_products;
+  "functions/seed": typeof functions_seed;
   "functions/users": typeof functions_users;
   "functions/usersActions": typeof functions_usersActions;
   http: typeof http;

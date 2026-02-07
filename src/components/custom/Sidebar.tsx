@@ -10,6 +10,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useProfile } from "@/hooks/convex/useProfile";
 import { useAuthActions } from "@convex-dev/auth/react";
+import { RolesType } from "@/interface/roles";
 
 const Sidebar = () => {
   const router = useRouter();
@@ -26,7 +27,7 @@ const Sidebar = () => {
       <div className="flex justify-center mb-8">
         <Image src="/logo.png" alt="logo" width={160} height={32} />
       </div>
-      <Menus profile={data} role={data?.role} isLoading={isLoading} />
+      <Menus profile={data ?? undefined} role={data?.role as RolesType | undefined} isLoading={isLoading} />
       <div className="mt-auto flex items-center justify-between gap-1 py-2">
         <Button
           size="sm"
