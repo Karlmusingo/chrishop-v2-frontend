@@ -2,7 +2,6 @@
 
 import { FC } from "react";
 
-import { useGetList } from "@/hooks/api/common/getAll";
 import { useQueryString } from "@/hooks/useQueryString";
 import { useTable } from "@/hooks/useTable";
 
@@ -11,18 +10,23 @@ import { DataList } from "@/components/custom/list/DataList";
 import { getColumns } from "./table";
 
 import AddProduct from "./AddProduct";
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 
 interface ProductsPageProps {}
 
 const ProductsPage: FC<ProductsPageProps> = () => {
   const { getQueryObject } = useQueryString();
-  const { data, isLoading, refetch } = useGetList({
-    queryKey: "get-products",
-    endpoint: "/products",
-    filter: { ...getQueryObject() },
-  });
+  const queryObj = getQueryObject();
 
-  const products = data?.data || [];
+  const products =
+    useQuery(api.functions.products.list, {
+      search: queryObj.search as string | undefined,
+      type: queryObj.type as string | undefined,
+      brand: queryObj.brand as string | undefined,
+      color: queryObj.color as string | undefined,
+      size: queryObj.size as string | undefined,
+    }) ?? [];
 
   const {} = useTable({ title: "" });
   return (
@@ -36,12 +40,12 @@ const ProductsPage: FC<ProductsPageProps> = () => {
         <DataList
           columns={getColumns({})}
           data={(products || []) as any[]}
-          state={{ loading: isLoading }}
+          state={{ loading: products === undefined }}
           filter={{
             options: { tab: [] },
             filterKey: "filter_status",
           }}
-          action={<AddProduct callback={refetch} />}
+          action={<AddProduct />}
         />
       </div>
     </div>

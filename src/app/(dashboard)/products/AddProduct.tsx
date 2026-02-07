@@ -15,7 +15,6 @@ import { ProductType } from "@/constants/productType";
 import { ProductBrand } from "@/constants/productBrand";
 import { ProductColors } from "@/constants/colors";
 import { ProductSize } from "@/constants/sizes";
-import { useCreateMutation } from "@/hooks/api/common/create";
 import {
   addProductSchema,
   AddProductSchemaType,
@@ -25,16 +24,17 @@ import { ROLES } from "@/interface/roles";
 import { toOptions } from "@/lib/toOptions";
 
 import MultiSelect from "@/components/custom/MultiSelectInput";
+import { useMutationWithToast } from "@/hooks/convex/useMutationWithToast";
+import { api } from "../../../../convex/_generated/api";
 
 interface AddProductProps {
   callback?: () => void;
 }
 
 const AddProduct: FC<AddProductProps> = ({ callback }) => {
-  const { mutate, isPending, error, isError } = useCreateMutation({
-    queryKey: "create-product",
-    endpoint: "products",
-  });
+  const { mutate, isPending, error, isError } = useMutationWithToast(
+    api.functions.products.create
+  );
   const { userRole } = usePermission();
 
   const [isOpened, setOpened] = useState(false);
@@ -51,13 +51,13 @@ const AddProduct: FC<AddProductProps> = ({ callback }) => {
   }
 
   const handleSubmit = (values: AddProductSchemaType) => {
-    mutate({
-      data: { ...values },
-      onSuccess: {
-        message: "Products created successfully",
-        callback: callbackOnSuccess,
-      },
-    });
+    mutate(
+      { ...values },
+      {
+        successMessage: "Products created successfully",
+        onSuccess: callbackOnSuccess,
+      }
+    );
   };
 
   return (

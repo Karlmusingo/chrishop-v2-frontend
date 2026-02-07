@@ -16,12 +16,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import Link from "next/link";
-import { useGetProfile } from "@/hooks/api/users/profile";
+import { useProfile } from "@/hooks/convex/useProfile";
 import { UserRoles } from "@/interface/roles";
 
 import { Ellipsis } from "lucide-react";
 import Button from "../Button";
-import { removeToken } from "@/lib/token";
+import { useAuthActions } from "@convex-dev/auth/react";
 
 export interface IMenuItem {
   name: string;
@@ -58,10 +58,11 @@ export function Header() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const { data } = useGetProfile();
+  const { data } = useProfile();
+  const { signOut } = useAuthActions();
 
-  const signOut = () => {
-    removeToken();
+  const handleSignOut = async () => {
+    await signOut();
     router.replace("/login");
   };
 
@@ -115,7 +116,9 @@ export function Header() {
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={signOut}>Deconnexion</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleSignOut}>
+              Deconnexion
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

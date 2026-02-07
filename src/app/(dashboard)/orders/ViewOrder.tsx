@@ -5,10 +5,9 @@ import Button from "@/components/custom/Button";
 import { Switch } from "@/components/ui/switch";
 import { savePDF } from "@progress/kendo-react-pdf";
 
-import { FC, useEffect, useRef, useState } from "react";
+import { FC, useRef, useState } from "react";
 
 import { IUnknown } from "@/interface/Iunknown";
-import { useUpdateMutation } from "@/hooks/api/common/update";
 import { Printer } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import {
@@ -26,7 +25,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useGetSingle } from "@/hooks/api/common/getSingle";
+import { useMutationWithToast } from "@/hooks/convex/useMutationWithToast";
+import { api } from "../../../../convex/_generated/api";
+import { useQuery } from "convex/react";
+import { Id } from "../../../../convex/_generated/dataModel";
 
 interface ViewOrderProps {
   callback?: () => void;
@@ -64,23 +66,18 @@ const ViewOrder: FC<ViewOrderProps> = ({
     }
   };
 
-  const { mutate, isPending, error, isError } = useUpdateMutation({
-    queryKey: "change-order-status",
-    endpoint: "orders",
-  });
+  const { mutate, isPending } = useMutationWithToast(
+    api.functions.orders.buy
+  );
 
-  const {
-    data,
-    isPending: isPendingGet,
-    refetch,
-  } = useGetSingle({
-    queryKey: "get-order",
-    endpoint: `orders/${order?.orderId}`,
-    id: order?.orderId,
-    enabled: !!order?.orderId,
-  });
+  // If we have an orderId but not the full order data, fetch it
+  const orderId = order?.orderId || order?._id;
+  const singleOrder = useQuery(
+    api.functions.orders.get,
+    orderId ? { id: orderId as Id<"orders"> } : "skip"
+  );
 
-  const singleOrder = data?.data;
+  const orderData: IUnknown = singleOrder ?? order;
 
   const onCheckChange = (check: boolean) => {
     if (check) {
@@ -99,34 +96,18 @@ const ViewOrder: FC<ViewOrderProps> = ({
     callback?.();
   }
 
-  function callbackOnError() {
-    setIsPaid(isPaid);
-  }
-
   const handleSubmit = (status: string) => {
-    mutate({
-      id: `${orderData?.id}/buy`,
-      data: {
-        status: status,
+    mutate(
+      {
+        id: (orderData?._id || orderId) as any,
+        status: status as any,
       },
-      onSuccess: {
-        message: "Inventory transfered successfully",
-        callback: callbackOnSuccess,
-      },
-      onError: {
-        callback: callbackOnError,
-      },
-    });
+      {
+        successMessage: "Order status updated",
+        onSuccess: callbackOnSuccess,
+      }
+    );
   };
-
-  useEffect(() => {
-    if (order && order.orderId && !order.id && !singleOrder) {
-      // get the order
-      refetch();
-    }
-  }, [order]);
-
-  const orderData: IUnknown = singleOrder ?? order;
 
   const totalInvoicePrice = orderData?.orderItems?.reduce(
     (acc: number, curr: IUnknown) => acc + curr.totalPrice,
@@ -152,7 +133,7 @@ const ViewOrder: FC<ViewOrderProps> = ({
               <div>
                 <CardTitle className="text-2xl font-bold">Facture</CardTitle>
                 <p className="text-sm">
-                  Numero: #{`${orderData?.id?.slice(0, 8)}`}
+                  Numero: #{`${(orderData?._id || "")?.toString().slice(0, 8)}`}
                 </p>
                 <p className="text-sm">Statut: {orderData.status}</p>
               </div>
@@ -160,7 +141,7 @@ const ViewOrder: FC<ViewOrderProps> = ({
                 <p className="text-sm">
                   Date:{" "}
                   {new Date(
-                    orderData?.createdAt || new Date()
+                    orderData?._creationTime || orderData?.createdAt || new Date()
                   ).toLocaleDateString()}
                 </p>
               </div>
@@ -187,7 +168,7 @@ const ViewOrder: FC<ViewOrderProps> = ({
                 </TableHeader>
                 <TableBody>
                   {orderData?.orderItems?.map((item: IUnknown) => (
-                    <TableRow key={item.id}>
+                    <TableRow key={item._id || item.id}>
                       <TableCell>{item?.product?.type}</TableCell>
                       <TableCell>{item?.product?.brand}</TableCell>
                       <TableCell>{item?.product?.color}</TableCell>

@@ -2,7 +2,6 @@
 
 import { FC, useState } from "react";
 
-import { useGetList } from "@/hooks/api/common/getAll";
 import { useQueryString } from "@/hooks/useQueryString";
 import { useTable } from "@/hooks/useTable";
 
@@ -17,34 +16,35 @@ import { IUnknown } from "@/interface/Iunknown";
 import AddExistingInventory from "./AddExistingInventory";
 import { usePermission } from "@/hooks/usePermission";
 import { ROLES } from "@/interface/roles";
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 
 interface InventoriesPageProps {}
 
 const InventoriesPage: FC<InventoriesPageProps> = () => {
   const { getQueryObject } = useQueryString();
-  const { data, isLoading, refetch } = useGetList({
-    queryKey: "get-inventories",
-    endpoint: "/inventories",
-    filter: { ...getQueryObject() },
-  });
+  const queryObj = getQueryObject();
+  const { userRole, data: profileData } = usePermission();
+
+  const inventories =
+    useQuery(api.functions.inventories.list, {
+      search: queryObj.search as string | undefined,
+      type: queryObj.type as string | undefined,
+      brand: queryObj.brand as string | undefined,
+      color: queryObj.color as string | undefined,
+      size: queryObj.size as string | undefined,
+      status: queryObj.status as string | undefined,
+      location: queryObj.location as string | undefined,
+      userLocationId: profileData?.locationId,
+      userRole: userRole,
+    }) ?? [];
+
+  const products = useQuery(api.functions.products.list, {}) ?? [];
+  const locations = useQuery(api.functions.locations.list, {}) ?? [];
+
   const [transferModalOpened, setTransferOpened] = useState(false);
   const [addExistingModalOpened, setAddExistingOpened] = useState(false);
   const [inventoryData, setInventoryData] = useState<IUnknown>({});
-
-  const { userRole } = usePermission();
-  const { data: productData } = useGetList({
-    queryKey: "get-products",
-    endpoint: "/products",
-  });
-
-  const { data: locationData } = useGetList({
-    queryKey: "get-locations",
-    endpoint: "/locations",
-  });
-
-  const inventories = data?.data || [];
-  const products = productData?.data || [];
-  const locations = locationData?.data || [];
 
   const {} = useTable({ title: "" });
   return (
@@ -60,7 +60,6 @@ const InventoriesPage: FC<InventoriesPageProps> = () => {
       )}
 
       <TransferInventory
-        callback={refetch}
         locations={locations}
         inventoryData={inventoryData}
         isOpen={transferModalOpened}
@@ -68,7 +67,6 @@ const InventoriesPage: FC<InventoriesPageProps> = () => {
       />
 
       <AddExistingInventory
-        callback={refetch}
         inventoryData={inventoryData}
         isOpen={addExistingModalOpened}
         onClose={() => setAddExistingOpened(false)}
@@ -87,12 +85,12 @@ const InventoriesPage: FC<InventoriesPageProps> = () => {
             },
           })}
           data={(inventories || []) as any[]}
-          state={{ loading: isLoading }}
+          state={{ loading: inventories === undefined }}
           filter={{
             options: { tab: ["IN_STOCK", "LOW_STOCK", "OUT_OF_STOCK"] },
             filterKey: "status",
           }}
-          action={<AddInventory products={products} callback={refetch} />}
+          action={<AddInventory products={products} />}
         />
       </div>
     </div>

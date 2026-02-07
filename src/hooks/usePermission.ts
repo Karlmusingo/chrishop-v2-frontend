@@ -3,7 +3,7 @@ import { usePathname } from "next/navigation";
 import pageRoles, { PageRoleValueType } from "@/constants/pageRoles";
 import { intersection, isEmpty, keys } from "lodash";
 
-import { useGetProfile } from "./api/users/profile";
+import { useProfile } from "./convex/useProfile";
 import { RolesType } from "@/interface/roles";
 import { IUnknown } from "@/interface/Iunknown";
 
@@ -22,10 +22,10 @@ interface usePermissionReturnType {
 
 export const usePermission = (): usePermissionReturnType => {
   const path = usePathname();
-  const { data, isPending, isSuccess } = useGetProfile();
+  const { data, isLoading, isSuccess } = useProfile();
 
   const memoizedReturn = useMemo((): permissionType => {
-    if (!isPending && isSuccess) {
+    if (!isLoading && isSuccess) {
       const concernedPageKey = keys(pageRoles)
         .filter((key) => path?.includes(key))
         .sort((a, b) => b.length - a.length)?.[0];
@@ -36,7 +36,7 @@ export const usePermission = (): usePermissionReturnType => {
         ] as PageRoleValueType;
 
         const hasRequiredRole = !isEmpty(
-          intersection(currentPageRole.roles, data?.roles)
+          intersection(currentPageRole.roles, [data?.role])
         );
         const accessBasedOnStatus = currentPageRole.internalPublic
           ? true
@@ -53,7 +53,7 @@ export const usePermission = (): usePermissionReturnType => {
     } else {
       return { roles: false, status: false };
     }
-  }, [path, isPending, isSuccess]);
+  }, [path, isLoading, isSuccess]);
 
   return {
     canAccess: memoizedReturn.roles && memoizedReturn.status,

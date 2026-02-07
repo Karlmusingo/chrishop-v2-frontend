@@ -1,23 +1,23 @@
 "use client";
 
 import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import Button from "./Button";
 import Menus from "./Menus";
 import Icon from "./Icon";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { ROLES } from "@/interface/roles";
-import { removeToken } from "@/lib/token";
-import { useGetProfile } from "@/hooks/api/users/profile";
+import { useProfile } from "@/hooks/convex/useProfile";
+import { useAuthActions } from "@convex-dev/auth/react";
 
 const Sidebar = () => {
   const router = useRouter();
-  const { data, isLoading } = useGetProfile();
+  const { data, isLoading } = useProfile();
+  const { signOut } = useAuthActions();
 
-  const signOut = () => {
-    removeToken();
+  const handleSignOut = async () => {
+    await signOut();
     router.push("/login");
   };
 
@@ -32,7 +32,7 @@ const Sidebar = () => {
           size="sm"
           variant="ghost"
           className="p-0 hover:bg-transparent"
-          onClick={() => signOut()}
+          onClick={() => handleSignOut()}
         >
           <Link
             href="#"

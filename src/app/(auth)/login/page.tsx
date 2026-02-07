@@ -1,50 +1,38 @@
 "use client";
 import Button from "@/components/custom/Button";
-
 import Input from "@/components/custom/form/Input";
-
 import { Form } from "@/components/ui/form";
-import { useCreateMutation } from "@/hooks/api/common/create";
-
+import { useActionWithToast } from "@/hooks/convex/useActionWithToast";
 import { loginSchema, LoginSchemaType } from "@/schemas/auth/login.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-
 import { useForm } from "react-hook-form";
+import { api } from "../../../../convex/_generated/api";
 
 export default function Login() {
   const router = useRouter();
-
-  const { mutate, isPending, data, error } = useCreateMutation({
-    queryKey: "user-login",
-    endpoint: "/auth/login",
-    Entity: "Login",
-    showToast: false,
-  });
+  const { mutate, isPending, error } = useActionWithToast(
+    api.functions.authActions.login
+  );
 
   const form = useForm<LoginSchemaType>({
     resolver: zodResolver(loginSchema),
   });
 
   const handleSubmit = async (values: LoginSchemaType) => {
-    mutate({
-      data: values,
-      onSuccess: {
-        callback: (data) => {
-          console.log({ data });
-          localStorage.setItem("token", data?.token);
+    await mutate(
+      { email: values.email, password: values.password },
+      {
+        onSuccess: (data) => {
           form.reset();
-
           if (data?.isFirstLogin) {
             return router.replace("/?firstLogin=true");
           }
-
           router.replace("/");
         },
-        message: "Logged in successfully",
-      },
-    });
+      }
+    );
   };
 
   return (

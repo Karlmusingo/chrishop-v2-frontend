@@ -23,7 +23,8 @@ import {
   transferInventoriesSchema,
   TransferInventoriesSchemaType,
 } from "@/schemas/inventories/transferInventories.schema";
-import { useUpdateMutation } from "@/hooks/api/common/update";
+import { useMutationWithToast } from "@/hooks/convex/useMutationWithToast";
+import { api } from "../../../../convex/_generated/api";
 
 interface TransferInventoryProps {
   callback?: () => void;
@@ -40,10 +41,9 @@ const TransferInventory: FC<TransferInventoryProps> = ({
   locations,
   isOpen = false,
 }) => {
-  const { mutate, isPending, error, isError } = useUpdateMutation({
-    queryKey: "transfer-inventory",
-    endpoint: "inventories",
-  });
+  const { mutate, isPending } = useMutationWithToast(
+    api.functions.inventories.transfer
+  );
 
   const form = useForm<TransferInventoriesSchemaType>({
     resolver: zodResolver(transferInventoriesSchema),
@@ -57,17 +57,17 @@ const TransferInventory: FC<TransferInventoryProps> = ({
   }
 
   const handleSubmit = (values: TransferInventoriesSchemaType) => {
-    mutate({
-      id: `${inventoryData?.id}/transfer`,
-      data: {
-        location: values.location,
+    mutate(
+      {
+        id: inventoryData?._id as any,
+        location: values.location as any,
         quantity: values.transferQuantity,
       },
-      onSuccess: {
-        message: "Inventory transfered successfully",
-        callback: callbackOnSuccess,
-      },
-    });
+      {
+        successMessage: "Inventory transfered successfully",
+        onSuccess: callbackOnSuccess,
+      }
+    );
   };
 
   useEffect(() => {
@@ -194,7 +194,7 @@ const TransferInventory: FC<TransferInventoryProps> = ({
               options={locations.map((item) => {
                 return {
                   label: item.name,
-                  value: item.id,
+                  value: item._id,
                 };
               })}
             />

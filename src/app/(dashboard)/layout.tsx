@@ -1,29 +1,29 @@
 "use client";
 import { Header } from "@/components/custom/Header";
-import { useGetProfile } from "@/hooks/api/users/profile";
+import { useProfile } from "@/hooks/convex/useProfile";
 import { useQueryString } from "@/hooks/useQueryString";
-import { removeToken } from "@/lib/token";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { FC, PropsWithChildren, useEffect, useState } from "react";
 import UpdatePassword from "./profile/UpdatePassword";
+import { useConvexAuth } from "convex/react";
 
 const DashboardLayout: FC<PropsWithChildren> = ({ children }) => {
   const router = useRouter();
   const { getQueryObject } = useQueryString();
-  const { isLoading, isSuccess, data } = useGetProfile();
+  const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
+  const { isLoading, isSuccess, data } = useProfile();
   const [openUpdatePassword, setOpenUpdatePassword] = useState(false);
 
   const { firstLogin } = getQueryObject();
 
   useEffect(() => {
-    if (!isLoading && !isSuccess) {
-      removeToken();
+    if (!authLoading && !isAuthenticated) {
       router.replace("/login");
     }
     if (isSuccess && firstLogin === "true") {
       setOpenUpdatePassword(true);
     }
-  }, [isSuccess, isLoading]);
+  }, [isSuccess, isLoading, isAuthenticated, authLoading]);
 
   return (
     <div className="h-screen">

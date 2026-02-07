@@ -5,19 +5,20 @@ import { ROLES, RolesType } from "@/interface/roles";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import { useCreateMutation } from "@/hooks/api/common/create";
+import { useActionWithToast } from "@/hooks/convex/useActionWithToast";
 
 import { usePermission } from "@/hooks/usePermission";
 import Button from "@/components/custom/Button";
 import Modal from "@/components/ui/modal";
 import { Form } from "@/components/ui/form";
 import Input from "@/components/custom/form/Input";
-import { useGetList } from "@/hooks/api/common/getAll";
 import { IUnknown } from "@/interface/Iunknown";
 import {
   addUserSchema,
   AddUserSchemaType,
 } from "@/schemas/user/addUser.schema";
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 
 interface AddStaffProps {
   context?: RolesType;
@@ -25,26 +26,22 @@ interface AddStaffProps {
 }
 
 const AddUser: FC<AddStaffProps> = ({ callback }) => {
-  const { mutate, isPending, error, isError } = useCreateMutation({
-    queryKey: "create-user",
-    endpoint: "/users",
-  });
+  const { mutate, isPending, error, isError } = useActionWithToast(
+    api.functions.usersActions.create
+  );
 
-  const { data: locationData } = useGetList({
-    queryKey: "get-locations",
-    endpoint: "/locations",
-  });
+  const locations = useQuery(api.functions.locations.list, {}) ?? [];
 
   const locationOptions = useMemo(() => {
     return (
-      locationData?.data?.map((location: IUnknown) => {
+      locations?.map((location: IUnknown) => {
         return {
           label: location.name,
-          value: location.id,
+          value: location._id,
         };
       }) || []
     );
-  }, [locationData]);
+  }, [locations]);
 
   const { userRole } = usePermission();
 
@@ -63,13 +60,13 @@ const AddUser: FC<AddStaffProps> = ({ callback }) => {
   }
 
   const handleSubmit = (values: AddUserSchemaType) => {
-    mutate({
-      data: { ...values },
-      onSuccess: {
-        message: `${values.role} created successfully`,
-        callback: callbackOnSuccess,
-      },
-    });
+    mutate(
+      { ...values },
+      {
+        successMessage: `${values.role} created successfully`,
+        onSuccess: callbackOnSuccess,
+      }
+    );
   };
 
   return (

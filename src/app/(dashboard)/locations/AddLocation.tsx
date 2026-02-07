@@ -5,8 +5,6 @@ import { ROLES } from "@/interface/roles";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import { useCreateMutation } from "@/hooks/api/common/create";
-
 import { usePermission } from "@/hooks/usePermission";
 import { Form } from "../../../components/ui/form";
 
@@ -18,16 +16,17 @@ import {
   addLocationSchema,
   AddLocationSchemaType,
 } from "@/schemas/locations/location.schema";
+import { useMutationWithToast } from "@/hooks/convex/useMutationWithToast";
+import { api } from "../../../../convex/_generated/api";
 
 interface AddLocationProps {
   callback?: () => void;
 }
 
 const AddLocation: FC<AddLocationProps> = ({ callback }) => {
-  const { mutate, isPending, error, isError } = useCreateMutation({
-    queryKey: "create-location",
-    endpoint: "locations",
-  });
+  const { mutate, isPending, error, isError } = useMutationWithToast(
+    api.functions.locations.create
+  );
 
   const { userRole } = usePermission();
 
@@ -44,13 +43,13 @@ const AddLocation: FC<AddLocationProps> = ({ callback }) => {
   }
 
   const handleSubmit = (values: AddLocationSchemaType) => {
-    mutate({
-      data: { ...values },
-      onSuccess: {
-        message: "Location created successfully",
-        callback: callbackOnSuccess,
-      },
-    });
+    mutate(
+      { ...values },
+      {
+        successMessage: "Location created successfully",
+        onSuccess: callbackOnSuccess,
+      }
+    );
   };
 
   return (

@@ -19,11 +19,12 @@ import { ProductSize } from "@/constants/sizes";
 import { toOptions } from "@/lib/toOptions";
 
 import { IUnknown } from "@/interface/Iunknown";
-import { useUpdateMutation } from "@/hooks/api/common/update";
 import {
   addExistingInventoriesSchema,
   AddExistingInventoriesSchemaType,
 } from "@/schemas/inventories/addInventories.schema";
+import { useMutationWithToast } from "@/hooks/convex/useMutationWithToast";
+import { api } from "../../../../convex/_generated/api";
 
 interface AddExistingInventoryProps {
   callback?: () => void;
@@ -38,10 +39,9 @@ const AddExistingInventory: FC<AddExistingInventoryProps> = ({
   inventoryData,
   isOpen = false,
 }) => {
-  const { mutate, isPending } = useUpdateMutation({
-    queryKey: "add-existing-inventory",
-    endpoint: "inventories",
-  });
+  const { mutate, isPending } = useMutationWithToast(
+    api.functions.inventories.add
+  );
 
   const form = useForm<AddExistingInventoriesSchemaType>({
     resolver: zodResolver(addExistingInventoriesSchema),
@@ -55,17 +55,16 @@ const AddExistingInventory: FC<AddExistingInventoryProps> = ({
   }
 
   const handleSubmit = (values: AddExistingInventoriesSchemaType) => {
-    console.log("values :>> ", values);
-    mutate({
-      id: `${inventoryData?.id}/add`,
-      data: {
+    mutate(
+      {
+        id: inventoryData?._id as any,
         quantity: values.addQuantity,
       },
-      onSuccess: {
-        message: "Inventory added successfully",
-        callback: callbackOnSuccess,
-      },
-    });
+      {
+        successMessage: "Inventory added successfully",
+        onSuccess: callbackOnSuccess,
+      }
+    );
   };
 
   useEffect(() => {

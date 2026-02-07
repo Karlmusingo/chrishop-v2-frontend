@@ -15,17 +15,13 @@ import { ProductType } from "@/constants/productType";
 import { ProductBrand } from "@/constants/productBrand";
 import { ProductColors } from "@/constants/colors";
 import { ProductSize } from "@/constants/sizes";
-import { useCreateMutation } from "@/hooks/api/common/create";
 
 import { usePermission } from "@/hooks/usePermission";
 import { ROLES } from "@/interface/roles";
 import { toOptions } from "@/lib/toOptions";
 
-import MultiSelect from "@/components/custom/MultiSelectInput";
-import { DataList } from "@/components/custom/list/DataList";
-import { getNewInventoryColums } from "./table";
 import { DialogFooter } from "@/components/ui/dialog";
-import { Loader2, Pencil, Trash } from "lucide-react";
+import { Pencil, Trash } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -40,6 +36,8 @@ import {
   addInventoriesSchema,
   AddInventoriesSchemaType,
 } from "@/schemas/inventories/inventories.schema";
+import { useMutationWithToast } from "@/hooks/convex/useMutationWithToast";
+import { api } from "../../../../convex/_generated/api";
 
 interface AddInventoryProps {
   callback?: () => void;
@@ -47,14 +45,13 @@ interface AddInventoryProps {
 }
 
 type FormSchemaPlusProductIdType = AddInventoriesSchemaType & {
-  productId: number;
+  productId: string;
 };
 
 const AddInventory: FC<AddInventoryProps> = ({ callback, products }) => {
-  const { mutate, isPending, error, isError } = useCreateMutation({
-    queryKey: "create-inventory",
-    endpoint: "inventories",
-  });
+  const { mutate, isPending } = useMutationWithToast(
+    api.functions.inventories.create
+  );
   const { userRole } = usePermission();
 
   const [isOpened, setOpened] = useState(false);
@@ -68,25 +65,27 @@ const AddInventory: FC<AddInventoryProps> = ({ callback, products }) => {
   function callbackOnSuccess() {
     form.reset();
     setOpened(false);
+    setInventory([]);
     callback?.();
   }
 
   const handleSubmit = () => {
-    mutate({
-      data: inventory.map((inv) => ({
-        productId: inv.productId,
-        quantity: inv.quantity,
-        price: inv.price,
-      })),
-      onSuccess: {
-        message: "Inventory created successfully",
-        callback: callbackOnSuccess,
+    mutate(
+      {
+        items: inventory.map((inv) => ({
+          productId: inv.productId as any,
+          quantity: inv.quantity,
+          price: inv.price,
+        })),
       },
-    });
+      {
+        successMessage: "Inventory created successfully",
+        onSuccess: callbackOnSuccess,
+      }
+    );
   };
 
   function onAddInventory(values: AddInventoriesSchemaType) {
-    // search for the product
     const findMatchingProduct = () => {
       return products.find((product) => {
         const baseCondition =
@@ -110,13 +109,13 @@ const AddInventory: FC<AddInventoryProps> = ({ callback, products }) => {
       return;
     }
 
-    if (inventory.find((item) => item.productId === product.id)) {
+    if (inventory.find((item) => item.productId === product._id)) {
       toast.error("Ce produit est déjà dans l'inventaire");
       return;
     }
     form.reset();
 
-    setInventory([...inventory, { ...values, productId: product.id }]);
+    setInventory([...inventory, { ...values, productId: product._id }]);
   }
 
   const handleRemoveFromInventory = (index: number) => {
@@ -307,9 +306,6 @@ const AddInventory: FC<AddInventoryProps> = ({ callback, products }) => {
             disabled={isPending}
             onClick={() => handleSubmit()}
           >
-            {/* {AddInventories.isPending && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )} */}
             Enregistrer
           </Button>
           <Button
@@ -317,7 +313,6 @@ const AddInventory: FC<AddInventoryProps> = ({ callback, products }) => {
             onClick={() => {
               form.reset();
               setInventory([]);
-              // (closeRef.current as unknown as CurrentRefType)?.click();
             }}
           >
             Annuler

@@ -58,7 +58,7 @@ export const getColumns = ({}: ActionsFuncType) => {
             trigger={<Icon name="EllipsisVertical" />}
             title="Action"
             items={actions}
-            id={rowData?.id}
+            id={rowData?._id || rowData?.id}
             data={rowData}
           />
         );

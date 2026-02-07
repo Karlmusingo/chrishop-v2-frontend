@@ -15,10 +15,8 @@ import { ProductType } from "@/constants/productType";
 import { ProductBrand } from "@/constants/productBrand";
 import { ProductColors } from "@/constants/colors";
 import { ProductSize } from "@/constants/sizes";
-import { useCreateMutation } from "@/hooks/api/common/create";
 
 import { usePermission } from "@/hooks/usePermission";
-import { ROLES } from "@/interface/roles";
 import { toOptions } from "@/lib/toOptions";
 
 import { DialogFooter } from "@/components/ui/dialog";
@@ -38,7 +36,8 @@ import {
   addOrderSchema,
   AddOrderSchemaType,
 } from "@/schemas/orders/orders.schema";
-import { useUpdateMutation } from "@/hooks/api/common/update";
+import { useMutationWithToast } from "@/hooks/convex/useMutationWithToast";
+import { api } from "../../../../convex/_generated/api";
 
 interface AddOrderProps {
   callback?: () => void;
@@ -63,15 +62,11 @@ const AddOrder: FC<AddOrderProps> = ({
   setIsOpen,
   moveToNext,
 }) => {
-  const { mutate, isPending } = useCreateMutation({
-    queryKey: "create-order",
-    endpoint: "orders",
-  });
+  const { mutate: createMutate, isPending } = useMutationWithToast(
+    api.functions.orders.create
+  );
   const { mutate: updateMutate, isPending: isPendingUpdate } =
-    useUpdateMutation({
-      queryKey: "update-order",
-      endpoint: "orders",
-    });
+    useMutationWithToast(api.functions.orders.update);
   const { data: profile } = usePermission();
 
   const [orders, setOrders] = useState<FormSchemaPlusProductIdType[]>([]);
@@ -102,44 +97,52 @@ const AddOrder: FC<AddOrderProps> = ({
   }, [orderData]);
 
   function callbackOnSuccess(data?: IUnknown) {
-    console.log("data callbackOnSuccess:>> ", data);
     form.reset();
     moveToNext?.(data);
-
     callback?.();
   }
 
   const handleSubmit = () => {
-    if (orderData?.id) {
-      return updateMutate({
-        id: orderData.id,
-        data: orders.map((item) => ({
-          productId: item.productId,
-          quantity: item.quantity,
-        })),
-        onSuccess: {
-          message: "Order updated successfully",
-          callback: callbackOnSuccess,
-        },
-      });
+    if (!profile?.locationId) {
+      toast.error("You must be assigned to a location");
+      return;
     }
 
-    mutate({
-      data: orders.map((item) => ({
-        productId: item.productId,
-        quantity: item.quantity,
-      })),
-      onSuccess: {
-        message: "Order created successfully",
-        callback: callbackOnSuccess,
-      },
-    });
+    if (orderData?._id) {
+      return updateMutate(
+        {
+          id: orderData._id as any,
+          items: orders.map((item) => ({
+            productId: item.productId as any,
+            quantity: item.quantity,
+          })),
+          userId: profile._id as any,
+          locationId: profile.locationId as any,
+        },
+        {
+          successMessage: "Order updated successfully",
+          onSuccess: callbackOnSuccess,
+        }
+      );
+    }
 
-    return;
+    createMutate(
+      {
+        items: orders.map((item) => ({
+          productId: item.productId as any,
+          quantity: item.quantity,
+        })),
+        userId: profile._id as any,
+        locationId: profile.locationId as any,
+      },
+      {
+        successMessage: "Order created successfully",
+        onSuccess: callbackOnSuccess,
+      }
+    );
   };
 
   function onAddOrder(values: AddOrderSchemaType) {
-    // search for the product
     const findMatchingProduct = () => {
       return inventories.find((item) => {
         const product = item.product;

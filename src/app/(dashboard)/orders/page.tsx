@@ -2,7 +2,6 @@
 
 import { FC, useState } from "react";
 
-import { useGetList } from "@/hooks/api/common/getAll";
 import { useQueryString } from "@/hooks/useQueryString";
 import { useTable } from "@/hooks/useTable";
 
@@ -13,34 +12,36 @@ import { getColumns } from "./table";
 import LocationFilter from "@/components/custom/LocationFilter";
 import { IUnknown } from "@/interface/Iunknown";
 import AddOrder from "./AddOrder";
-import { useGetProfile } from "@/hooks/api/users/profile";
 import ViewOrder from "./ViewOrder";
 import { usePermission } from "@/hooks/usePermission";
 import { ROLES } from "@/interface/roles";
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 
 interface OrdersPageProps {}
 
 const OrdersPage: FC<OrdersPageProps> = () => {
   const { getQueryObject } = useQueryString();
-  const { data, isLoading, refetch } = useGetList({
-    queryKey: "get-orders",
-    endpoint: "/orders",
-    filter: { ...getQueryObject() },
-  });
+  const queryObj = getQueryObject();
+  const { userRole, data: profileData } = usePermission();
+
+  const orders =
+    useQuery(api.functions.orders.list, {
+      location: queryObj.location as string | undefined,
+      userLocationId: profileData?.locationId,
+      userRole: userRole,
+    }) ?? [];
+
+  const inventories =
+    useQuery(api.functions.inventories.list, {
+      location: profileData?.locationId as string | undefined,
+      userLocationId: profileData?.locationId,
+      userRole: userRole,
+    }) ?? [];
+
   const [onEditModal, setOnEditModal] = useState(false);
   const [onViewModal, setOnViewModal] = useState(false);
   const [orderData, setOrderData] = useState<IUnknown>({});
-
-  const { userRole, data: profileData } = usePermission();
-
-  const { data: inventoryData } = useGetList({
-    queryKey: "get-inventories",
-    endpoint: "/inventories",
-    filter: { location: profileData?.locationId },
-  });
-
-  const orders = data?.data || [];
-  const inventories = inventoryData?.data || [];
 
   const {} = useTable({ title: "" });
   return (
@@ -56,7 +57,6 @@ const OrdersPage: FC<OrdersPageProps> = () => {
       )}
 
       <ViewOrder
-        callback={refetch}
         orderData={orderData}
         isOpen={onViewModal}
         onClose={() => {
@@ -78,7 +78,7 @@ const OrdersPage: FC<OrdersPageProps> = () => {
             },
           })}
           data={(orders || []) as any[]}
-          state={{ loading: isLoading }}
+          state={{ loading: orders === undefined }}
           filter={{
             options: { tab: [] },
             filterKey: "filter_status",
@@ -92,9 +92,6 @@ const OrdersPage: FC<OrdersPageProps> = () => {
                 setOnEditModal(open);
               }}
               inventories={inventories}
-              callback={() => {
-                refetch();
-              }}
               moveToNext={(data?: IUnknown) => {
                 setOnEditModal(false);
                 setOnViewModal(true);

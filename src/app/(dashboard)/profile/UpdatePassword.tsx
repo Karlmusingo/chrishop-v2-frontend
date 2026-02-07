@@ -1,11 +1,9 @@
 "use client";
 
-import { FC, useState } from "react";
+import { FC } from "react";
 import { RolesType } from "@/interface/roles";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-
-import { useCreateMutation } from "@/hooks/api/common/create";
 
 import Button from "@/components/custom/Button";
 import Modal from "@/components/ui/modal";
@@ -16,7 +14,8 @@ import {
   UpdatePasswordSchemaType,
 } from "@/schemas/user/updatePassword.schema";
 import { toast } from "sonner";
-import { useUpdateMutation } from "@/hooks/api/common/update";
+import { useActionWithToast } from "@/hooks/convex/useActionWithToast";
+import { api } from "../../../../convex/_generated/api";
 
 interface UpdatePasswordProps {
   context?: RolesType;
@@ -32,10 +31,9 @@ const UpdatePassword: FC<UpdatePasswordProps> = ({
   open,
   setOpen,
 }) => {
-  const { mutate, isPending, error, isError } = useUpdateMutation({
-    queryKey: "create-user",
-    endpoint: "/users/update-password",
-  });
+  const { mutate, isPending, error, isError } = useActionWithToast(
+    api.functions.usersActions.updatePassword
+  );
 
   const form = useForm<UpdatePasswordSchemaType>({
     resolver: zodResolver(updatePasswordSchema),
@@ -54,13 +52,13 @@ const UpdatePassword: FC<UpdatePasswordProps> = ({
       return;
     }
 
-    mutate({
-      data: { password: values.password, newPassword: values.newPassword },
-      onSuccess: {
-        message: `Mot de passe modifié avec succès`,
-        callback: callbackOnSuccess,
-      },
-    });
+    mutate(
+      { password: values.password, newPassword: values.newPassword },
+      {
+        successMessage: "Mot de passe modifié avec succès",
+        onSuccess: callbackOnSuccess,
+      }
+    );
   };
 
   return (

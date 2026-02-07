@@ -3,17 +3,13 @@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { usePathname, useSearchParams, redirect } from "next/navigation";
-import { useGetList } from "@/hooks/api/common/getAll";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 
 export default function LocationFilter({ depot = true }: { depot?: boolean }) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const { data: locationData } = useGetList({
-    queryKey: "get-locations",
-    endpoint: "/locations",
-  });
-
-  const locations = locationData?.data || [];
+  const locations = useQuery(api.functions.locations.list, {}) ?? [];
 
   const onValueChange = (value: string) => {
     const params = new URLSearchParams(searchParams);
@@ -71,17 +67,16 @@ export default function LocationFilter({ depot = true }: { depot?: boolean }) {
               </div>
             )}
             {locations.map((location: any) => (
-              <div key={location.id}>
+              <div key={location._id}>
                 <RadioGroupItem
-                  value={location.id}
-                  id={location.id}
+                  value={location._id}
+                  id={location._id}
                   className="peer sr-only"
                 />
-                {/* #262E3F */}
                 <Label
-                  htmlFor={location.id}
+                  htmlFor={location._id}
                   className={`flex cursor-pointer items-center gap-2 rounded-md border px-4 py-2 [&:has(:checked)]:bg-muted ${
-                    searchParams.get("location")?.toString() === location.id
+                    searchParams.get("location")?.toString() === location._id
                       ? "border-primary bg-muted"
                       : ""
                   }`}

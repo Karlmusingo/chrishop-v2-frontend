@@ -9,23 +9,22 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Input from "@/components/custom/form/Input";
 import Button from "@/components/custom/Button";
 import { Form } from "@/components/ui/form";
-import { useParams } from "next/navigation";
-import { useUpdateMutation } from "@/hooks/api/common/update";
-import { useGetProfile } from "@/hooks/api/users/profile";
 import {
   profileSchema,
   UpdateProfileSchemaType,
 } from "@/schemas/user/profile.schema";
 import UpdatePassword from "./UpdatePassword";
+import { useProfile } from "@/hooks/convex/useProfile";
+import { useMutationWithToast } from "@/hooks/convex/useMutationWithToast";
+import { api } from "../../../../convex/_generated/api";
 
 interface ProfilePageProps {}
 
 const ProfilePage: FC<ProfilePageProps> = () => {
-  const { data: profile } = useGetProfile();
-  const { mutate, isPending, error } = useUpdateMutation({
-    queryKey: "update-profile",
-    endpoint: `users/profile`,
-  });
+  const { data: profile } = useProfile();
+  const { mutate, isPending, error } = useMutationWithToast(
+    api.functions.users.updateProfile
+  );
 
   const [openUpdatePassword, setOpenUpdatePassword] = useState(false);
 
@@ -45,16 +44,17 @@ const ProfilePage: FC<ProfilePageProps> = () => {
   }, [profile]);
 
   const handleSubmit = (values: UpdateProfileSchemaType) => {
-    mutate({
-      data: {
-        ...values,
-        role: undefined,
-        location: undefined,
+    mutate(
+      {
+        firstName: values.firstName,
+        lastName: values.lastName,
+        middleName: values.middleName,
+        phoneNumber: values.phoneNumber,
       },
-      onSuccess: {
-        message: `Profile updated successfully`,
-      },
-    });
+      {
+        successMessage: "Profile updated successfully",
+      }
+    );
   };
 
   const {} = useTable({ title: "" });
@@ -126,7 +126,6 @@ const ProfilePage: FC<ProfilePageProps> = () => {
                     showTrigger={true}
                     callback={() => {
                       setOpenUpdatePassword(false);
-                      // router.push("/");
                     }}
                   />
                   <Button type="submit" loading={isPending}>

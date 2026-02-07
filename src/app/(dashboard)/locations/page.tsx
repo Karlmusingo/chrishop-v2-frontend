@@ -1,32 +1,20 @@
 "use client";
 
-import { FC, Suspense, useState } from "react";
+import { FC, Suspense } from "react";
 
-import { useGetList } from "@/hooks/api/common/getAll";
-import { useQueryString } from "@/hooks/useQueryString";
-import { useSearch } from "@/hooks/useSearch";
 import { useTable } from "@/hooks/useTable";
 
 import { DataList } from "@/components/custom/list/DataList";
 
 import { filterOptions, getColumns } from "./table";
-import { RolesList, UserRoles } from "@/interface/roles";
-import { IUnknown } from "@/interface/Iunknown";
 import AddLocation from "./AddLocation";
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 
 interface LocationPageProps {}
 
 const LocationPage: FC<LocationPageProps> = () => {
-  const {
-    data: locationData,
-    isLoading,
-    refetch,
-  } = useGetList({
-    queryKey: "get-locations",
-    endpoint: "/locations",
-  });
-
-  const locations = (locationData as any)?.data;
+  const locations = useQuery(api.functions.locations.list, {}) ?? [];
 
   const {} = useTable({ title: "" });
   return (
@@ -42,12 +30,12 @@ const LocationPage: FC<LocationPageProps> = () => {
           <DataList
             columns={getColumns({})}
             data={(locations || []) as any[]}
-            state={{ loading: isLoading }}
+            state={{ loading: locations === undefined }}
             filter={{
               options: {},
               filterKey: "company",
             }}
-            action={<AddLocation callback={refetch} />}
+            action={<AddLocation />}
           />
         </Suspense>
       </div>

@@ -132,7 +132,7 @@ export const getColumns = ({
             trigger={<Icon name="EllipsisVertical" />}
             title="Action"
             items={actions}
-            id={rowData?.id}
+            id={rowData?._id || rowData?.id}
             data={rowData}
           />
         );
@@ -209,7 +209,7 @@ export const getNewInventoryColums = ({}: ActionsFuncTypeNewInventory) => {
             trigger={<Icon name="EllipsisVertical" />}
             title="Action"
             items={actions}
-            id={rowData?.id}
+            id={rowData?._id || rowData?.id}
             data={rowData}
           />
         );

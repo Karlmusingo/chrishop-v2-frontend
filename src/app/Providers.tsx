@@ -1,17 +1,15 @@
-'use client'; 
+"use client";
 
-import { FC, PropsWithChildren } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { FC, PropsWithChildren } from "react";
+import { ConvexReactClient } from "convex/react";
+import { ConvexAuthProvider } from "@convex-dev/auth/react";
+
+const convex = new ConvexReactClient(
+  process.env.NEXT_PUBLIC_CONVEX_URL as string
+);
 
 const Providers: FC<PropsWithChildren> = ({ children }) => {
-  const reactQuery = new QueryClient();
-  return (
-    <QueryClientProvider client={reactQuery}>
-      {children}
-      <ReactQueryDevtools initialIsOpen={false} />
-    </QueryClientProvider>
-  );
+  return <ConvexAuthProvider client={convex}>{children}</ConvexAuthProvider>;
 };
 
 export default Providers;

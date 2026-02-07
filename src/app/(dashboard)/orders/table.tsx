@@ -36,11 +36,11 @@ export const getColumns = ({ onEdit, onView, profile }: ActionsFuncType) => {
   const columns: ColumnDef<IUnknown>[] = [
     {
       header: "#",
-      accessorKey: "id",
+      accessorKey: "_id",
       cell: ({ row }) => {
         const rowData = row.original;
 
-        return rowData.id?.slice(0, 8);
+        return (rowData._id || rowData.id)?.toString().slice(0, 8);
       },
     },
     {
@@ -62,11 +62,11 @@ export const getColumns = ({ onEdit, onView, profile }: ActionsFuncType) => {
     },
     {
       header: "Date",
-      accessorKey: "createdAt",
+      accessorKey: "_creationTime",
       cell: ({ row }) => {
         const rowData = row.original;
 
-        return new Date(rowData.createdAt).toLocaleDateString();
+        return new Date(rowData._creationTime || rowData.createdAt).toLocaleDateString();
       },
     },
 
@@ -81,7 +81,7 @@ export const getColumns = ({ onEdit, onView, profile }: ActionsFuncType) => {
             trigger={<Icon name="EllipsisVertical" />}
             title="Action"
             items={actions}
-            id={rowData?.id}
+            id={rowData?._id || rowData?.id}
             data={rowData}
           />
         );

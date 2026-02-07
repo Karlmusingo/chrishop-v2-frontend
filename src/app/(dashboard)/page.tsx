@@ -1,20 +1,22 @@
 "use client";
 import { DashboardComponent } from "@/components/dashboard";
-import { useGetList } from "@/hooks/api/common/getAll";
 import { usePermission } from "@/hooks/usePermission";
 import { useQueryString } from "@/hooks/useQueryString";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 
 export default function Home() {
   const { getQueryObject } = useQueryString();
+  const { userRole, data: profileData } = usePermission();
 
-  const { data } = useGetList({
-    queryKey: "get-dashboard",
-    endpoint: "/dashboard",
-    filter: { ...getQueryObject() },
-  });
-  const { userRole } = usePermission();
+  const queryObj = getQueryObject();
 
-  const dashboardData = data?.data || {};
+  const dashboardData =
+    useQuery(api.functions.dashboard.getData, {
+      location: queryObj.location as string | undefined,
+      userLocationId: profileData?.locationId,
+      userRole: userRole,
+    }) ?? {};
 
   return (
     <main className="min-h-screen">
