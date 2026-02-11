@@ -5,23 +5,23 @@ import { Id } from "../_generated/dataModel";
 import { action } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { roleValidator } from "../schema";
-import {
-  generatePasswordHash,
-  generateSaltedHash,
-} from "../lib/password";
+import { generatePasswordHash, generateSaltedHash } from "../lib/password";
 
 export const login = action({
   args: {
     email: v.string(),
     password: v.string(),
   },
-  handler: async (ctx, args): Promise<{
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{
     id: Id<"users">;
     email?: string;
     phoneNumber?: string;
     role?: string;
     locationId?: Id<"locations">;
-    isFirstLogin?: boolean;
+    hasInitialPasswordChanged?: boolean;
   }> => {
     const user = await ctx.runQuery(internal.functions.auth.getUserByEmail, {
       email: args.email,
@@ -35,21 +35,17 @@ export const login = action({
       throw new Error("Invalid user credentials configuration");
     }
 
-    if (
-      generatePasswordHash(args.password, user.salt) !== user.passwordHash
-    ) {
+    if (generatePasswordHash(args.password, user.salt) !== user.passwordHash) {
       throw new Error("Email and password do not match");
     }
 
     if (user.status !== "ACTIVE") {
       throw new Error(
-        "The user is not active, please contact the administrator"
+        "The user is not active, please contact the administrator",
       );
     }
 
-    await ctx.runMutation(internal.functions.auth.markFirstLogin, {
-      userId: user._id,
-    });
+    console.log("user :>> ", user);
 
     return {
       id: user._id,
@@ -57,7 +53,7 @@ export const login = action({
       phoneNumber: user.phoneNumber,
       role: user.role,
       locationId: user.locationId,
-      isFirstLogin: user.isFirstLogin,
+      hasInitialPasswordChanged: user.hasInitialPasswordChanged,
     };
   },
 });
@@ -78,7 +74,7 @@ export const registerSuperAdmin = action({
     }
 
     const existingAdmin = await ctx.runQuery(
-      internal.functions.auth.getFirstAdmin
+      internal.functions.auth.getFirstAdmin,
     );
     if (existingAdmin) {
       throw new Error("Admin already exists");
@@ -86,11 +82,11 @@ export const registerSuperAdmin = action({
 
     const existingEmail = await ctx.runQuery(
       internal.functions.auth.getUserByEmail,
-      { email: args.email }
+      { email: args.email },
     );
     const existingPhone = await ctx.runQuery(
       internal.functions.auth.getUserByPhone,
-      { phoneNumber: args.phoneNumber }
+      { phoneNumber: args.phoneNumber },
     );
 
     if (existingEmail || existingPhone) {
@@ -111,5 +107,23 @@ export const registerSuperAdmin = action({
     });
 
     return { userId };
+  },
+});
+
+export const resetAuthAccount = action({
+  args: { email: v.string(), password: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.runQuery(internal.functions.auth.getUserByEmail, {
+      email: args.email,
+    });
+    if (!user || !user.salt || !user.passwordHash) {
+      throw new Error("User not found");
+    }
+    if (generatePasswordHash(args.password, user.salt) !== user.passwordHash) {
+      throw new Error("Invalid credentials");
+    }
+    await ctx.runMutation(internal.functions.users.deleteAuthAccount, {
+      userId: user._id,
+    });
   },
 });

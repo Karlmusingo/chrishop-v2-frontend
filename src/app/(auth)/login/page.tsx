@@ -9,58 +9,54 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { useAuthActions } from "@convex-dev/auth/react";
+import { useAction } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 
 export default function Login() {
   const router = useRouter();
   const { signIn } = useAuthActions();
+  const resetAuthAccount = useAction(api.functions.authActions.resetAuthAccount);
   const { mutate, isPending, error } = useActionWithToast(
     api.functions.authActions.login,
   );
-
-  console.log("error :>> ", error);
 
   const form = useForm<LoginSchemaType>({
     resolver: zodResolver(loginSchema),
   });
 
+  const handleConvexAuth = async (
+    email: string,
+    password: string,
+    hasInitialPasswordChanged: boolean,
+  ) => {
+    const flow = !hasInitialPasswordChanged ? "signUp" : "signIn";
+    try {
+      await signIn("password", { email, password, flow });
+    } catch {
+      try {
+        const fallbackFlow = flow === "signIn" ? "signUp" : "signIn";
+        await signIn("password", { email, password, flow: fallbackFlow });
+      } catch {
+        // Both failed — authAccount is out of sync. Reset and retry signUp.
+        await resetAuthAccount({ email, password });
+        await signIn("password", { email, password, flow: "signUp" });
+      }
+    }
+  };
+
   const handleSubmit = async (values: LoginSchemaType) => {
-    // Step 1: Validate credentials, check status, get isFirstLogin
-    const data = await mutate(
+    await mutate(
       { email: values.email, password: values.password },
       {
         onSuccess: async (data) => {
-          try {
-            // Step 2: Create Convex Auth session
-            // Use "signUp" for first-time users (no auth account yet),
-            // "signIn" for returning users (auth account exists)
-            const flow = data?.isFirstLogin ? "signUp" : "signIn";
-            await signIn("password", {
-              email: values.email,
-              password: values.password,
-              flow,
-            });
-          } catch {
-            // If signIn fails (auth account might not exist yet), try signUp
-            try {
-              await signIn("password", {
-                email: values.email,
-                password: values.password,
-                flow: "signUp",
-              });
-            } catch {
-              // If signUp also fails (account already exists), try signIn again
-              await signIn("password", {
-                email: values.email,
-                password: values.password,
-                flow: "signIn",
-              });
-            }
-          }
+          await handleConvexAuth(
+            values.email,
+            values.password,
+            !!data?.hasInitialPasswordChanged,
+          );
 
-          // form.reset();
-          if (data?.isFirstLogin) {
-            return router.replace("/?firstLogin=true");
+          if (!data?.hasInitialPasswordChanged) {
+            return router.replace("/?hasInitialPasswordChanged=false");
           }
           router.replace("/");
         },

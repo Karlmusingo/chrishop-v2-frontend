@@ -5,14 +5,21 @@ import Dropdown from "@/components/custom/dropdown/Dropdown";
 import Icon from "@/components/custom/Icon";
 import { UserRoles } from "@/interface/roles";
 
-type ActionsFuncType = {};
+type ActionsFuncType = {
+  onResetPassword: (id: string, extraData?: IUnknown) => void;
+};
 
-export const getColumns = ({}: ActionsFuncType) => {
+export const getColumns = ({ onResetPassword }: ActionsFuncType) => {
   const actions: {
     label: string;
     action?: (id: string, hooks?: IUnknown, extraData?: IUnknown) => void;
     disable?: (id: string, extraData?: IUnknown) => boolean;
-  }[] = [];
+  }[] = [
+    {
+      label: "Réinitialiser le mot de passe",
+      action: (id, _hooks, extraData) => onResetPassword(id, extraData),
+    },
+  ];
 
   const columns: ColumnDef<IUnknown>[] = [
     {

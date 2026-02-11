@@ -50,14 +50,14 @@ export const insertUser = internalMutation({
     return await ctx.db.insert("users", {
       ...args,
       status: "ACTIVE",
-      isFirstLogin: true,
+      hasInitialPasswordChanged: false,
     });
   },
 });
 
-export const markFirstLogin = internalMutation({
+export const markInitialPasswordChanged = internalMutation({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.userId, { isFirstLogin: false });
+    await ctx.db.patch(args.userId, { hasInitialPasswordChanged: true });
   },
 });

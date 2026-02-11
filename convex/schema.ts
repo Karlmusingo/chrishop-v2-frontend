@@ -46,7 +46,7 @@ export default defineSchema({
     salt: v.optional(v.string()),
     role: v.optional(roleValidator),
     status: v.optional(userStatusValidator),
-    isFirstLogin: v.optional(v.boolean()),
+    hasInitialPasswordChanged: v.optional(v.boolean()),
     locationId: v.optional(v.id("locations")),
   })
     .index("email", ["email"])

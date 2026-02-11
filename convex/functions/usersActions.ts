@@ -20,7 +20,10 @@ export const create = action({
     role: roleValidator,
     location: v.optional(v.id("locations")),
   },
-  handler: async (ctx, args): Promise<{
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{
     firstName: string;
     lastName: string;
     email: string;
@@ -28,11 +31,11 @@ export const create = action({
   }> => {
     const existingByEmail = await ctx.runQuery(
       internal.functions.users.getUserByEmail,
-      { email: args.email }
+      { email: args.email },
     );
     const existingByPhone = await ctx.runQuery(
       internal.functions.users.getUserByPhone,
-      { phoneNumber: args.phoneNumber }
+      { phoneNumber: args.phoneNumber },
     );
 
     if (existingByEmail || existingByPhone) {
@@ -70,6 +73,49 @@ export const create = action({
   },
 });
 
+export const resetPassword = action({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args): Promise<{ success: boolean }> => {
+    const caller = await ctx.runQuery(
+      internal.functions.users.getAuthenticatedUser,
+    );
+    if (!caller) throw new Error("Unauthenticated");
+    if (caller.role !== "ADMIN") throw new Error("Forbidden: insufficient role");
+
+    const targetUser = await ctx.runQuery(
+      internal.functions.users.getUserById,
+      { userId: args.userId },
+    );
+    if (!targetUser) throw new Error("User not found");
+    if (!targetUser.email) throw new Error("User has no email address");
+
+    const randomPassword = generateRandomPassword();
+    const hashAndSalt = generateSaltedHash(randomPassword);
+
+    await ctx.runMutation(internal.functions.users.patchPassword, {
+      userId: args.userId,
+      passwordHash: hashAndSalt.hash,
+      salt: hashAndSalt.salt,
+      hasInitialPasswordChanged: false,
+    });
+
+    await ctx.runMutation(internal.functions.users.deleteAuthAccount, {
+      userId: args.userId,
+    });
+
+    await ctx.runAction(internal.functions.email.sendEmail, {
+      to: targetUser.email,
+      subject: "Chrishop - Réinitialisation du mot de passe",
+      html: `<p>Votre mot de passe a été réinitialisé.</p><p><b>Nouveau mot de passe : ${randomPassword}</b></p><p>Vous serez invité à le changer lors de votre prochaine connexion.</p>`,
+      text: `Votre mot de passe a été réinitialisé. Nouveau mot de passe : ${randomPassword}. Vous serez invité à le changer lors de votre prochaine connexion.`,
+    });
+
+    return { success: true };
+  },
+});
+
 export const updatePassword = action({
   args: {
     password: v.string(),
@@ -77,7 +123,7 @@ export const updatePassword = action({
   },
   handler: async (ctx, args): Promise<{ success: boolean }> => {
     const user = await ctx.runQuery(
-      internal.functions.users.getAuthenticatedUser
+      internal.functions.users.getAuthenticatedUser,
     );
     if (!user) throw new Error("Unauthenticated");
 
@@ -85,9 +131,7 @@ export const updatePassword = action({
       throw new Error("Invalid user credentials configuration");
     }
 
-    if (
-      generatePasswordHash(args.password, user.salt) !== user.passwordHash
-    ) {
+    if (generatePasswordHash(args.password, user.salt) !== user.passwordHash) {
       throw new Error("Le password saisi est incorrect");
     }
 
@@ -97,6 +141,10 @@ export const updatePassword = action({
       userId: user._id,
       passwordHash: hashAndSalt.hash,
       salt: hashAndSalt.salt,
+    });
+
+    await ctx.runMutation(internal.functions.users.deleteAuthAccount, {
+      userId: user._id,
     });
 
     return { success: true };

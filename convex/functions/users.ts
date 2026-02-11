@@ -113,6 +113,13 @@ export const getUserByPhone = internalQuery({
   },
 });
 
+export const getUserById = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.userId);
+  },
+});
+
 export const insertUser = internalMutation({
   args: {
     firstName: v.string(),
@@ -129,7 +136,7 @@ export const insertUser = internalMutation({
     return await ctx.db.insert("users", {
       ...args,
       status: "ACTIVE",
-      isFirstLogin: true,
+      hasInitialPasswordChanged: false,
     });
   },
 });
@@ -139,11 +146,26 @@ export const patchPassword = internalMutation({
     userId: v.id("users"),
     passwordHash: v.string(),
     salt: v.string(),
+    hasInitialPasswordChanged: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.userId, {
       passwordHash: args.passwordHash,
       salt: args.salt,
+      hasInitialPasswordChanged: args.hasInitialPasswordChanged ?? true,
     });
+  },
+});
+
+export const deleteAuthAccount = internalMutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const accounts = await ctx.db
+      .query("authAccounts")
+      .withIndex("userIdAndProvider", (q) => q.eq("userId", args.userId))
+      .collect();
+    for (const account of accounts) {
+      await ctx.db.delete(account._id);
+    }
   },
 });

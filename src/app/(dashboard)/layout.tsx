@@ -14,7 +14,7 @@ const DashboardLayout: FC<PropsWithChildren> = ({ children }) => {
   const { isLoading, isSuccess, data } = useProfile();
   const [openUpdatePassword, setOpenUpdatePassword] = useState(false);
 
-  const { firstLogin } = getQueryObject();
+  const { hasInitialPasswordChanged } = getQueryObject();
 
   useEffect(() => {
     if (!authLoading && !isLoading && !isAuthenticated) {
@@ -23,10 +23,10 @@ const DashboardLayout: FC<PropsWithChildren> = ({ children }) => {
   }, [isAuthenticated, authLoading, isLoading]);
 
   useEffect(() => {
-    if (isSuccess && firstLogin === "true") {
+    if (isSuccess && hasInitialPasswordChanged === "false") {
       setOpenUpdatePassword(true);
     }
-  }, [isSuccess, firstLogin]);
+  }, [isSuccess, hasInitialPasswordChanged]);
 
   if (authLoading) {
     return (
@@ -43,7 +43,7 @@ const DashboardLayout: FC<PropsWithChildren> = ({ children }) => {
   return (
     <div className="h-screen">
       <Header />
-      {firstLogin === "true" && (
+      {hasInitialPasswordChanged === "false" && (
         <UpdatePassword
           open={openUpdatePassword}
           setOpen={setOpenUpdatePassword}
