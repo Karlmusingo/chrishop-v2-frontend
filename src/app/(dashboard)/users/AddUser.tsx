@@ -19,6 +19,7 @@ import {
 } from "@/schemas/user/addUser.schema";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import { Id } from "../../../../convex/_generated/dataModel";
 
 interface AddStaffProps {
   context?: RolesType;
@@ -61,7 +62,7 @@ const AddUser: FC<AddStaffProps> = ({ callback }) => {
 
   const handleSubmit = (values: AddUserSchemaType) => {
     mutate(
-      { ...values },
+      { ...values, location: values.location as Id<"locations"> | undefined },
       {
         successMessage: `${values.role} created successfully`,
         onSuccess: callbackOnSuccess,

@@ -6,7 +6,7 @@ export const addUserSchema = z.strictObject({
   lastName: z.string().min(3).max(80),
   phoneNumber: z.string(),
   email: z.string(),
-  role: z.string(),
+  role: z.enum(["ADMIN", "MANAGER", "SELLER", "CASHIER"]),
   location: z.string().optional(),
 });
 
