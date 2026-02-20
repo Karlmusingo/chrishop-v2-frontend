@@ -16,6 +16,7 @@ import {
 import { Input as InputComponent, InputUIProps } from "../../ui/input";
 import Select from "./Select";
 import MultiSelect from "./MultiSelectInput";
+import PasswordInput from "./PasswordInput";
 
 export interface InputProps extends InputUIProps {
   control: Control<any>;
@@ -60,12 +61,7 @@ const Input: FC<InputProps> = ({
             {type === "text" ? (
               <InputComponent placeholder={placeholder} {...field} {...props} />
             ) : type === "password" ? (
-              <InputComponent
-                type="password"
-                placeholder={placeholder}
-                {...field}
-                {...props}
-              />
+              <PasswordInput placeholder={placeholder} field={field} {...props} />
             ) : type === "number" ? (
               <InputComponent
                 type="number"
