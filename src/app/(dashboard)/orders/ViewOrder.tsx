@@ -61,20 +61,18 @@ const ViewOrder: FC<ViewOrderProps> = ({
         () =>
           setTimeout(() => {
             onClose();
-          }, 1000)
+          }, 1000),
       );
     }
   };
 
-  const { mutate, isPending } = useMutationWithToast(
-    api.functions.orders.buy
-  );
+  const { mutate, isPending } = useMutationWithToast(api.functions.orders.buy);
 
   // If we have an orderId but not the full order data, fetch it
   const orderId = order?.orderId || order?._id;
   const singleOrder = useQuery(
     api.functions.orders.get,
-    orderId ? { id: orderId as Id<"orders"> } : "skip"
+    orderId ? { id: orderId as Id<"orders"> } : "skip",
   );
 
   const orderData: IUnknown = singleOrder ?? order;
@@ -105,13 +103,13 @@ const ViewOrder: FC<ViewOrderProps> = ({
       {
         successMessage: "Statut de la commande mis à jour",
         onSuccess: callbackOnSuccess,
-      }
+      },
     );
   };
 
   const totalInvoicePrice = orderData?.orderItems?.reduce(
     (acc: number, curr: IUnknown) => acc + curr.totalPrice,
-    0
+    0,
   );
 
   return (
@@ -141,8 +139,18 @@ const ViewOrder: FC<ViewOrderProps> = ({
                 <p className="text-sm">
                   Date:{" "}
                   {new Date(
-                    orderData?._creationTime || orderData?.createdAt || new Date()
-                  ).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false })}
+                    orderData?._creationTime ||
+                      orderData?.createdAt ||
+                      new Date(),
+                  ).toLocaleString("fr-FR", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: false,
+                  })}
                 </p>
               </div>
             </CardHeader>
@@ -151,6 +159,14 @@ const ViewOrder: FC<ViewOrderProps> = ({
                 <h2 className="text-xl font-semibold">
                   Boutique: {orderData?.location?.name}
                 </h2>
+                {orderData?.seller && (
+                  <p className="text-sm">
+                    Vendeur:{" "}
+                    {orderData.seller.firstName || orderData.seller.lastName
+                      ? `${orderData.seller.firstName ?? ""} ${orderData.seller.lastName ?? ""}`.trim()
+                      : (orderData.seller.name ?? "")}
+                  </p>
+                )}
               </div>
 
               <Table className="border-collapse [&_td]:border-x [&_th]:border-x [&_td]:p-1 [&_th]:p-1">

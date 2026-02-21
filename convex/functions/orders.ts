@@ -35,8 +35,12 @@ export const list = query({
         );
 
         const location = await ctx.db.get(order.locationId);
+        const user = await ctx.db.get(order.userId);
+        const seller = user
+          ? { firstName: user.firstName, lastName: user.lastName, name: user.name }
+          : null;
 
-        return { ...order, orderItems: itemsWithProduct, location };
+        return { ...order, orderItems: itemsWithProduct, location, seller };
       })
     );
 
@@ -63,8 +67,12 @@ export const get = query({
     );
 
     const location = await ctx.db.get(order.locationId);
+    const user = await ctx.db.get(order.userId);
+    const seller = user
+      ? { firstName: user.firstName, lastName: user.lastName, name: user.name }
+      : null;
 
-    return { ...order, orderItems: itemsWithProduct, location };
+    return { ...order, orderItems: itemsWithProduct, location, seller };
   },
 });
 

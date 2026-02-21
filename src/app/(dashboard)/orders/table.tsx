@@ -53,6 +53,21 @@ export const getColumns = ({ onEdit, onView, profile }: ActionsFuncType) => {
         return rowData.location?.name;
       },
     },
+    ...(profile?.role === "ADMIN" || profile?.role === "MANAGER"
+      ? [
+          {
+            header: "Vendeur",
+            accessorKey: "seller",
+            cell: ({ row }: { row: IUnknown }) => {
+              const seller = row.original?.seller;
+              if (!seller) return "";
+              return seller.firstName || seller.lastName
+                ? `${seller.firstName ?? ""} ${seller.lastName ?? ""}`.trim()
+                : seller.name ?? "";
+            },
+          },
+        ]
+      : []),
     {
       header: "Total",
       accessorKey: "totalAmount",
