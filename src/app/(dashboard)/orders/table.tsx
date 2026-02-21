@@ -3,6 +3,7 @@ import { ColumnDef } from "@tanstack/react-table";
 
 import Dropdown from "@/components/custom/dropdown/Dropdown";
 import Icon from "@/components/custom/Icon";
+import { Badge } from "@/components/ui/badge";
 
 type ActionsFuncType = {
   onEdit: (id: string, extraData?: IUnknown) => void;
@@ -59,6 +60,23 @@ export const getColumns = ({ onEdit, onView, profile }: ActionsFuncType) => {
     {
       header: "Statut",
       accessorKey: "status",
+      cell: ({ row }) => {
+        const status = row.original.status;
+        const variantMap: Record<string, "success" | "warning" | "neutral"> = {
+          PAID: "success",
+          PENDING: "warning",
+        };
+        const labelMap: Record<string, string> = {
+          PAID: "PAYÉ",
+          PENDING: "EN ATTENTE",
+          CANCEL: "ANNULÉ",
+        };
+        return (
+          <Badge variant={variantMap[status] || "neutral"}>
+            {labelMap[status] || status}
+          </Badge>
+        );
+      },
     },
     {
       header: "Date",

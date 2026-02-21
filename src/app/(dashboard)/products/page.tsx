@@ -11,6 +11,7 @@ import { DataList } from "@/components/custom/list/DataList";
 import { getColumns } from "./table";
 
 import AddProduct from "./AddProduct";
+import PageHeader from "@/components/custom/PageHeader";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 
@@ -44,10 +45,7 @@ const ProductsPage: FC<ProductsPageProps> = () => {
   const {} = useTable({ title: "" });
   return (
     <div>
-      <div>
-        <h2 className=" text-[1.2em] font-semibold">Products</h2>
-        <p className=" text-sm text-slate-500">Manage the products here</p>
-      </div>
+      <PageHeader title="Produits" subtitle="Gerez vos produits ici" />
 
       <div className="py-4">
         <DataList

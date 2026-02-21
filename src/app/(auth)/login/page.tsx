@@ -5,7 +5,7 @@ import { Form } from "@/components/ui/form";
 import { useActionWithToast } from "@/hooks/convex/useActionWithToast";
 import { loginSchema, LoginSchemaType } from "@/schemas/auth/login.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import Link from "next/link";
+import { Shirt } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { useAuthActions } from "@convex-dev/auth/react";
@@ -65,47 +65,67 @@ export default function Login() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-100">
-      <div className="min-w-96 space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-700">
-        <div className="space-y-2 text-center">
-          <h1 className="text-3xl font-bold">Login</h1>
+    <main className="flex min-h-screen">
+      {/* Left brand panel */}
+      <div className="hidden lg:flex lg:w-1/2 bg-[#1A1A1A] flex-col items-center justify-center px-12">
+        <div className="flex items-center gap-3 mb-6">
+          <Shirt className="h-10 w-10 text-[var(--accent-primary)]" />
+          <span className="font-serif text-4xl font-bold text-white">ThreadCraft</span>
         </div>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-4"
-          >
-            <Input
-              name="email"
-              label="Email"
-              control={form.control}
-              placeholder="Email"
-            />
-            <Input
-              name="password"
-              type="password"
-              label="Password"
-              control={form.control}
-              placeholder="Password"
-            />
-            {error?.message && <p className="text-red-500">{error.message}</p>}
-            <Link
-              href="#"
-              className="mb-1 text-blue-500 hover:text-blue-700"
-              prefetch={false}
+        <p className="text-center text-[#999] text-lg max-w-md leading-relaxed">
+          Gérez votre inventaire, vos ventes et vos boutiques en toute simplicité.
+        </p>
+      </div>
+
+      {/* Right form panel */}
+      <div className="flex w-full lg:w-1/2 items-center justify-center bg-[var(--bg-primary)] px-6">
+        <div className="w-full max-w-md space-y-8">
+          {/* Mobile logo */}
+          <div className="flex items-center gap-2 lg:hidden justify-center mb-4">
+            <Shirt className="h-7 w-7 text-[var(--accent-primary)]" />
+            <span className="font-serif text-2xl font-bold">ThreadCraft</span>
+          </div>
+
+          <div className="space-y-2">
+            <h1 className="font-serif text-3xl font-bold text-[var(--text-primary)]">
+              Connexion
+            </h1>
+            <p className="text-sm text-[var(--text-tertiary)]">
+              Entrez vos identifiants pour accéder à votre compte
+            </p>
+          </div>
+
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="space-y-5"
             >
-              Forgot your password?
-            </Link>
-            <Button
-              loading={isPending}
-              type="submit"
-              size="sm"
-              className="ml-auto flex w-full"
-            >
-              Sign in
-            </Button>
-          </form>
-        </Form>
+              <Input
+                name="email"
+                label="Email"
+                control={form.control}
+                placeholder="votre@email.com"
+              />
+              <Input
+                name="password"
+                type="password"
+                label="Mot de passe"
+                control={form.control}
+                placeholder="Votre mot de passe"
+              />
+              {error?.message && (
+                <p className="text-sm text-[var(--status-error)]">{error.message}</p>
+              )}
+              <Button
+                loading={isPending}
+                type="submit"
+                className="w-full"
+              >
+                Se connecter
+              </Button>
+            </form>
+          </Form>
+        </div>
       </div>
     </main>
   );

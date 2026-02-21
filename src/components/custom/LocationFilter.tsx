@@ -23,70 +23,72 @@ export default function LocationFilter({ depot = true }: { depot?: boolean }) {
     void redirect(`${pathname}?${params.toString()}`);
   };
 
+  const currentLocation = searchParams.get("location")?.toString();
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
-          <RadioGroup
-            onValueChange={onValueChange}
-            className="flex items-center gap-2"
-            defaultValue={searchParams.get("location")?.toString()}
-          >
+      <div className="flex items-center gap-1">
+        <RadioGroup
+          onValueChange={onValueChange}
+          className="flex items-center gap-0"
+          defaultValue={currentLocation}
+        >
+          <div>
+            <RadioGroupItem
+              value="all"
+              id="status-all"
+              className="peer sr-only"
+            />
+            <Label
+              htmlFor="status-all"
+              className={`flex cursor-pointer items-center gap-2 border-b-2 px-4 py-2.5 font-mono text-xs uppercase tracking-wide transition-colors ${
+                !currentLocation
+                  ? "border-[var(--accent-primary)] text-[var(--accent-primary)]"
+                  : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+              }`}
+            >
+              Tout
+            </Label>
+          </div>
+          {depot && (
             <div>
               <RadioGroupItem
-                value="all"
-                id="status-all"
+                value="depot"
+                id="status-depot"
                 className="peer sr-only"
               />
               <Label
-                htmlFor="status-all"
-                className={`flex cursor-pointer items-center gap-2 rounded-md border px-4 py-2 [&:has(:checked)]:bg-muted ${
-                  !searchParams.get("location")?.toString() ? "bg-muted" : ""
+                htmlFor="status-depot"
+                className={`flex cursor-pointer items-center gap-2 border-b-2 px-4 py-2.5 font-mono text-xs uppercase tracking-wide transition-colors ${
+                  currentLocation === "depot"
+                    ? "border-[var(--accent-primary)] text-[var(--accent-primary)]"
+                    : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
                 }`}
               >
-                All
+                Depot
               </Label>
             </div>
-            {depot && (
-              <div>
-                <RadioGroupItem
-                  value="depot"
-                  id="status-depot"
-                  className="peer sr-only"
-                />
-                <Label
-                  htmlFor="status-depot"
-                  className={`flex cursor-pointer items-center gap-2 rounded-md border px-4 py-2 [&:has(:checked)]:bg-muted ${
-                    searchParams.get("location")?.toString() === "depot"
-                      ? "border-primary bg-muted"
-                      : ""
-                  }`}
-                >
-                  Depot
-                </Label>
-              </div>
-            )}
-            {locations.map((location: any) => (
-              <div key={location._id}>
-                <RadioGroupItem
-                  value={location._id}
-                  id={location._id}
-                  className="peer sr-only"
-                />
-                <Label
-                  htmlFor={location._id}
-                  className={`flex cursor-pointer items-center gap-2 rounded-md border px-4 py-2 [&:has(:checked)]:bg-muted ${
-                    searchParams.get("location")?.toString() === location._id
-                      ? "border-primary bg-muted"
-                      : ""
-                  }`}
-                >
-                  {location.name}
-                </Label>
-              </div>
-            ))}
-          </RadioGroup>
-        </div>
+          )}
+          {locations.map((location: any) => (
+            <div key={location._id}>
+              <RadioGroupItem
+                value={location._id}
+                id={location._id}
+                className="peer sr-only"
+              />
+              <Label
+                htmlFor={location._id}
+                className={`flex cursor-pointer items-center gap-2 border-b-2 px-4 py-2.5 font-mono text-xs uppercase tracking-wide transition-colors ${
+                  currentLocation === location._id
+                    ? "border-[var(--accent-primary)] text-[var(--accent-primary)]"
+                    : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+                }`}
+              >
+                {location.name}
+              </Label>
+            </div>
+          ))}
+        </RadioGroup>
       </div>
     </div>
   );

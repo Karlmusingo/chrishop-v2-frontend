@@ -3,6 +3,7 @@ import { ColumnDef } from "@tanstack/react-table";
 
 import Dropdown from "@/components/custom/dropdown/Dropdown";
 import Icon from "@/components/custom/Icon";
+import { Badge } from "@/components/ui/badge";
 import { UserRoles } from "@/interface/roles";
 
 type ActionsFuncType = {
@@ -23,7 +24,7 @@ export const getColumns = ({ onResetPassword }: ActionsFuncType) => {
 
   const columns: ColumnDef<IUnknown>[] = [
     {
-      header: "Name",
+      header: "Nom",
       cell: ({ row }) => {
         const rowData = row.original;
 
@@ -35,11 +36,11 @@ export const getColumns = ({ onResetPassword }: ActionsFuncType) => {
       accessorKey: "email",
     },
     {
-      header: "Phone Number",
+      header: "Téléphone",
       accessorKey: "phoneNumber",
     },
     {
-      header: "Location",
+      header: "Boutique",
       cell: ({ row }) => {
         const rowData = row.original;
 
@@ -47,12 +48,28 @@ export const getColumns = ({ onResetPassword }: ActionsFuncType) => {
       },
     },
     {
-      header: "Role",
+      header: "Rôle",
       accessorKey: "role",
+      cell: ({ row }) => {
+        const role = row.original.role;
+        return <Badge variant="neutral">{role}</Badge>;
+      },
     },
     {
-      header: "Status",
+      header: "Statut",
       accessorKey: "status",
+      cell: ({ row }) => {
+        const status = row.original.status;
+        const variantMap: Record<string, "success" | "warning" | "neutral"> = {
+          active: "success",
+          inactive: "neutral",
+        };
+        return (
+          <Badge variant={variantMap[status] || "neutral"}>
+            {status === "active" ? "ACTIF" : status === "inactive" ? "INACTIF" : status}
+          </Badge>
+        );
+      },
     },
     {
       id: "actions",

@@ -51,14 +51,12 @@ const Select: FC<SelectProps> = ({
           <FormControl>
             <SelectUI
               onValueChange={field.onChange}
-              defaultValue={field.value}
               {...field}
               {...extra}
-              value={field.value}
+              value={field.value ?? ""}
             >
               <SelectTrigger id={name}>
                 <SelectValue
-                  defaultValue={field.value}
                   placeholder={placeholder}
                 />
               </SelectTrigger>

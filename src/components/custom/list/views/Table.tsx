@@ -9,7 +9,6 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -70,13 +69,15 @@ export function TableView<TData, TValue>({
   });
 
   return (
-    <div className="">
-      <ListFilter
-        options={filterOptions}
-        filterKey={filterKey}
-        action={action}
-        searchPlaceholder={searchPlaceholder}
-      />
+    <div className="rounded-2xl border border-[var(--border-primary)] bg-white overflow-hidden">
+      <div className="p-4">
+        <ListFilter
+          options={filterOptions}
+          filterKey={filterKey}
+          action={action}
+          searchPlaceholder={searchPlaceholder}
+        />
+      </div>
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -102,10 +103,9 @@ export function TableView<TData, TValue>({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
-                className="border-b"
               >
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="  text-slate-600">
+                  <TableCell key={cell.id}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
@@ -114,14 +114,15 @@ export function TableView<TData, TValue>({
           ) : (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
+                Aucun resultat.
               </TableCell>
             </TableRow>
           )}
         </TableBody>
       </Table>
-      <Separator className="mb-6" />
-      <ListPagination table={table} />
+      <div className="border-t border-[var(--border-divider)] p-4">
+        <ListPagination table={table} />
+      </div>
     </div>
   );
 }

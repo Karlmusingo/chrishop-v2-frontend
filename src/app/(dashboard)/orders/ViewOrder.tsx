@@ -103,7 +103,7 @@ const ViewOrder: FC<ViewOrderProps> = ({
         status: status as any,
       },
       {
-        successMessage: "Order status updated",
+        successMessage: "Statut de la commande mis à jour",
         onSuccess: callbackOnSuccess,
       }
     );
@@ -154,7 +154,7 @@ const ViewOrder: FC<ViewOrderProps> = ({
               </div>
 
               <Table className="border-collapse [&_td]:border-x [&_th]:border-x [&_td]:p-1 [&_th]:p-1">
-                <TableHeader className="border-b bg-black text-white">
+                <TableHeader className="border-b bg-[var(--bg-sidebar)] text-white">
                   <TableRow>
                     <TableHead className="text-white h-auto">Type</TableHead>
                     <TableHead className="text-white h-auto">Marque</TableHead>

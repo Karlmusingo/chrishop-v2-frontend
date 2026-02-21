@@ -14,6 +14,7 @@ import {
   UpdateProfileSchemaType,
 } from "@/schemas/user/profile.schema";
 import UpdatePassword from "./UpdatePassword";
+import PageHeader from "@/components/custom/PageHeader";
 import { useProfile } from "@/hooks/convex/useProfile";
 import { useMutationWithToast } from "@/hooks/convex/useMutationWithToast";
 import { api } from "../../../../convex/_generated/api";
@@ -60,14 +61,11 @@ const ProfilePage: FC<ProfilePageProps> = () => {
   const {} = useTable({ title: "" });
 
   return (
-    <div className="pl-52">
-      <div>
-        <h2 className=" text-[1.2em] font-semibold">Profile </h2>
-        <p className=" text-sm text-slate-500">Manage your profile here.</p>
-      </div>
+    <div>
+      <PageHeader title="Profil" subtitle="Gerez vos informations personnelles" />
       <div className="py-4">
-        <div className="min-h-screen bg-background flex flex-col p-4 sm:p-6 lg:p-8">
-          <div className="w-full max-w-xl ">
+        <div className="rounded-2xl bg-white border border-[var(--border-primary)] p-8">
+          <div className="w-full max-w-xl">
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(handleSubmit)}
@@ -129,7 +127,7 @@ const ProfilePage: FC<ProfilePageProps> = () => {
                     }}
                   />
                   <Button type="submit" loading={isPending}>
-                    Save profile
+                    Enregistrer
                   </Button>
                 </div>
               </form>

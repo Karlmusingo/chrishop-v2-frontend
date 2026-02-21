@@ -10,6 +10,7 @@ import Confirm from "@/components/custom/Confirm";
 
 import { filterOptions, getColumns } from "./table";
 import AddUser from "./AddUser";
+import PageHeader from "@/components/custom/PageHeader";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useActionWithToast } from "@/hooks/convex/useActionWithToast";
@@ -72,14 +73,9 @@ const UsersPage: FC<UsersPageProps> = () => {
 
   return (
     <div>
-      <div>
-        <h2 className=" text-[1.2em] font-semibold">Users </h2>
-        <p className=" text-sm text-slate-500">
-          Manage users and their accounts here.
-        </p>
-      </div>
+      <PageHeader title="Utilisateurs" subtitle="Gerez les utilisateurs et leurs comptes" />
       <div className="py-4">
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<div>Chargement...</div>}>
           <DataList
             columns={getColumns({ onResetPassword: handleResetPassword })}
             data={(users || []) as any[]}

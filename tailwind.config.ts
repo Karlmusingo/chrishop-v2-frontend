@@ -19,6 +19,11 @@ const config = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        serif: ["var(--font-newsreader)", "Georgia", "serif"],
+        mono: ["var(--font-mono)", "monospace"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -53,11 +58,23 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        sidebar: "var(--bg-sidebar)",
+        surface: "var(--bg-primary)",
+        "accent-primary": "var(--accent-primary)",
+        "status-success": "var(--status-success)",
+        "status-warning": "var(--status-warning)",
+        "status-error": "var(--status-error)",
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      width: {
+        sidebar: "var(--sidebar-width)",
+      },
+      spacing: {
+        sidebar: "var(--sidebar-width)",
       },
       keyframes: {
         "accordion-down": {

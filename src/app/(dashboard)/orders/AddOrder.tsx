@@ -140,7 +140,7 @@ const AddOrder: FC<AddOrderProps> = ({
           locationId: locationId as any,
         },
         {
-          successMessage: "Order updated successfully",
+          successMessage: "Commande mise à jour avec succès",
           onSuccess: callbackOnSuccess,
         },
       );
@@ -156,7 +156,7 @@ const AddOrder: FC<AddOrderProps> = ({
         locationId: locationId as any,
       },
       {
-        successMessage: "Order created successfully",
+        successMessage: "Commande créée avec succès",
         onSuccess: callbackOnSuccess,
       },
     );
@@ -370,7 +370,7 @@ const AddOrder: FC<AddOrderProps> = ({
               <TableHead className="text-center">Type</TableHead>
               <TableHead className="text-center">Marque</TableHead>
               <TableHead className="text-center">Couleur</TableHead>
-              <TableHead className="text-center">Size</TableHead>
+              <TableHead className="text-center">Taille</TableHead>
               <TableHead className="text-center">Quantité</TableHead>
               <TableHead className="text-center">Prix</TableHead>
               <TableHead className="text-center">Total</TableHead>

@@ -8,6 +8,7 @@ import { DataList } from "@/components/custom/list/DataList";
 
 import { filterOptions, getColumns } from "./table";
 import AddLocation from "./AddLocation";
+import PageHeader from "@/components/custom/PageHeader";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 
@@ -19,14 +20,9 @@ const LocationPage: FC<LocationPageProps> = () => {
   const {} = useTable({ title: "" });
   return (
     <div>
-      <div>
-        <h2 className=" text-[1.2em] font-semibold">Boutiques </h2>
-        <p className=" text-sm text-slate-500">
-          Manage boutiques and their accounts here.
-        </p>
-      </div>
+      <PageHeader title="Boutiques" subtitle="Gerez vos boutiques et leurs comptes" />
       <div className="py-4">
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<div>Chargement...</div>}>
           <DataList
             columns={getColumns({})}
             data={(locations || []) as any[]}

@@ -20,6 +20,7 @@ export interface fullMetaType extends defaultMeta {
 interface MetaStore {
   meta: fullMetaType | IUnknown;
   setData: (data: fullMetaType) => void;
+  resetData: () => void;
   fetchNewMeta?: (callback: UnknownFunction) => void;
 }
 
@@ -27,6 +28,9 @@ export const useMetaStore = create<MetaStore>((set) => ({
   meta: {},
   setData: (data: fullMetaType) => {
     if (!isEmpty(data)) set({ meta: data });
+  },
+  resetData: () => {
+    set({ meta: {} });
   },
   fetchNewMeta: (callback) => {
     callback?.();

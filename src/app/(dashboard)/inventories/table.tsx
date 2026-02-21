@@ -60,7 +60,7 @@ export const getColumns = ({
       },
     },
     {
-      header: "Brand",
+      header: "Marque",
       accessorKey: "brand",
       cell: ({ row }) => {
         const rowData = row.original;
@@ -104,20 +104,29 @@ export const getColumns = ({
       accessorKey: "quantity",
     },
     {
-      header: "Revenue",
+      header: "Revenu",
       accessorKey: "expectedRevenue",
     },
     {
       header: "Statut",
       accessorKey: "status",
       cell: ({ row }) => {
-        const rowData = row.original;
-
-        if (["LOW_STOCK", "OUT_OF_STOCK"].includes(rowData.status)) {
-          return <Badge variant="destructive">{rowData.status}</Badge>;
-        }
-
-        return rowData.status;
+        const status = row.original.status;
+        const variantMap: Record<string, "success" | "warning" | "error"> = {
+          IN_STOCK: "success",
+          LOW_STOCK: "warning",
+          OUT_OF_STOCK: "error",
+        };
+        const labelMap: Record<string, string> = {
+          IN_STOCK: "EN STOCK",
+          LOW_STOCK: "STOCK BAS",
+          OUT_OF_STOCK: "RUPTURE",
+        };
+        return (
+          <Badge variant={variantMap[status] || "neutral"}>
+            {labelMap[status] || status}
+          </Badge>
+        );
       },
     },
 
@@ -170,7 +179,7 @@ export const getNewInventoryColums = ({}: ActionsFuncTypeNewInventory) => {
       accessorKey: "type",
     },
     {
-      header: "Brand",
+      header: "Marque",
       accessorKey: "brand",
     },
     {

@@ -19,13 +19,11 @@ const Select: FC<SelectProps> = ({
   onValueChange,
   className,
   options,
-  defaultValue,
   ...props
 }) => {
   return (
     <SelectUI
       onValueChange={onValueChange}
-      defaultValue={defaultValue}
       {...props}
     >
       <SelectTrigger className={cn("w-[180px]", className)}>

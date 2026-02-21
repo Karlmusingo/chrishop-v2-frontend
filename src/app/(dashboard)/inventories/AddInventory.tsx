@@ -80,7 +80,7 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
         })),
       },
       {
-        successMessage: "Inventory created successfully",
+        successMessage: "Stock ajouté avec succès",
         onSuccess: callbackOnSuccess,
       }
     );
@@ -256,7 +256,7 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
               <TableHead className="text-center">Type</TableHead>
               <TableHead className="text-center">Marque</TableHead>
               <TableHead className="text-center">Couleur</TableHead>
-              <TableHead className="text-center">Size</TableHead>
+              <TableHead className="text-center">Taille</TableHead>
               <TableHead className="text-center">Quantité</TableHead>
               <TableHead className="text-center">Prix</TableHead>
               <TableHead className="text-right">Actions</TableHead>

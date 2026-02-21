@@ -11,6 +11,7 @@ import { getColumns } from "./table";
 
 import AddInventory from "./AddInventory";
 import LocationFilter from "@/components/custom/LocationFilter";
+import PageHeader from "@/components/custom/PageHeader";
 import TransferInventory from "./TransferInventory";
 import { IUnknown } from "@/interface/Iunknown";
 import AddExistingInventory from "./AddExistingInventory";
@@ -48,10 +49,7 @@ const InventoriesPage: FC<InventoriesPageProps> = () => {
   const {} = useTable({ title: "" });
   return (
     <div>
-      <div>
-        <h2 className=" text-[1.2em] font-semibold">Inventories</h2>
-        <p className=" text-sm text-slate-500">Manage the Inventories here</p>
-      </div>
+      <PageHeader title="Inventaire" subtitle="Gerez le stock de vos boutiques" />
       {userRole === ROLES.ADMIN && (
         <div className="flex gap-4 mt-12">
           <LocationFilter />

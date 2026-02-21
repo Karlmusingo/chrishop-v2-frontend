@@ -64,7 +64,7 @@ const AddUser: FC<AddStaffProps> = ({ callback }) => {
     mutate(
       { ...values, location: values.location as Id<"locations"> | undefined },
       {
-        successMessage: `${values.role} created successfully`,
+        successMessage: "Utilisateur créé avec succès",
         onSuccess: callbackOnSuccess,
       },
     );
@@ -73,7 +73,7 @@ const AddUser: FC<AddStaffProps> = ({ callback }) => {
   return (
     <div>
       <Modal
-        title="Add User"
+        title="Ajouter un utilisateur"
         description=""
         onClose={() => setOpened(false)}
         isOpened={isOpened}
@@ -91,7 +91,7 @@ const AddUser: FC<AddStaffProps> = ({ callback }) => {
               setOpened(true);
             }}
           >
-            Add User
+            Ajouter un utilisateur
           </Button>
         }
       >
@@ -129,7 +129,7 @@ const AddUser: FC<AddStaffProps> = ({ callback }) => {
                 {roleInput === ROLES.ADMIN || (
                   <Input
                     name="location"
-                    label="Location (optional)"
+                    label="Boutique (optionnel)"
                     type="select"
                     options={locationOptions}
                     control={form.control}
@@ -148,7 +148,7 @@ const AddUser: FC<AddStaffProps> = ({ callback }) => {
 
                 <Input
                   name="phoneNumber"
-                  label="Phone number"
+                  label="Téléphone"
                   control={form.control}
                 />
                 <Input name="email" label="Email" control={form.control} />

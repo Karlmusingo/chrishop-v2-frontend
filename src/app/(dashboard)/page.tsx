@@ -1,5 +1,6 @@
 "use client";
 import { DashboardComponent } from "@/components/dashboard";
+import PageHeader from "@/components/custom/PageHeader";
 import { usePermission } from "@/hooks/usePermission";
 import { useQueryString } from "@/hooks/useQueryString";
 import { useQuery } from "convex/react";
@@ -19,8 +20,11 @@ export default function Home() {
     }) ?? {};
 
   return (
-    <main className="min-h-screen">
-      <DashboardComponent userRole={userRole} dashboardData={dashboardData} />
-    </main>
+    <div>
+      <PageHeader title="Tableau de bord" subtitle="Vue d'ensemble de votre activité" />
+      <div className="py-4">
+        <DashboardComponent userRole={userRole} dashboardData={dashboardData} />
+      </div>
+    </div>
   );
 }

@@ -54,7 +54,7 @@ const AddProduct: FC<AddProductProps> = ({ callback }) => {
     mutate(
       { ...values },
       {
-        successMessage: "Products created successfully",
+        successMessage: "Produit créé avec succès",
         onSuccess: callbackOnSuccess,
       }
     );
@@ -62,7 +62,7 @@ const AddProduct: FC<AddProductProps> = ({ callback }) => {
 
   return (
     <Modal
-      title="Add Product"
+      title="Ajouter un produit"
       description=""
       onClose={() => setOpened(false)}
       isOpened={isOpened}
@@ -81,7 +81,7 @@ const AddProduct: FC<AddProductProps> = ({ callback }) => {
               setOpened(true);
             }}
           >
-            Add Product
+            Ajouter un produit
           </Button>
         )
       }

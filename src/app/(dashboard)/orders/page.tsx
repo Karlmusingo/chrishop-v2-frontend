@@ -10,6 +10,7 @@ import { DataList } from "@/components/custom/list/DataList";
 import { getColumns } from "./table";
 
 import LocationFilter from "@/components/custom/LocationFilter";
+import PageHeader from "@/components/custom/PageHeader";
 import { IUnknown } from "@/interface/Iunknown";
 import AddOrder from "./AddOrder";
 import ViewOrder from "./ViewOrder";
@@ -39,10 +40,7 @@ const OrdersPage: FC<OrdersPageProps> = () => {
   const {} = useTable({ title: "" });
   return (
     <div>
-      <div>
-        <h2 className=" text-[1.2em] font-semibold">Ventes</h2>
-        <p className=" text-sm text-slate-500">Manage the orders here</p>
-      </div>
+      <PageHeader title="Ventes" subtitle="Gerez vos commandes ici" />
       {userRole === ROLES.ADMIN && (
         <div className="flex gap-4 mt-12">
           <LocationFilter depot={false} />

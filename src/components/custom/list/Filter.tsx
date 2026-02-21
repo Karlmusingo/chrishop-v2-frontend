@@ -7,8 +7,6 @@ import { cn } from "@/lib/utils";
 import { useQueryString } from "@/hooks/useQueryString";
 import { useTable } from "@/hooks/useTable";
 
-import { Separator } from "@/components/ui/separator";
-
 import { Search } from "../form/Search";
 import ComboBoxFilter, { comboboxOptionsType } from "./Combobox";
 import { ListPagination } from "./Pagination";
@@ -41,37 +39,47 @@ const ListFilter: FC<TableFilterProps> = ({
   const table = useTable();
 
   return (
-    <div className="mb-5">
-      <div className="my-4 flex items-center justify-between gap-2">
+    <div className="mb-2">
+      <div className="flex items-center justify-between gap-2">
         {!!table.title && (
-          <p className=" text-lg font-semibold">{capitalize(table.title)}</p>
+          <p className="font-serif text-lg font-semibold text-[var(--text-primary)]">{capitalize(table.title)}</p>
         )}
         <>
           {!isEmpty(tab) && (
-            <div className="flex gap-2">
-              <div
+            <div className="flex gap-1">
+              <Link
+                href={pathname}
                 className={cn(
-                  " inline-block rounded-lg px-3  py-1 text-[.85em] font-semibold text-slate-600",
-                  { "bg-slate-100 text-slate-800": !currentFilter }
+                  "inline-block rounded-full px-3 py-1 font-mono text-xs uppercase tracking-wide transition-colors",
+                  !currentFilter
+                    ? "bg-[var(--accent-primary)] text-white"
+                    : "bg-[#F5F5F5] text-[var(--text-secondary)] hover:bg-[#EBEBEB]"
                 )}
               >
-                <Link href={pathname}>All</Link>
-              </div>
-              {tab?.map((filter: string) => (
-                <div
-                  key={filter}
-                  className={cn(
-                    " inline-block rounded-lg px-3  py-1 text-[.85em] font-semibold text-slate-600",
-                    {
-                      "bg-slate-100 text-slate-800": currentFilter === filter,
-                    }
-                  )}
-                >
-                  <Link href={createQueryString(filterKey!, filter)}>
-                    {capitalize(filter?.split("_")?.join(" ") || "")}
+                Tout
+              </Link>
+              {tab?.map((filter: string) => {
+                const labelMap: Record<string, string> = {
+                  IN_STOCK: "En stock",
+                  LOW_STOCK: "Stock bas",
+                  OUT_OF_STOCK: "Rupture",
+                };
+                const label = labelMap[filter] || capitalize(filter?.split("_")?.join(" ") || "");
+                return (
+                  <Link
+                    key={filter}
+                    href={createQueryString(filterKey!, filter)}
+                    className={cn(
+                      "inline-block rounded-full px-3 py-1 font-mono text-xs uppercase tracking-wide transition-colors",
+                      currentFilter === filter
+                        ? "bg-[var(--accent-primary)] text-white"
+                        : "bg-[#F5F5F5] text-[var(--text-secondary)] hover:bg-[#EBEBEB]"
+                    )}
+                  >
+                    {label}
                   </Link>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
@@ -96,13 +104,12 @@ const ListFilter: FC<TableFilterProps> = ({
         <Search
           onChange={(ev) => pushQueryObject({ search: ev.target.value, page: "1" })}
           defaultValue={searchParams.get("search") as string}
-          className=" ml-auto"
+          className="ml-auto"
           placeholder={searchPlaceholder}
         />
 
         {action}
       </div>
-      <Separator />
     </div>
   );
 };

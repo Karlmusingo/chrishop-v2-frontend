@@ -55,12 +55,13 @@ export function DashboardComponent({
     labels: dashboardData?.dailySales?.map((item: IUnknown) => item.day) || [],
     datasets: [
       {
-        label: "Daily Sales",
+        label: "Ventes journalières",
         data:
           dashboardData?.dailySales?.map((item: IUnknown) => item.sales) || [],
-        borderColor: "rgb(75, 192, 192)",
-        backgroundColor: "rgba(75, 192, 192, 0.5)",
-        tension: 0.1,
+        borderColor: "var(--accent-primary)",
+        backgroundColor: "rgba(13, 110, 110, 0.15)",
+        tension: 0.3,
+        fill: true,
       },
     ],
   };
@@ -70,17 +71,18 @@ export function DashboardComponent({
       dashboardData?.salesByType?.map((item: IUnknown) => item.type) || [],
     datasets: [
       {
-        label: "Sales by Type",
+        label: "Ventes par type",
         data:
           dashboardData?.salesByType?.map(
             (item: IUnknown) => item.totalsales
           ) || [],
         backgroundColor: [
-          "rgba(255, 99, 132, 0.5)",
-          "rgba(54, 162, 235, 0.5)",
-          "rgba(255, 206, 86, 0.5)",
-          "rgba(75, 192, 192, 0.5)",
+          "rgba(13, 110, 110, 0.7)",
+          "rgba(13, 110, 110, 0.5)",
+          "rgba(13, 110, 110, 0.35)",
+          "rgba(13, 110, 110, 0.2)",
         ],
+        borderRadius: 6,
       },
     ],
   };
@@ -90,17 +92,18 @@ export function DashboardComponent({
       dashboardData?.salesByBrand?.map((item: IUnknown) => item.brand) || [],
     datasets: [
       {
-        label: "Sales by Brand",
+        label: "Ventes par marque",
         data:
           dashboardData?.salesByBrand?.map(
             (item: IUnknown) => item.totalsales
           ) || [],
         backgroundColor: [
-          "rgba(255, 99, 132, 0.5)",
-          "rgba(54, 162, 235, 0.5)",
-          "rgba(255, 206, 86, 0.5)",
-          "rgba(75, 192, 192, 0.5)",
+          "rgba(13, 110, 110, 0.7)",
+          "rgba(13, 110, 110, 0.5)",
+          "rgba(13, 110, 110, 0.35)",
+          "rgba(13, 110, 110, 0.2)",
         ],
+        borderRadius: 6,
       },
     ],
   };
@@ -110,35 +113,40 @@ export function DashboardComponent({
     plugins: {
       legend: {
         position: "top" as const,
+        labels: {
+          font: { family: "var(--font-mono)", size: 11 },
+        },
       },
       title: {
-        display: true,
-        text: "Chart.js Chart",
+        display: false,
       },
     },
     scales: {
       x: {
         type: "category" as const,
+        grid: { display: false },
+        ticks: { font: { family: "var(--font-mono)", size: 11 } },
       },
       y: {
         beginAtZero: true,
+        grid: { color: "rgba(0,0,0,0.04)" },
+        ticks: { font: { family: "var(--font-mono)", size: 11 } },
       },
     },
   };
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="space-y-6">
       {userRole === ROLES.ADMIN && (
         <div className="flex justify-between items-center">
           <LocationFilter depot={false} />
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Daily Sales</CardTitle>
-            {/* <CardDescription>{selectedLocation}</CardDescription> */}
+            <CardTitle>Ventes journalières</CardTitle>
           </CardHeader>
           <CardContent>
             <Line data={dailySales} options={chartOptions} />
@@ -147,7 +155,7 @@ export function DashboardComponent({
 
         <Card>
           <CardHeader>
-            <CardTitle>Sales by Type</CardTitle>
+            <CardTitle>Ventes par type</CardTitle>
           </CardHeader>
           <CardContent>
             <Bar data={salesByType} options={chartOptions} />
@@ -156,7 +164,7 @@ export function DashboardComponent({
 
         <Card>
           <CardHeader>
-            <CardTitle>Sales by Brand</CardTitle>
+            <CardTitle>Ventes par marque</CardTitle>
           </CardHeader>
           <CardContent>
             <Bar data={salesByBrand} options={chartOptions} />
@@ -165,18 +173,19 @@ export function DashboardComponent({
 
         <Card>
           <CardHeader>
-            <CardTitle>Sales Summary</CardTitle>
-            {/* <CardDescription>{selectedLocation}</CardDescription> */}
+            <CardTitle>Résumé des ventes</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableBody>
                 {dashboardData?.salesSummary?.map((item: IUnknown) => (
                   <TableRow key={item.category}>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-mono text-xs uppercase tracking-wide text-[var(--text-tertiary)]">
                       {item.category}
                     </TableCell>
-                    <TableCell className="text-right">{item.value}</TableCell>
+                    <TableCell className="text-right font-serif text-lg font-semibold">
+                      {item.value}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -187,18 +196,18 @@ export function DashboardComponent({
 
       <Card>
         <CardHeader>
-          <CardTitle>Low Stock Alert</CardTitle>
-          <CardDescription>Items that need restocking in</CardDescription>
+          <CardTitle>Alerte stock bas</CardTitle>
+          <CardDescription>Articles nécessitant un réapprovisionnement</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Brand</TableHead>
+                <TableHead>Nom</TableHead>
+                <TableHead>Marque</TableHead>
                 <TableHead>Stock</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Boutique</TableHead>
+                <TableHead>Statut</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -206,10 +215,12 @@ export function DashboardComponent({
                 <TableRow key={item.id}>
                   <TableCell>{item.productName}</TableCell>
                   <TableCell>{item?.product?.brand}</TableCell>
-                  <TableCell>{item.quantity}</TableCell>
+                  <TableCell className="font-mono">{item.quantity}</TableCell>
                   <TableCell>{item.location?.name}</TableCell>
                   <TableCell>
-                    <Badge variant="destructive">{item?.status}</Badge>
+                    <Badge variant={item?.status === "LOW_STOCK" ? "warning" : "error"}>
+                      {item?.status === "LOW_STOCK" ? "STOCK BAS" : "RUPTURE"}
+                    </Badge>
                   </TableCell>
                 </TableRow>
               ))}

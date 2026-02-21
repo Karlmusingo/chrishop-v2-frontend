@@ -59,7 +59,7 @@ const Input: FC<InputProps> = ({
           <FormLabel>{label}</FormLabel>
           <FormControl>
             {type === "text" ? (
-              <InputComponent placeholder={placeholder} {...field} {...props} />
+              <InputComponent placeholder={placeholder} {...field} {...props} value={field.value ?? ""} />
             ) : type === "password" ? (
               <PasswordInput placeholder={placeholder} field={field} {...props} />
             ) : type === "number" ? (
@@ -67,7 +67,7 @@ const Input: FC<InputProps> = ({
                 type="number"
                 placeholder={placeholder}
                 {...field}
-                value={field.value?.toString?.()}
+                value={field.value?.toString?.() ?? ""}
                 {...props}
               />
             ) : type === "select" ? (
@@ -75,8 +75,8 @@ const Input: FC<InputProps> = ({
                 className="w-full"
                 options={options || []}
                 onValueChange={field.onChange}
-                defaultValue={field.value || props.defaultValue}
                 {...field}
+                value={field.value ?? ""}
               />
             ) : type === "multi-select" ? (
               <MultiSelect

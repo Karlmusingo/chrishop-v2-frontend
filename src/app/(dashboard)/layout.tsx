@@ -1,20 +1,27 @@
 "use client";
-import { Header } from "@/components/custom/Header";
+import { Sidebar } from "@/components/custom/Sidebar";
 import { useProfile } from "@/hooks/convex/useProfile";
 import { useQueryString } from "@/hooks/useQueryString";
-import { useRouter } from "next/navigation";
+import { useMetaStore } from "@/hooks/zustand/useMetaStore";
+import { usePathname, useRouter } from "next/navigation";
 import { FC, PropsWithChildren, useEffect, useState } from "react";
 import UpdatePassword from "./profile/UpdatePassword";
 import { useConvexAuth } from "convex/react";
 
 const DashboardLayout: FC<PropsWithChildren> = ({ children }) => {
   const router = useRouter();
+  const pathname = usePathname();
   const { getQueryObject } = useQueryString();
+  const { resetData } = useMetaStore();
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
   const { isLoading, isSuccess, data } = useProfile();
   const [openUpdatePassword, setOpenUpdatePassword] = useState(false);
 
   const { hasInitialPasswordChanged } = getQueryObject();
+
+  useEffect(() => {
+    resetData();
+  }, [pathname]);
 
   useEffect(() => {
     if (!authLoading && !isLoading && !isAuthenticated) {
@@ -31,7 +38,7 @@ const DashboardLayout: FC<PropsWithChildren> = ({ children }) => {
   if (authLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <div className="animate-spin h-8 w-8 rounded-full border-4 border-gray-300 border-t-black" />
+        <div className="animate-spin h-8 w-8 rounded-full border-4 border-gray-300 border-t-[var(--accent-primary)]" />
       </div>
     );
   }
@@ -41,8 +48,8 @@ const DashboardLayout: FC<PropsWithChildren> = ({ children }) => {
   }
 
   return (
-    <div className="h-screen">
-      <Header />
+    <div className="flex h-screen overflow-hidden">
+      <Sidebar />
       {hasInitialPasswordChanged === "false" && (
         <UpdatePassword
           open={openUpdatePassword}
@@ -53,7 +60,9 @@ const DashboardLayout: FC<PropsWithChildren> = ({ children }) => {
           }}
         />
       )}
-      <div className=" mt-20 p-8 bg-[#FBFBFB]">{children}</div>
+      <main className="ml-sidebar flex-1 overflow-y-auto bg-[var(--bg-primary)] px-10 py-8">
+        {children}
+      </main>
     </div>
   );
 };
