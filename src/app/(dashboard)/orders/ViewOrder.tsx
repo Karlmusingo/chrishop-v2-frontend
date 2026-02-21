@@ -121,7 +121,7 @@ const ViewOrder: FC<ViewOrderProps> = ({
       classNames={{
         title: "text-2xl font-semibold",
         description: "text-sm",
-        container: "w-full max-h-[90vh] overflow-y-auto sm:max-w-[700px]",
+        container: "w-full max-h-[90vh] overflow-y-auto sm:max-w-[470px]",
       }}
     >
       <div className="w-full max-w-3xl mx-auto relative">
@@ -137,7 +137,6 @@ const ViewOrder: FC<ViewOrderProps> = ({
               </div>
               <div className="text-right">
                 <p className="text-sm">
-                  Date:{" "}
                   {new Date(
                     orderData?._creationTime ||
                       orderData?.createdAt ||
@@ -172,11 +171,8 @@ const ViewOrder: FC<ViewOrderProps> = ({
               <Table className="border-collapse [&_td]:border-x [&_th]:border-x [&_td]:p-1 [&_th]:p-1">
                 <TableHeader className="border-b bg-[var(--bg-sidebar)] text-white">
                   <TableRow>
-                    <TableHead className="text-white h-auto">Type</TableHead>
-                    <TableHead className="text-white h-auto">Marque</TableHead>
-                    <TableHead className="text-white h-auto">Couleur</TableHead>
+                    <TableHead className="text-white h-auto">Article</TableHead>
                     <TableHead className="text-white h-auto">Taille</TableHead>
-                    <TableHead className="text-white h-auto">Colle</TableHead>
                     <TableHead className="text-white h-auto">Quant</TableHead>
                     <TableHead className="text-white h-auto">Prix</TableHead>
                     <TableHead className="text-white h-auto">Total</TableHead>
@@ -185,11 +181,29 @@ const ViewOrder: FC<ViewOrderProps> = ({
                 <TableBody>
                   {orderData?.orderItems?.map((item: IUnknown) => (
                     <TableRow key={item._id || item.id}>
-                      <TableCell>{item?.product?.type}</TableCell>
-                      <TableCell>{item?.product?.brand}</TableCell>
-                      <TableCell>{item?.product?.color}</TableCell>
+                      <TableCell>
+                        <div className="text-xs leading-tight">
+                          <div>
+                            <span className="font-medium">Type:</span>{" "}
+                            {item?.product?.type}
+                          </div>
+                          <div>
+                            <span className="font-medium">Marque:</span>{" "}
+                            {item?.product?.brand}
+                          </div>
+                          <div>
+                            <span className="font-medium">Couleur:</span>{" "}
+                            {item?.product?.color}
+                          </div>
+                          {item?.product?.collarColor && (
+                            <div>
+                              <span className="font-medium">Colle:</span>{" "}
+                              {item?.product?.collarColor}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>{item?.product?.size}</TableCell>
-                      <TableCell>{item?.product?.collarColor}</TableCell>
                       <TableCell>{item.quantity}</TableCell>
                       <TableCell>{item.unitPrice}$</TableCell>
                       <TableCell>{item.totalPrice}$</TableCell>
