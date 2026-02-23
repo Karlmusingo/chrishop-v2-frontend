@@ -11,12 +11,6 @@ import Button from "@/components/custom/Button";
 import Input from "@/components/custom/form/Input";
 
 import { FC, useEffect } from "react";
-import { ProductType } from "@/constants/productType";
-import { ProductBrand } from "@/constants/productBrand";
-import { ProductColors } from "@/constants/colors";
-import { ProductSize } from "@/constants/sizes";
-
-import { toOptions } from "@/lib/toOptions";
 
 import { IUnknown } from "@/interface/Iunknown";
 import {
@@ -25,6 +19,7 @@ import {
 } from "@/schemas/inventories/addInventories.schema";
 import { useMutationWithToast } from "@/hooks/convex/useMutationWithToast";
 import { api } from "../../../../convex/_generated/api";
+import { useProductAttributes } from "@/hooks/convex/useProductAttributes";
 
 interface AddExistingInventoryProps {
   callback?: () => void;
@@ -42,6 +37,8 @@ const AddExistingInventory: FC<AddExistingInventoryProps> = ({
   const { mutate, isPending } = useMutationWithToast(
     api.functions.inventories.add
   );
+  const { typeOptions, brandOptions, colorOptions, sizeOptions } =
+    useProductAttributes();
 
   const form = useForm<AddExistingInventoriesSchemaType>({
     resolver: zodResolver(addExistingInventoriesSchema),
@@ -107,7 +104,7 @@ const AddExistingInventory: FC<AddExistingInventoryProps> = ({
                 label="Type"
                 placeholder="Sélectionnez un type"
                 disabled
-                options={toOptions(Object.values(ProductType))}
+                options={typeOptions}
               />
             </div>
 
@@ -118,7 +115,7 @@ const AddExistingInventory: FC<AddExistingInventoryProps> = ({
                 label="Marque"
                 disabled
                 placeholder="Sélectionnez une marque"
-                options={toOptions(Object.values(ProductBrand))}
+                options={brandOptions}
               />
             </div>
           </div>
@@ -131,7 +128,7 @@ const AddExistingInventory: FC<AddExistingInventoryProps> = ({
                 label="Couleur"
                 disabled
                 placeholder="Sélectionnez les couleurs"
-                options={toOptions(Object.values(ProductColors))}
+                options={colorOptions}
               />
             </div>
 
@@ -142,7 +139,7 @@ const AddExistingInventory: FC<AddExistingInventoryProps> = ({
                 label="Taille"
                 disabled
                 placeholder="Sélectionnez les tailles"
-                options={toOptions(Object.values(ProductSize))}
+                options={sizeOptions}
               />
             </div>
           </div>
@@ -154,7 +151,7 @@ const AddExistingInventory: FC<AddExistingInventoryProps> = ({
                 name="collarColor"
                 label="Couleur de la colle"
                 placeholder="Sélectionnez les couleurs"
-                options={toOptions(Object.values(ProductColors))}
+                options={colorOptions}
                 disabled
               />
             </div>

@@ -13,4 +13,5 @@ export default {
   "/": { roles: [], internalPublic: true },
   "/users": { roles: [ROLES.ADMIN], internalPublic: false },
   "/locations": { roles: [ROLES.ADMIN], internalPublic: false },
+  "/configuration": { roles: [ROLES.ADMIN], internalPublic: false },
 } as PageRoleType;

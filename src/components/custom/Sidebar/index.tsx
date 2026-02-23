@@ -12,6 +12,7 @@ import {
   User,
   LogOut,
   Shirt,
+  Settings,
 } from "lucide-react";
 import { useProfile } from "@/hooks/convex/useProfile";
 import { UserRoles } from "@/interface/roles";
@@ -31,6 +32,7 @@ const navItems: NavItem[] = [
   { name: "Produits", path: "/products", icon: Box, roles: [] },
   { name: "Boutiques", path: "/locations", icon: Store, roles: [UserRoles.ADMIN] },
   { name: "Utilisateurs", path: "/users", icon: Users, roles: [UserRoles.ADMIN] },
+  { name: "Configuration", path: "/configuration", icon: Settings, roles: [UserRoles.ADMIN] },
 ];
 
 export function Sidebar() {

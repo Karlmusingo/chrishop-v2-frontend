@@ -1,33 +1,27 @@
-import { ProductColors } from "@/constants/colors";
-import { ProductBrand } from "@/constants/productBrand";
-import { ProductType } from "@/constants/productType";
-import { ProductSize } from "@/constants/sizes";
 import { z } from "zod";
 
 export const addProductSchema = z.strictObject({
-  type: z.nativeEnum(ProductType, {
+  type: z.string({
     message: "Veiller selectionner le type",
-  }),
-  brand: z.nativeEnum(ProductBrand, {
+  }).min(1, "Veiller selectionner le type"),
+  brand: z.string({
     message: "Veiller selectionner la marque",
-  }),
+  }).min(1, "Veiller selectionner la marque"),
   color: z
     .array(
-      z.nativeEnum(ProductColors, {
+      z.string({
         message: "Veillez selectionner la couleur",
-        required_error: "Veillez selectionner la couleur",
       })
     )
     .nonempty("Veillez selectionner au moins une couleur"),
   size: z
     .array(
-      z.nativeEnum(ProductSize, {
+      z.string({
         message: "Veillez selectionner la taille",
-        required_error: "Veillez selectionner la taille",
       })
     )
     .nonempty("Veillez selectionner au moins une taille"),
-  collarColor: z.array(z.nativeEnum(ProductColors)).optional(),
+  collarColor: z.array(z.string()).optional(),
   description: z.string().min(1, {
     message: "Veiller entrer la description",
   }),

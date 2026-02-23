@@ -11,12 +11,6 @@ import Button from "@/components/custom/Button";
 import Input from "@/components/custom/form/Input";
 
 import { FC, useEffect } from "react";
-import { ProductType } from "@/constants/productType";
-import { ProductBrand } from "@/constants/productBrand";
-import { ProductColors } from "@/constants/colors";
-import { ProductSize } from "@/constants/sizes";
-
-import { toOptions } from "@/lib/toOptions";
 
 import { IUnknown } from "@/interface/Iunknown";
 import {
@@ -25,6 +19,7 @@ import {
 } from "@/schemas/inventories/transferInventories.schema";
 import { useMutationWithToast } from "@/hooks/convex/useMutationWithToast";
 import { api } from "../../../../convex/_generated/api";
+import { useProductAttributes } from "@/hooks/convex/useProductAttributes";
 
 interface TransferInventoryProps {
   callback?: () => void;
@@ -44,6 +39,8 @@ const TransferInventory: FC<TransferInventoryProps> = ({
   const { mutate, isPending } = useMutationWithToast(
     api.functions.inventories.transfer
   );
+  const { typeOptions, brandOptions, colorOptions, sizeOptions } =
+    useProductAttributes();
 
   const form = useForm<TransferInventoriesSchemaType>({
     resolver: zodResolver(transferInventoriesSchema),
@@ -110,7 +107,7 @@ const TransferInventory: FC<TransferInventoryProps> = ({
                 label="Type"
                 placeholder="Sélectionnez un type"
                 disabled
-                options={toOptions(Object.values(ProductType))}
+                options={typeOptions}
               />
             </div>
 
@@ -121,7 +118,7 @@ const TransferInventory: FC<TransferInventoryProps> = ({
                 label="Marque"
                 disabled
                 placeholder="Sélectionnez une marque"
-                options={toOptions(Object.values(ProductBrand))}
+                options={brandOptions}
               />
             </div>
           </div>
@@ -134,7 +131,7 @@ const TransferInventory: FC<TransferInventoryProps> = ({
                 label="Couleur"
                 disabled
                 placeholder="Sélectionnez les couleurs"
-                options={toOptions(Object.values(ProductColors))}
+                options={colorOptions}
               />
             </div>
 
@@ -145,7 +142,7 @@ const TransferInventory: FC<TransferInventoryProps> = ({
                 label="Taille"
                 disabled
                 placeholder="Sélectionnez les tailles"
-                options={toOptions(Object.values(ProductSize))}
+                options={sizeOptions}
               />
             </div>
           </div>
@@ -157,7 +154,7 @@ const TransferInventory: FC<TransferInventoryProps> = ({
                 name="collarColor"
                 label="Couleur de la colle"
                 placeholder="Sélectionnez les couleurs"
-                options={toOptions(Object.values(ProductColors))}
+                options={colorOptions}
                 disabled
               />
             </div>

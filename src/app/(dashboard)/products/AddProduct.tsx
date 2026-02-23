@@ -11,21 +11,17 @@ import Button from "@/components/custom/Button";
 import Input from "@/components/custom/form/Input";
 
 import { FC, useState } from "react";
-import { ProductType } from "@/constants/productType";
-import { ProductBrand } from "@/constants/productBrand";
-import { ProductColors } from "@/constants/colors";
-import { ProductSize } from "@/constants/sizes";
 import {
   addProductSchema,
   AddProductSchemaType,
 } from "@/schemas/products/products.schema";
 import { usePermission } from "@/hooks/usePermission";
 import { ROLES } from "@/interface/roles";
-import { toOptions } from "@/lib/toOptions";
 
 import MultiSelect from "@/components/custom/MultiSelectInput";
 import { useMutationWithToast } from "@/hooks/convex/useMutationWithToast";
 import { api } from "../../../../convex/_generated/api";
+import { useProductAttributes } from "@/hooks/convex/useProductAttributes";
 
 interface AddProductProps {
   callback?: () => void;
@@ -36,6 +32,8 @@ const AddProduct: FC<AddProductProps> = ({ callback }) => {
     api.functions.products.create
   );
   const { userRole } = usePermission();
+  const { typeOptions, brandOptions, colorOptions, sizeOptions } =
+    useProductAttributes();
 
   const [isOpened, setOpened] = useState(false);
 
@@ -98,7 +96,7 @@ const AddProduct: FC<AddProductProps> = ({ callback }) => {
                 name="type"
                 label="Type"
                 placeholder="Sélectionnez un type"
-                options={toOptions(Object.values(ProductType))}
+                options={typeOptions}
               />
             </div>
 
@@ -108,7 +106,7 @@ const AddProduct: FC<AddProductProps> = ({ callback }) => {
                 name="brand"
                 label="Marque"
                 placeholder="Sélectionnez une marque"
-                options={toOptions(Object.values(ProductBrand))}
+                options={brandOptions}
               />
             </div>
           </div>
@@ -119,7 +117,7 @@ const AddProduct: FC<AddProductProps> = ({ callback }) => {
               name="color"
               label="Couleur"
               placeholder="Sélectionnez les couleurs"
-              options={toOptions(Object.values(ProductColors))}
+              options={colorOptions}
             />
           </div>
           <div className="grid gap-1">
@@ -128,7 +126,7 @@ const AddProduct: FC<AddProductProps> = ({ callback }) => {
               name="size"
               label="Taille"
               placeholder="Sélectionnez les tailles"
-              options={toOptions(Object.values(ProductSize))}
+              options={sizeOptions}
             />
           </div>
 
@@ -139,7 +137,7 @@ const AddProduct: FC<AddProductProps> = ({ callback }) => {
                 name="collarColor"
                 label="Couleur de la colle"
                 placeholder="Sélectionnez les couleurs"
-                options={toOptions(Object.values(ProductColors))}
+                options={colorOptions}
               />
             </div>
           )}

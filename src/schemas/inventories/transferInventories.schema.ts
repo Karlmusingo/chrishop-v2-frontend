@@ -1,24 +1,20 @@
-import { ProductColors } from "@/constants/colors";
-import { ProductBrand } from "@/constants/productBrand";
-import { ProductType } from "@/constants/productType";
-import { ProductSize } from "@/constants/sizes";
 import { z } from "zod";
 import { validateNumber } from "./inventories.schema";
 
 export const transferInventoriesSchema = z.object({
-  type: z.nativeEnum(ProductType, {
+  type: z.string({
     message: "Veiller selectionner le type",
-  }),
-  brand: z.nativeEnum(ProductBrand, {
+  }).min(1, "Veiller selectionner le type"),
+  brand: z.string({
     message: "Veiller selectionner la marque",
-  }),
-  color: z.nativeEnum(ProductColors, {
+  }).min(1, "Veiller selectionner la marque"),
+  color: z.string({
     message: "Veillez selectionner la couleur",
-  }),
-  size: z.nativeEnum(ProductSize, {
+  }).min(1, "Veillez selectionner la couleur"),
+  size: z.string({
     message: "Veillez selectionner la taille",
-  }),
-  collarColor: z.nativeEnum(ProductColors).optional(),
+  }).min(1, "Veillez selectionner la taille"),
+  collarColor: z.string().optional(),
   quantity: z.any().optional(),
   price: z.any().optional(),
   location: z

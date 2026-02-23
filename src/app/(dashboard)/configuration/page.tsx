@@ -1,0 +1,92 @@
+"use client";
+
+import { FC, useState } from "react";
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
+import PageHeader from "@/components/custom/PageHeader";
+import AttributeTable from "./AttributeTable";
+
+const tabs = [
+  { key: "types", label: "Types" },
+  { key: "brands", label: "Marques" },
+  { key: "colors", label: "Couleurs" },
+  { key: "sizes", label: "Tailles" },
+] as const;
+
+type TabKey = (typeof tabs)[number]["key"];
+
+const ConfigurationPage: FC = () => {
+  const [activeTab, setActiveTab] = useState<TabKey>("types");
+
+  const types = useQuery(api.functions.productTypes.list, {}) ?? [];
+  const brands = useQuery(api.functions.productBrands.list, {}) ?? [];
+  const colors = useQuery(api.functions.productColors.list, {}) ?? [];
+  const sizes = useQuery(api.functions.productSizes.list, {}) ?? [];
+
+  return (
+    <div>
+      <PageHeader
+        title="Configuration"
+        subtitle="Gérez les attributs de vos produits"
+      />
+
+      <div className="mb-6 flex gap-1 rounded-lg border bg-[#F8F8F8] p-1">
+        {tabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+              activeTab === tab.key
+                ? "bg-white text-[var(--text-primary)] shadow-sm"
+                : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "types" && (
+        <AttributeTable
+          categoryLabel="Type"
+          items={types}
+          createMutation={api.functions.productTypes.create}
+          updateMutation={api.functions.productTypes.update}
+          removeMutation={api.functions.productTypes.remove}
+        />
+      )}
+
+      {activeTab === "brands" && (
+        <AttributeTable
+          categoryLabel="Marque"
+          items={brands}
+          createMutation={api.functions.productBrands.create}
+          updateMutation={api.functions.productBrands.update}
+          removeMutation={api.functions.productBrands.remove}
+        />
+      )}
+
+      {activeTab === "colors" && (
+        <AttributeTable
+          categoryLabel="Couleur"
+          items={colors}
+          createMutation={api.functions.productColors.create}
+          updateMutation={api.functions.productColors.update}
+          removeMutation={api.functions.productColors.remove}
+        />
+      )}
+
+      {activeTab === "sizes" && (
+        <AttributeTable
+          categoryLabel="Taille"
+          items={sizes}
+          createMutation={api.functions.productSizes.create}
+          updateMutation={api.functions.productSizes.update}
+          removeMutation={api.functions.productSizes.remove}
+        />
+      )}
+    </div>
+  );
+};
+
+export default ConfigurationPage;

@@ -1,32 +1,12 @@
-import { ProductColors } from "@/constants/colors";
-import { ProductBrand } from "@/constants/productBrand";
-import { ProductType } from "@/constants/productType";
-import { ProductSize } from "@/constants/sizes";
 import { z } from "zod";
 import { validateNumber } from "./inventories.schema";
 
 export const addExistingInventoriesSchema = z.object({
-  type: z
-    .nativeEnum(ProductType, {
-      message: "Veiller selectionner le type",
-    })
-    .optional(),
-  brand: z
-    .nativeEnum(ProductBrand, {
-      message: "Veiller selectionner la marque",
-    })
-    .optional(),
-  color: z
-    .nativeEnum(ProductColors, {
-      message: "Veillez selectionner la couleur",
-    })
-    .optional(),
-  size: z
-    .nativeEnum(ProductSize, {
-      message: "Veillez selectionner la taille",
-    })
-    .optional(),
-  collarColor: z.nativeEnum(ProductColors).optional(),
+  type: z.string().optional(),
+  brand: z.string().optional(),
+  color: z.string().optional(),
+  size: z.string().optional(),
+  collarColor: z.string().optional(),
   quantity: z.any().optional(),
   price: z.any().optional(),
   addQuantity: z

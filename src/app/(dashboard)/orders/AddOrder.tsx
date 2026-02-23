@@ -11,14 +11,9 @@ import Button from "@/components/custom/Button";
 import Input from "@/components/custom/form/Input";
 
 import { FC, useEffect, useState } from "react";
-import { ProductType } from "@/constants/productType";
-import { ProductBrand } from "@/constants/productBrand";
-import { ProductColors } from "@/constants/colors";
-import { ProductSize } from "@/constants/sizes";
 
 import { usePermission } from "@/hooks/usePermission";
 import { ROLES } from "@/interface/roles";
-import { toOptions } from "@/lib/toOptions";
 import { useConvex, useQuery } from "convex/react";
 
 import { DialogFooter } from "@/components/ui/dialog";
@@ -48,6 +43,7 @@ import {
 } from "@/schemas/orders/orders.schema";
 import { useMutationWithToast } from "@/hooks/convex/useMutationWithToast";
 import { api } from "../../../../convex/_generated/api";
+import { useProductAttributes } from "@/hooks/convex/useProductAttributes";
 
 interface AddOrderProps {
   callback?: () => void;
@@ -80,6 +76,8 @@ const AddOrder: FC<AddOrderProps> = ({
   const isAdmin = profile?.role === ROLES.ADMIN;
   const locations =
     useQuery(api.functions.locations.list, isAdmin ? {} : "skip") ?? [];
+  const { typeOptions, brandOptions, colorOptions, sizeOptions } =
+    useProductAttributes();
 
   const [orders, setOrders] = useState<FormSchemaPlusProductIdType[]>([]);
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
@@ -295,7 +293,7 @@ const AddOrder: FC<AddOrderProps> = ({
                 name="type"
                 label="Type"
                 placeholder="Sélectionnez un type"
-                options={toOptions(Object.values(ProductType))}
+                options={typeOptions}
               />
             </div>
 
@@ -305,7 +303,7 @@ const AddOrder: FC<AddOrderProps> = ({
                 name="brand"
                 label="Marque"
                 placeholder="Sélectionnez une marque"
-                options={toOptions(Object.values(ProductBrand))}
+                options={brandOptions}
               />
             </div>
           </div>
@@ -317,7 +315,7 @@ const AddOrder: FC<AddOrderProps> = ({
                 name="color"
                 label="Couleur"
                 placeholder="Sélectionnez les couleurs"
-                options={toOptions(Object.values(ProductColors))}
+                options={colorOptions}
               />
             </div>
             <div className="grid gap-1">
@@ -326,7 +324,7 @@ const AddOrder: FC<AddOrderProps> = ({
                 name="size"
                 label="Taille"
                 placeholder="Sélectionnez les tailles"
-                options={toOptions(Object.values(ProductSize))}
+                options={sizeOptions}
               />
             </div>
           </div>
@@ -338,7 +336,7 @@ const AddOrder: FC<AddOrderProps> = ({
                 name="collarColor"
                 label="Couleur de la colle"
                 placeholder="Sélectionnez les couleurs"
-                options={toOptions(Object.values(ProductColors))}
+                options={colorOptions}
               />
             </div>
           )}

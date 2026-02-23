@@ -11,14 +11,9 @@ import Button from "@/components/custom/Button";
 import Input from "@/components/custom/form/Input";
 
 import { FC, useState } from "react";
-import { ProductType } from "@/constants/productType";
-import { ProductBrand } from "@/constants/productBrand";
-import { ProductColors } from "@/constants/colors";
-import { ProductSize } from "@/constants/sizes";
 
 import { usePermission } from "@/hooks/usePermission";
 import { ROLES } from "@/interface/roles";
-import { toOptions } from "@/lib/toOptions";
 import { useConvex } from "convex/react";
 
 import { DialogFooter } from "@/components/ui/dialog";
@@ -39,6 +34,7 @@ import {
 } from "@/schemas/inventories/inventories.schema";
 import { useMutationWithToast } from "@/hooks/convex/useMutationWithToast";
 import { api } from "../../../../convex/_generated/api";
+import { useProductAttributes } from "@/hooks/convex/useProductAttributes";
 
 interface AddInventoryProps {
   callback?: () => void;
@@ -54,6 +50,8 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
     api.functions.inventories.create
   );
   const { userRole } = usePermission();
+  const { typeOptions, brandOptions, colorOptions, sizeOptions } =
+    useProductAttributes();
 
   const [isOpened, setOpened] = useState(false);
   const [inventory, setInventory] = useState<FormSchemaPlusProductIdType[]>([]);
@@ -176,7 +174,7 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
                 name="type"
                 label="Type"
                 placeholder="Sélectionnez un type"
-                options={toOptions(Object.values(ProductType))}
+                options={typeOptions}
               />
             </div>
 
@@ -186,7 +184,7 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
                 name="brand"
                 label="Marque"
                 placeholder="Sélectionnez une marque"
-                options={toOptions(Object.values(ProductBrand))}
+                options={brandOptions}
               />
             </div>
           </div>
@@ -197,7 +195,7 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
               name="color"
               label="Couleur"
               placeholder="Sélectionnez les couleurs"
-              options={toOptions(Object.values(ProductColors))}
+              options={colorOptions}
             />
           </div>
           <div className="grid gap-1">
@@ -206,7 +204,7 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
               name="size"
               label="Taille"
               placeholder="Sélectionnez les tailles"
-              options={toOptions(Object.values(ProductSize))}
+              options={sizeOptions}
             />
           </div>
 
@@ -217,7 +215,7 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
                 name="collarColor"
                 label="Couleur de la colle"
                 placeholder="Sélectionnez les couleurs"
-                options={toOptions(Object.values(ProductColors))}
+                options={colorOptions}
               />
             </div>
           )}
