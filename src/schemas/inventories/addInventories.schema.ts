@@ -5,8 +5,8 @@ export const addExistingInventoriesSchema = z.object({
   type: z.string().optional(),
   brand: z.string().optional(),
   color: z.string().optional(),
-  size: z.string().optional(),
   collarColor: z.string().optional(),
+  size: z.string().optional(),
   quantity: z.any().optional(),
   price: z.any().optional(),
   addQuantity: z

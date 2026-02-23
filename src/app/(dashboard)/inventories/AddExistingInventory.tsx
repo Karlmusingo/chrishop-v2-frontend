@@ -120,7 +120,7 @@ const AddExistingInventory: FC<AddExistingInventoryProps> = ({
             </div>
           </div>
 
-          <div className=" grid grid-cols-2 gap-4">
+          <div className={`grid gap-4${typeValue?.includes("polo") ? " grid-cols-2" : ""}`}>
             <div className="grid gap-1">
               <SelectInput
                 control={form.control}
@@ -132,30 +132,29 @@ const AddExistingInventory: FC<AddExistingInventoryProps> = ({
               />
             </div>
 
-            <div className="grid gap-1">
-              <SelectInput
-                control={form.control}
-                name="size"
-                label="Taille"
-                disabled
-                placeholder="Sélectionnez les tailles"
-                options={sizeOptions}
-              />
-            </div>
+            {typeValue?.includes("polo") && (
+              <div className="grid gap-1">
+                <SelectInput
+                  control={form.control}
+                  name="collarColor"
+                  label="Couleur de la colle"
+                  placeholder="Sélectionnez les couleurs"
+                  options={colorOptions}
+                  disabled
+                />
+              </div>
+            )}
           </div>
-
-          {typeValue?.includes("polo") && (
-            <div className="grid gap-1">
-              <SelectInput
-                control={form.control}
-                name="collarColor"
-                label="Couleur de la colle"
-                placeholder="Sélectionnez les couleurs"
-                options={colorOptions}
-                disabled
-              />
-            </div>
-          )}
+          <div className="grid gap-1">
+            <SelectInput
+              control={form.control}
+              name="size"
+              label="Taille"
+              disabled
+              placeholder="Sélectionnez les tailles"
+              options={sizeOptions}
+            />
+          </div>
 
           <div className=" grid grid-cols-2 gap-4">
             <div className="grid gap-1">

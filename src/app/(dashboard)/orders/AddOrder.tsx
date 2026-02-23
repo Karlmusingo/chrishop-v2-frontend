@@ -308,7 +308,7 @@ const AddOrder: FC<AddOrderProps> = ({
             </div>
           </div>
 
-          <div className=" grid grid-cols-2 gap-4">
+          <div className={`grid gap-4${typeValue?.includes("polo") ? " grid-cols-2" : ""}`}>
             <div className="grid gap-1">
               <SelectInput
                 control={form.control}
@@ -318,28 +318,28 @@ const AddOrder: FC<AddOrderProps> = ({
                 options={colorOptions}
               />
             </div>
-            <div className="grid gap-1">
-              <SelectInput
-                control={form.control}
-                name="size"
-                label="Taille"
-                placeholder="Sélectionnez les tailles"
-                options={sizeOptions}
-              />
-            </div>
-          </div>
 
-          {typeValue?.includes("polo") && (
-            <div className="grid gap-1">
-              <SelectInput
-                control={form.control}
-                name="collarColor"
-                label="Couleur de la colle"
-                placeholder="Sélectionnez les couleurs"
-                options={colorOptions}
-              />
-            </div>
-          )}
+            {typeValue?.includes("polo") && (
+              <div className="grid gap-1">
+                <SelectInput
+                  control={form.control}
+                  name="collarColor"
+                  label="Couleur de la colle"
+                  placeholder="Sélectionnez les couleurs"
+                  options={colorOptions}
+                />
+              </div>
+            )}
+          </div>
+          <div className="grid gap-1">
+            <SelectInput
+              control={form.control}
+              name="size"
+              label="Taille"
+              placeholder="Sélectionnez les tailles"
+              options={sizeOptions}
+            />
+          </div>
 
           <div className="mb-2 grid gap-1">
             <Input

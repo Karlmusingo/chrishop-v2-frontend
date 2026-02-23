@@ -11,10 +11,10 @@ export const transferInventoriesSchema = z.object({
   color: z.string({
     message: "Veillez selectionner la couleur",
   }).min(1, "Veillez selectionner la couleur"),
+  collarColor: z.string().optional(),
   size: z.string({
     message: "Veillez selectionner la taille",
   }).min(1, "Veillez selectionner la taille"),
-  collarColor: z.string().optional(),
   quantity: z.any().optional(),
   price: z.any().optional(),
   location: z

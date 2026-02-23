@@ -189,14 +189,28 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
             </div>
           </div>
 
-          <div className="grid gap-1">
-            <SelectInput
-              control={form.control}
-              name="color"
-              label="Couleur"
-              placeholder="Sélectionnez les couleurs"
-              options={colorOptions}
-            />
+          <div className={`grid gap-4${typeValue?.includes("polo") ? " grid-cols-2" : ""}`}>
+            <div className="grid gap-1">
+              <SelectInput
+                control={form.control}
+                name="color"
+                label="Couleur"
+                placeholder="Sélectionnez les couleurs"
+                options={colorOptions}
+              />
+            </div>
+
+            {typeValue?.includes("polo") && (
+              <div className="grid gap-1">
+                <SelectInput
+                  control={form.control}
+                  name="collarColor"
+                  label="Couleur de la colle"
+                  placeholder="Sélectionnez les couleurs"
+                  options={colorOptions}
+                />
+              </div>
+            )}
           </div>
           <div className="grid gap-1">
             <SelectInput
@@ -207,18 +221,6 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
               options={sizeOptions}
             />
           </div>
-
-          {typeValue?.includes("polo") && (
-            <div className="grid gap-1">
-              <SelectInput
-                control={form.control}
-                name="collarColor"
-                label="Couleur de la colle"
-                placeholder="Sélectionnez les couleurs"
-                options={colorOptions}
-              />
-            </div>
-          )}
 
           <div className="mb-2 grid grid-cols-2 gap-4">
             <div className="grid gap-1">

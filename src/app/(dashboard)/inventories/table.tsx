@@ -78,21 +78,21 @@ export const getColumns = ({
       },
     },
     {
-      header: "Taille",
-      accessorKey: "size",
-      cell: ({ row }) => {
-        const rowData = row.original;
-
-        return rowData.product?.size;
-      },
-    },
-    {
       header: "Couleur de colle",
       accessorKey: "collarColor",
       cell: ({ row }) => {
         const rowData = row.original;
 
         return rowData.product?.collarColor;
+      },
+    },
+    {
+      header: "Taille",
+      accessorKey: "size",
+      cell: ({ row }) => {
+        const rowData = row.original;
+
+        return rowData.product?.size;
       },
     },
     {
@@ -187,12 +187,12 @@ export const getNewInventoryColums = ({}: ActionsFuncTypeNewInventory) => {
       accessorKey: "color",
     },
     {
-      header: "Taille",
-      accessorKey: "size",
-    },
-    {
       header: "Couleur de colle",
       accessorKey: "collarColor",
+    },
+    {
+      header: "Taille",
+      accessorKey: "size",
     },
     {
       header: "Prix",

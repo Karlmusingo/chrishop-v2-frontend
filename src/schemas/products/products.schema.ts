@@ -14,6 +14,7 @@ export const addProductSchema = z.strictObject({
       })
     )
     .nonempty("Veillez selectionner au moins une couleur"),
+  collarColor: z.array(z.string()).optional(),
   size: z
     .array(
       z.string({
@@ -21,7 +22,6 @@ export const addProductSchema = z.strictObject({
       })
     )
     .nonempty("Veillez selectionner au moins une taille"),
-  collarColor: z.array(z.string()).optional(),
   description: z.string().min(1, {
     message: "Veiller entrer la description",
   }),

@@ -34,10 +34,10 @@ export const addInventoriesSchema = z.object({
   color: z.string({
     message: "Veillez selectionner la couleur",
   }).min(1, "Veillez selectionner la couleur"),
+  collarColor: z.string().optional(),
   size: z.string({
     message: "Veillez selectionner la taille",
   }).min(1, "Veillez selectionner la taille"),
-  collarColor: z.string().optional(),
   quantity: z
     .string({
       invalid_type_error: "La quantité doit être un nombre supérieur à 0",

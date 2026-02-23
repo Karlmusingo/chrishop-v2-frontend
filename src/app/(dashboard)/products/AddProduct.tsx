@@ -111,14 +111,28 @@ const AddProduct: FC<AddProductProps> = ({ callback }) => {
             </div>
           </div>
 
-          <div className="grid gap-1">
-            <MultiSelect
-              control={form.control}
-              name="color"
-              label="Couleur"
-              placeholder="Sélectionnez les couleurs"
-              options={colorOptions}
-            />
+          <div className={`grid gap-4${typeValue?.includes("polo") ? " grid-cols-2" : ""}`}>
+            <div className="grid gap-1">
+              <MultiSelect
+                control={form.control}
+                name="color"
+                label="Couleur"
+                placeholder="Sélectionnez les couleurs"
+                options={colorOptions}
+              />
+            </div>
+
+            {typeValue?.includes("polo") && (
+              <div className="grid gap-1">
+                <MultiSelect
+                  control={form.control}
+                  name="collarColor"
+                  label="Couleur de la colle"
+                  placeholder="Sélectionnez les couleurs"
+                  options={colorOptions}
+                />
+              </div>
+            )}
           </div>
           <div className="grid gap-1">
             <MultiSelect
@@ -129,18 +143,6 @@ const AddProduct: FC<AddProductProps> = ({ callback }) => {
               options={sizeOptions}
             />
           </div>
-
-          {typeValue?.includes("polo") && (
-            <div className="grid gap-1">
-              <MultiSelect
-                control={form.control}
-                name="collarColor"
-                label="Couleur de la colle"
-                placeholder="Sélectionnez les couleurs"
-                options={colorOptions}
-              />
-            </div>
-          )}
 
           <div className="grid gap-1">
             <Input

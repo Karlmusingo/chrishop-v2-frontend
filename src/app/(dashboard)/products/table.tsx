@@ -22,12 +22,12 @@ export const getColumns = ({}: ActionsFuncType) => {
       accessorKey: "color",
     },
     {
-      header: "Taille",
-      accessorKey: "size",
-    },
-    {
       header: "Couleur de colle",
       accessorKey: "collarColor",
+    },
+    {
+      header: "Taille",
+      accessorKey: "size",
     },
     {
       header: "Description",
