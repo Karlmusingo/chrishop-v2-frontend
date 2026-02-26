@@ -96,6 +96,7 @@ const AddOrder: FC<AddOrderProps> = ({
           ...item,
           type: item.product.type,
           brand: item.product.brand,
+          code: item.product.code,
           color: item.product.color,
           size: item.product.size,
           quantity: item.quantity,
@@ -172,8 +173,9 @@ const AddOrder: FC<AddOrderProps> = ({
       {
         type: values.type,
         brand: values.brand,
-        color: values.color,
-        size: values.size,
+        ...(values.code ? { code: values.code } : {}),
+        ...(values.color ? { color: values.color } : {}),
+        ...(values.size ? { size: values.size } : {}),
         ...(typeValue?.includes("polo") && values.collarColor
           ? { collarColor: values.collarColor }
           : {}),
@@ -221,6 +223,7 @@ const AddOrder: FC<AddOrderProps> = ({
 
     form.setValue("type", orderItem.type);
     form.setValue("brand", orderItem.brand);
+    form.setValue("code", orderItem.code);
     form.setValue("color", orderItem.color);
     form.setValue("size", orderItem.size);
     form.setValue("collarColor", orderItem.collarColor);
@@ -308,6 +311,15 @@ const AddOrder: FC<AddOrderProps> = ({
             </div>
           </div>
 
+          <div className="grid gap-1">
+            <Input
+              control={form.control}
+              name="code"
+              label="Code"
+              placeholder="Entrez le code du produit"
+            />
+          </div>
+
           <div className={`grid gap-4${typeValue?.includes("polo") ? " grid-cols-2" : ""}`}>
             <div className="grid gap-1">
               <SelectInput
@@ -367,6 +379,7 @@ const AddOrder: FC<AddOrderProps> = ({
             <TableRow>
               <TableHead className="text-center">Type</TableHead>
               <TableHead className="text-center">Marque</TableHead>
+              <TableHead className="text-center">Code</TableHead>
               <TableHead className="text-center">Couleur</TableHead>
               <TableHead className="text-center">Taille</TableHead>
               <TableHead className="text-center">Quantité</TableHead>
@@ -380,8 +393,9 @@ const AddOrder: FC<AddOrderProps> = ({
               <TableRow key={index} onClick={() => null}>
                 <TableCell className="text-center">{item.type}</TableCell>
                 <TableCell className="text-center">{item.brand}</TableCell>
-                <TableCell className="text-center">{item.color}</TableCell>
-                <TableCell className="text-center">{item.size}</TableCell>
+                <TableCell className="text-center">{item.code || "-"}</TableCell>
+                <TableCell className="text-center">{item.color || "-"}</TableCell>
+                <TableCell className="text-center">{item.size || "-"}</TableCell>
                 <TableCell className="text-center">{item.quantity}</TableCell>
                 <TableCell className="text-center">{item.price}</TableCell>
                 <TableCell className="text-center">{item.total}</TableCell>
@@ -407,6 +421,7 @@ const AddOrder: FC<AddOrderProps> = ({
             ))}
             <TableRow className="bg-gray-100 hover:bg-gray-100">
               <TableCell className="text-center font-bold">Total</TableCell>
+              <TableCell className="text-center" />
               <TableCell className="text-center" />
               <TableCell className="text-center" />
               <TableCell className="text-center" />

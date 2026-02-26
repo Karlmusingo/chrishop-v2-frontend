@@ -58,6 +58,7 @@ export default defineSchema({
     name: v.string(),
     type: v.optional(v.string()), //
     brand: v.optional(v.string()),
+    code: v.optional(v.string()),
     color: v.optional(v.string()),
     size: v.optional(v.string()),
     collarColor: v.optional(v.string()),

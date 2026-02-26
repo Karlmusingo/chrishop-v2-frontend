@@ -111,6 +111,15 @@ const AddProduct: FC<AddProductProps> = ({ callback }) => {
             </div>
           </div>
 
+          <div className="grid gap-1">
+            <Input
+              control={form.control}
+              name="code"
+              label="Code"
+              placeholder="Entrez le code du produit"
+            />
+          </div>
+
           <div className={`grid gap-4${typeValue?.includes("polo") ? " grid-cols-2" : ""}`}>
             <div className="grid gap-1">
               <MultiSelect

@@ -73,6 +73,9 @@ export const update = mutation({
       // Cascade: update products that reference the old value in color or collarColor
       const products = await ctx.db.query("products").collect();
       for (const product of products) {
+        // Skip code-based products (they don't use color in their name)
+        if (product.code) continue;
+
         const updates: Record<string, any> = {};
         let nameChanged = false;
         const nameParts = product.name.split("|");

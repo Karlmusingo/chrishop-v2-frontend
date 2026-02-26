@@ -31,13 +31,10 @@ export const addInventoriesSchema = z.object({
   brand: z.string({
     message: "Veiller selectionner la marque",
   }).min(1, "Veiller selectionner la marque"),
-  color: z.string({
-    message: "Veillez selectionner la couleur",
-  }).min(1, "Veillez selectionner la couleur"),
+  code: z.string().optional(),
+  color: z.string().optional(),
   collarColor: z.string().optional(),
-  size: z.string({
-    message: "Veillez selectionner la taille",
-  }).min(1, "Veillez selectionner la taille"),
+  size: z.string().optional(),
   quantity: z
     .string({
       invalid_type_error: "La quantité doit être un nombre supérieur à 0",
@@ -62,6 +59,14 @@ export const addInventoriesSchema = z.object({
       }
       return parsed;
     }),
-});
+}).refine(
+  (data) => {
+    return (data.code && data.code.length > 0) || (data.color && data.color.length > 0 && data.size && data.size.length > 0);
+  },
+  {
+    message: "Veuillez fournir un code ou une couleur et taille",
+    path: ["code"],
+  }
+);
 
 export type AddInventoriesSchemaType = z.infer<typeof addInventoriesSchema>;

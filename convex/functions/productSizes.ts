@@ -73,6 +73,9 @@ export const update = mutation({
       // Cascade: update products that reference the old value
       const products = await ctx.db.query("products").collect();
       for (const product of products) {
+        // Skip code-based products (they don't use size in their name)
+        if (product.code) continue;
+
         if (product.size === current.value) {
           const nameParts = product.name.split("|");
           nameParts[3] = newValue;

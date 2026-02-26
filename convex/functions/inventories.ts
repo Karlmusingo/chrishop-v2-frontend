@@ -102,17 +102,23 @@ export const findByProductAttributes = query({
   args: {
     type: v.string(),
     brand: v.string(),
-    color: v.string(),
-    size: v.string(),
+    code: v.optional(v.string()),
+    color: v.optional(v.string()),
+    size: v.optional(v.string()),
     collarColor: v.optional(v.string()),
     locationId: v.id("locations"),
   },
   handler: async (ctx, args) => {
-    const nameParts = [args.type, args.brand, args.color, args.size];
-    if (args.collarColor) {
-      nameParts.push(args.collarColor);
+    let name: string;
+    if (args.code) {
+      name = `${args.type}|${args.brand}|${args.code}`;
+    } else {
+      const nameParts = [args.type, args.brand, args.color!, args.size!];
+      if (args.collarColor) {
+        nameParts.push(args.collarColor);
+      }
+      name = nameParts.join("|");
     }
-    const name = nameParts.join("|");
 
     const product = await ctx.db
       .query("products")

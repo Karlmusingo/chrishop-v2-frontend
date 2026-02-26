@@ -18,6 +18,10 @@ export const getColumns = ({}: ActionsFuncType) => {
       accessorKey: "brand",
     },
     {
+      header: "Code",
+      accessorKey: "code",
+    },
+    {
       header: "Couleur",
       accessorKey: "color",
     },

@@ -6,6 +6,7 @@ export const list = query({
     search: v.optional(v.string()),
     type: v.optional(v.string()),
     brand: v.optional(v.string()),
+    code: v.optional(v.string()),
     color: v.optional(v.string()),
     size: v.optional(v.string()),
     collarColor: v.optional(v.string()),
@@ -26,6 +27,9 @@ export const list = query({
     }
     if (args.brand) {
       products = products.filter((p) => p.brand === args.brand);
+    }
+    if (args.code) {
+      products = products.filter((p) => p.code === args.code);
     }
     if (args.color) {
       products = products.filter((p) => p.color === args.color);
@@ -63,16 +67,22 @@ export const findByAttributes = query({
   args: {
     type: v.string(),
     brand: v.string(),
-    color: v.string(),
-    size: v.string(),
+    code: v.optional(v.string()),
+    color: v.optional(v.string()),
+    size: v.optional(v.string()),
     collarColor: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const nameParts = [args.type, args.brand, args.color, args.size];
-    if (args.collarColor) {
-      nameParts.push(args.collarColor);
+    let name: string;
+    if (args.code) {
+      name = `${args.type}|${args.brand}|${args.code}`;
+    } else {
+      const nameParts = [args.type, args.brand, args.color!, args.size!];
+      if (args.collarColor) {
+        nameParts.push(args.collarColor);
+      }
+      name = nameParts.join("|");
     }
-    const name = nameParts.join("|");
 
     return await ctx.db
       .query("products")
@@ -100,13 +110,33 @@ export const create = mutation({
   args: {
     type: v.string(),
     brand: v.string(),
-    color: v.array(v.string()),
-    size: v.array(v.string()),
+    code: v.optional(v.string()),
+    color: v.optional(v.array(v.string())),
+    size: v.optional(v.array(v.string())),
     collarColor: v.optional(v.array(v.string())),
     price: v.optional(v.number()),
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    // Code-based product: single product creation
+    if (args.code) {
+      const name = `${args.type}|${args.brand}|${args.code}`;
+      const id = await ctx.db.insert("products", {
+        name,
+        type: args.type,
+        brand: args.brand,
+        code: args.code,
+        price: args.price,
+        description: args.description,
+      });
+      return { count: 1 };
+    }
+
+    // Standard bulk creation: color + size required
+    if (!args.color?.length || !args.size?.length) {
+      throw new Error("Veuillez fournir un code ou des couleurs et tailles");
+    }
+
     type InsertProduct = {
       name: string;
       type: string;
@@ -120,7 +150,7 @@ export const create = mutation({
 
     const insertProducts = args.color.reduce<InsertProduct[]>(
       (result, color) => {
-        const sizes: InsertProduct[] = args.size.map((size) => {
+        const sizes: InsertProduct[] = args.size!.map((size) => {
           const name = `${args.type}|${args.brand}|${color}|${size}`;
           return {
             name,
@@ -166,6 +196,7 @@ export const update = mutation({
     id: v.id("products"),
     type: v.optional(v.string()),
     brand: v.optional(v.string()),
+    code: v.optional(v.string()),
     color: v.optional(v.string()),
     size: v.optional(v.string()),
     collarColor: v.optional(v.string()),
@@ -174,7 +205,17 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     const { id, ...rest } = args;
-    const name = `${rest.type}|${rest.brand}|${rest.color}|${rest.size}`;
+
+    let name: string;
+    if (rest.code) {
+      name = `${rest.type}|${rest.brand}|${rest.code}`;
+    } else {
+      const nameParts = [rest.type, rest.brand, rest.color, rest.size];
+      if (rest.collarColor) {
+        nameParts.push(rest.collarColor);
+      }
+      name = nameParts.filter(Boolean).join("|");
+    }
 
     const patch: Record<string, any> = { name };
     for (const [key, value] of Object.entries(rest)) {

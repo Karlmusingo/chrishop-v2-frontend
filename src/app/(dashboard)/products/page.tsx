@@ -28,6 +28,7 @@ const ProductsPage: FC<ProductsPageProps> = () => {
     search: queryObj.search as string | undefined,
     type: queryObj.type as string | undefined,
     brand: queryObj.brand as string | undefined,
+    code: queryObj.code as string | undefined,
     color: queryObj.color as string | undefined,
     size: queryObj.size as string | undefined,
     page,

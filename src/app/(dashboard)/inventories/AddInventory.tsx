@@ -90,8 +90,9 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
       {
         type: values.type,
         brand: values.brand,
-        color: values.color,
-        size: values.size,
+        ...(values.code ? { code: values.code } : {}),
+        ...(values.color ? { color: values.color } : {}),
+        ...(values.size ? { size: values.size } : {}),
         ...(typeValue?.includes("polo") && values.collarColor
           ? { collarColor: values.collarColor }
           : {}),
@@ -124,6 +125,7 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
 
     form.setValue("type", inventoryItem.type);
     form.setValue("brand", inventoryItem.brand);
+    form.setValue("code", inventoryItem.code);
     form.setValue("color", inventoryItem.color);
     form.setValue("size", inventoryItem.size);
     form.setValue("collarColor", inventoryItem.collarColor);
@@ -187,6 +189,15 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
                 options={brandOptions}
               />
             </div>
+          </div>
+
+          <div className="grid gap-1">
+            <Input
+              control={form.control}
+              name="code"
+              label="Code"
+              placeholder="Entrez le code du produit"
+            />
           </div>
 
           <div className={`grid gap-4${typeValue?.includes("polo") ? " grid-cols-2" : ""}`}>
@@ -255,6 +266,7 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
             <TableRow>
               <TableHead className="text-center">Type</TableHead>
               <TableHead className="text-center">Marque</TableHead>
+              <TableHead className="text-center">Code</TableHead>
               <TableHead className="text-center">Couleur</TableHead>
               <TableHead className="text-center">Taille</TableHead>
               <TableHead className="text-center">Quantité</TableHead>
@@ -267,8 +279,9 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
               <TableRow key={index} onClick={() => null}>
                 <TableCell className="text-center">{item.type}</TableCell>
                 <TableCell className="text-center">{item.brand}</TableCell>
-                <TableCell className="text-center">{item.color}</TableCell>
-                <TableCell className="text-center">{item.size}</TableCell>
+                <TableCell className="text-center">{item.code || "-"}</TableCell>
+                <TableCell className="text-center">{item.color || "-"}</TableCell>
+                <TableCell className="text-center">{item.size || "-"}</TableCell>
                 <TableCell className="text-center">{item.quantity}</TableCell>
                 <TableCell className="text-center">{item.price}</TableCell>
                 <TableCell className="text-right">
