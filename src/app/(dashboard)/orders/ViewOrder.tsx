@@ -131,9 +131,9 @@ const ViewOrder: FC<ViewOrderProps> = ({
               <div>
                 <CardTitle className="text-2xl font-bold">Facture</CardTitle>
                 <p className="text-sm">
-                  Numero: #{`${(orderData?._id || "")?.toString().slice(0, 8)}`}
+                  Numero: #{`${(orderData?._id || "")?.toString().slice(0, 8).toUpperCase()}`}
                 </p>
-                <p className="text-sm">Statut: {orderData.status}</p>
+                <p className="text-sm">Statut: {{ PAID: "PAYÉ", PENDING: "EN ATTENTE", CANCEL: "ANNULÉ" }[orderData.status as string] || orderData.status}</p>
               </div>
               <div className="text-right">
                 <p className="text-sm">

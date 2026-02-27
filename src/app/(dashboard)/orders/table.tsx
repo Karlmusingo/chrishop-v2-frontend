@@ -53,7 +53,14 @@ export const getColumns = ({ onEdit, onView, onCancel, profile }: ActionsFuncTyp
       cell: ({ row }) => {
         const rowData = row.original;
 
-        return (rowData._id || rowData.id)?.toString().slice(0, 8);
+        return (
+          <button
+            className="text-primary underline cursor-pointer hover:opacity-80"
+            onClick={() => onView(rowData._id || rowData.id, rowData)}
+          >
+            {(rowData._id || rowData.id)?.toString().slice(0, 8).toUpperCase()}
+          </button>
+        );
       },
     },
     {
