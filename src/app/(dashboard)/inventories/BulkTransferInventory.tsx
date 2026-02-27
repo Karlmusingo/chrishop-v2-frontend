@@ -10,7 +10,7 @@ import Modal from "@/components/ui/modal";
 import Button from "@/components/custom/Button";
 import Input from "@/components/custom/form/Input";
 
-import { FC, useEffect, useState } from "react";
+import { FC, useState } from "react";
 
 import { usePermission } from "@/hooks/usePermission";
 import { ROLES } from "@/interface/roles";
@@ -35,160 +35,127 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { IUnknown } from "@/interface/Iunknown";
-
 import {
-  addOrderSchema,
-  AddOrderSchemaType,
-} from "@/schemas/orders/orders.schema";
+  bulkTransferIndividualSchema,
+  BulkTransferIndividualSchemaType,
+} from "@/schemas/inventories/bulkTransferInventory.schema";
 import {
-  addPackagingOrderSchema,
-  AddPackagingOrderSchemaType,
-} from "@/schemas/orders/addPackagingOrder.schema";
+  bulkTransferPackagingSchema,
+  BulkTransferPackagingSchemaType,
+} from "@/schemas/inventories/bulkTransferPackaging.schema";
 import { useMutationWithToast } from "@/hooks/convex/useMutationWithToast";
 import { api } from "../../../../convex/_generated/api";
 import { useProductAttributes } from "@/hooks/convex/useProductAttributes";
 
-interface AddOrderProps {
+interface BulkTransferInventoryProps {
   callback?: () => void;
-  orderData?: IUnknown;
-  isOpen: boolean;
-  setIsOpen: (open: boolean) => void;
-  moveToNext?: (data?: IUnknown) => void;
 }
 
-type FormSchemaPlusProductIdType = AddOrderSchemaType & {
+type TransferItem = {
   productId: string;
-  price: number;
-  total: number;
+  type: string;
+  brand: string;
+  code?: string;
+  color?: string;
+  size?: string;
+  collarColor?: string;
+  transferQuantity: number;
+  availableQuantity: number;
 };
 
-type OrderMode = "individual" | "packaging";
+type TransferMode = "individual" | "packaging";
 
-const AddOrder: FC<AddOrderProps> = ({
+const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
   callback,
-  orderData,
-  isOpen,
-  setIsOpen,
-  moveToNext,
 }) => {
   const convex = useConvex();
-  const { mutate: createMutate, isPending } = useMutationWithToast(
-    api.functions.orders.create,
+  const { mutate, isPending } = useMutationWithToast(
+    api.functions.inventories.bulkTransfer
   );
-  const { mutate: updateMutate, isPending: isPendingUpdate } =
-    useMutationWithToast(api.functions.orders.update);
-  const { data: profile } = usePermission();
-  const isAdmin = profile?.role === ROLES.ADMIN;
-  const locations =
-    useQuery(api.functions.locations.list, isAdmin ? {} : "skip") ?? [];
+  const { userRole } = usePermission();
   const { typeOptions, brandOptions, colorOptions, sizeOptions } =
     useProductAttributes();
 
-  const [orders, setOrders] = useState<FormSchemaPlusProductIdType[]>([]);
-  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
-    null,
-  );
-  const [mode, setMode] = useState<OrderMode>("individual");
-
+  const locations = useQuery(api.functions.locations.list, {}) ?? [];
   const packagingTemplates =
     useQuery(api.functions.packagingTemplates.list, {}) ?? [];
 
-  const form = useForm<AddOrderSchemaType>({
-    resolver: zodResolver(addOrderSchema),
+  const [isOpened, setOpened] = useState(false);
+  const [items, setItems] = useState<TransferItem[]>([]);
+  const [mode, setMode] = useState<TransferMode>("individual");
+  const [sourceLocationId, setSourceLocationId] = useState<string | null>(null);
+  const [destinationLocationId, setDestinationLocationId] = useState<
+    string | null
+  >(null);
+
+  const form = useForm<BulkTransferIndividualSchemaType>({
+    resolver: zodResolver(bulkTransferIndividualSchema),
   });
   const typeValue = form.watch("type");
 
-  const packagingForm = useForm<AddPackagingOrderSchemaType>({
-    resolver: zodResolver(addPackagingOrderSchema),
+  const packagingForm = useForm<BulkTransferPackagingSchemaType>({
+    resolver: zodResolver(bulkTransferPackagingSchema),
     defaultValues: {
       // @ts-ignore
       numberOfPackages: "1",
     },
   });
 
-  useEffect(() => {
-    if (orderData && orderData.orderItems) {
-      setOrders(
-        orderData.orderItems.map((item: any) => ({
-          ...item,
-          type: item.product.type,
-          brand: item.product.brand,
-          code: item.product.code,
-          color: item.product.color,
-          size: item.product.size,
-          quantity: item.quantity,
-          collarColor: item.product.collarColor,
-
-          productId: item.productId,
-          price: item.unitPrice,
-          total: item.totalPrice,
-        })),
-      );
-    }
-  }, [orderData]);
-
-  function callbackOnSuccess(data?: IUnknown) {
+  function callbackOnSuccess() {
     form.reset();
     packagingForm.reset();
-    moveToNext?.(data);
+    setOpened(false);
+    setItems([]);
+    setSourceLocationId(null);
+    setDestinationLocationId(null);
     callback?.();
   }
 
-  const getLocationId = () => {
-    return isAdmin ? selectedLocationId : profile?.locationId;
+  const getSourceLocationIdForQuery = () => {
+    if (!sourceLocationId || sourceLocationId === "depot") return undefined;
+    return sourceLocationId;
   };
 
   const handleSubmit = () => {
-    const locationId = getLocationId();
-    if (!locationId) {
-      toast.error("Veuillez sélectionner une boutique");
+    if (!sourceLocationId) {
+      toast.error("Veuillez sélectionner une source");
+      return;
+    }
+    if (!destinationLocationId) {
+      toast.error("Veuillez sélectionner une destination");
+      return;
+    }
+    if (items.length === 0) {
+      toast.error("Veuillez ajouter au moins un article");
       return;
     }
 
-    if (orderData?._id) {
-      return updateMutate(
-        {
-          id: orderData._id as any,
-          items: orders.map((item) => ({
-            productId: item.productId as any,
-            quantity: item.quantity,
-          })),
-          userId: profile._id as any,
-          locationId: locationId as any,
-        },
-        {
-          successMessage: "Commande mise à jour avec succès",
-          onSuccess: callbackOnSuccess,
-        },
-      );
-    }
-
-    createMutate(
+    mutate(
       {
-        items: orders.map((item) => ({
+        items: items.map((item) => ({
           productId: item.productId as any,
-          quantity: item.quantity,
+          quantity: item.transferQuantity,
         })),
-        userId: profile._id as any,
-        locationId: locationId as any,
+        sourceLocationId: getSourceLocationIdForQuery() as any,
+        destinationLocationId: destinationLocationId as any,
       },
       {
-        successMessage: "Commande créée avec succès",
+        successMessage: "Transfert effectué avec succès",
         onSuccess: callbackOnSuccess,
-      },
+      }
     );
   };
 
-  async function onAddOrder(values: AddOrderSchemaType) {
-    const locationId = getLocationId();
-    if (!locationId) {
-      toast.error("Veuillez sélectionner une boutique");
+  async function onAddTransferItem(values: BulkTransferIndividualSchemaType) {
+    if (!sourceLocationId) {
+      toast.error("Veuillez sélectionner une source");
       return;
     }
 
+    const sourceLocId = getSourceLocationIdForQuery();
+
     const inventory = await convex.query(
-      api.functions.inventories.findByProductAttributes,
+      api.functions.inventories.findByProductAttributesAtSource,
       {
         type: values.type,
         brand: values.brand,
@@ -198,58 +165,69 @@ const AddOrder: FC<AddOrderProps> = ({
         ...(typeValue?.includes("polo") && values.collarColor
           ? { collarColor: values.collarColor }
           : {}),
-        locationId: locationId as any,
-      },
+        locationId: sourceLocId as any,
+      }
     );
 
     if (!inventory || inventory.quantity <= 0) {
-      toast.error("Ce produit n'a pas d'inventaire");
+      toast.error("Ce produit n'a pas d'inventaire à cette source");
       return;
     }
 
-    if (orders.find((item) => item.productId === inventory.productId)) {
+    if (items.find((item) => item.productId === inventory.productId)) {
       toast.error("Ce produit est déjà dans la liste");
       return;
     }
 
-    if (inventory.quantity < values.quantity) {
+    if (inventory.quantity < values.transferQuantity) {
       toast.error(
-        "Quantité insuffisante, quantité disponible: " + inventory.quantity,
+        "Quantité insuffisante, quantité disponible: " + inventory.quantity
       );
       return;
     }
 
-    setOrders([
-      ...orders,
+    form.reset();
+
+    setItems([
+      ...items,
       {
-        ...values,
+        type: values.type,
+        brand: values.brand,
+        code: values.code,
+        color: values.color,
+        size: values.size,
+        collarColor: values.collarColor,
         productId: inventory.productId,
-        price: inventory.price,
-        total: (inventory.price ?? 1) * values.quantity,
+        transferQuantity: values.transferQuantity,
+        availableQuantity: inventory.quantity,
       },
     ]);
   }
 
-  async function onAddPackagingOrder(values: AddPackagingOrderSchemaType) {
-    const locationId = getLocationId();
-    if (!locationId) {
-      toast.error("Veuillez sélectionner une boutique");
+  async function onAddPackagingTransfer(
+    values: BulkTransferPackagingSchemaType
+  ) {
+    if (!sourceLocationId) {
+      toast.error("Veuillez sélectionner une source");
       return;
     }
 
     try {
+      const sourceLocId = getSourceLocationIdForQuery();
+
       const result = await convex.query(
         api.functions.packagingTemplates.expandToItems,
         {
           templateId: values.templateId as any,
           numberOfPackages: values.numberOfPackages,
-          locationId: locationId as any,
-        },
+          locationId: sourceLocId as any,
+          checkInventory: true,
+        }
       );
 
       if (result.missingProducts.length > 0) {
         toast.error(
-          `Produits manquants: ${result.missingProducts.join(", ")}`,
+          `Produits manquants: ${result.missingProducts.join(", ")}`
         );
         return;
       }
@@ -258,40 +236,36 @@ const AddOrder: FC<AddOrderProps> = ({
         const details = result.insufficientStock
           .map(
             (s: any) =>
-              `${s.size}: ${s.available}/${s.required} disponible(s)`,
+              `${s.size}: ${s.available}/${s.required} disponible(s)`
           )
           .join(", ");
         toast.error(`Stock insuffisant - ${details}`);
         return;
       }
 
-      // Check for duplicates with existing order items
+      // Check for duplicates
       const duplicates = result.items.filter((item: any) =>
-        orders.find((o) => o.productId === item.productId),
+        items.find((existing) => existing.productId === item.productId)
       );
       if (duplicates.length > 0) {
         toast.error(
-          `Certains produits sont déjà dans la liste: ${duplicates.map((d: any) => d.size).join(", ")}`,
+          `Certains produits sont déjà dans la liste: ${duplicates.map((d: any) => d.size).join(", ")}`
         );
         return;
       }
 
-      const newItems: FormSchemaPlusProductIdType[] = result.items.map(
-        (item: any) => ({
-          type: item.type,
-          brand: item.brand,
-          color: item.color,
-          size: item.size,
-          collarColor: item.collarColor,
-          code: undefined,
-          quantity: item.quantity,
-          productId: item.productId,
-          price: item.inventoryPrice ?? 0,
-          total: (item.inventoryPrice ?? 0) * item.quantity,
-        }),
-      );
+      const newItems: TransferItem[] = result.items.map((item: any) => ({
+        type: item.type,
+        brand: item.brand,
+        color: item.color,
+        size: item.size,
+        collarColor: item.collarColor,
+        productId: item.productId,
+        transferQuantity: item.quantity,
+        availableQuantity: item.availableQuantity ?? 0,
+      }));
 
-      setOrders([...orders, ...newItems]);
+      setItems([...items, ...newItems]);
       packagingForm.reset();
       // @ts-ignore
       packagingForm.setValue("numberOfPackages", "1");
@@ -300,84 +274,123 @@ const AddOrder: FC<AddOrderProps> = ({
     }
   }
 
-  const handleRemoveFromOrders = (index: number) => {
-    const updatedInventory = [...orders];
-    updatedInventory.splice(index, 1);
-    setOrders(updatedInventory);
+  const handleRemoveItem = (index: number) => {
+    const updated = [...items];
+    updated.splice(index, 1);
+    setItems(updated);
   };
 
-  const handleEditOrder = (index: number) => {
-    const updatedOrder = [...orders];
-    const orderItem = updatedOrder[index];
+  const handleEditItem = (index: number) => {
+    const updated = [...items];
+    const item = updated[index];
 
-    form.setValue("type", orderItem.type);
-    form.setValue("brand", orderItem.brand);
-    form.setValue("code", orderItem.code);
-    form.setValue("color", orderItem.color);
-    form.setValue("size", orderItem.size);
-    form.setValue("collarColor", orderItem.collarColor);
+    form.setValue("type", item.type);
+    form.setValue("brand", item.brand);
+    form.setValue("code", item.code);
+    form.setValue("color", item.color);
+    form.setValue("size", item.size);
+    form.setValue("collarColor", item.collarColor);
     // @ts-ignore
-    form.setValue("quantity", orderItem.quantity.toString());
+    form.setValue("transferQuantity", item.transferQuantity.toString());
 
-    updatedOrder.splice(index, 1);
-    setOrders(updatedOrder);
+    updated.splice(index, 1);
+    setItems(updated);
     setMode("individual");
   };
-
-  const totalSize = orders.reduce((acc, curr) => acc + curr.total, 0);
 
   const templateOptions = packagingTemplates.map((t: any) => ({
     label: `${t.name} (${t.packagingType === "BALE" ? "Balle" : "Douzaine"} - ${t.totalItems} pcs)`,
     value: t._id,
   }));
 
+  const sourceLocationOptions = [
+    { label: "Depot", value: "depot" },
+    ...locations
+      .filter((loc: any) => loc._id !== destinationLocationId)
+      .map((loc: any) => ({
+        label: loc.name,
+        value: loc._id,
+      })),
+  ];
+
+  const destinationLocationOptions = locations
+    .filter((loc: any) => {
+      if (sourceLocationId === "depot") return true;
+      return loc._id !== sourceLocationId;
+    })
+    .map((loc: any) => ({
+      label: loc.name,
+      value: loc._id,
+    }));
+
   return (
     <Modal
-      title="Ajouter une vente"
+      title="Transfert"
       description=""
-      onClose={() => setIsOpen(false)}
-      isOpened={isOpen}
+      onClose={() => setOpened(false)}
+      isOpened={isOpened}
       classNames={{
         title: "text-2xl font-semibold",
         description: "text-sm",
         container: "w-full max-h-[90vh] overflow-y-auto sm:max-w-[700px]",
       }}
       trigger={
-        <Button
-          icon="Plus"
-          type="button"
-          disabled={!profile?.location && profile?.role !== "ADMIN"}
-          onClick={() => {
-            setIsOpen(true);
-          }}
-        >
-          Ajouter une vente
-        </Button>
+        userRole === ROLES.ADMIN && (
+          <Button
+            icon="ArrowRightLeft"
+            type="button"
+            variant="outline"
+            onClick={() => setOpened(true)}
+          >
+            Transfert
+          </Button>
+        )
       }
     >
-      {isAdmin && (
-        <div className="grid gap-1 mb-4">
-          <Label>Boutique</Label>
+      {/* Source and Destination selectors */}
+      <div className="mb-4 grid grid-cols-2 gap-4">
+        <div className="grid gap-1">
+          <Label>Source</Label>
           <SelectUI
-            value={selectedLocationId ?? undefined}
+            value={sourceLocationId ?? undefined}
             onValueChange={(val) => {
-              setSelectedLocationId(val);
-              setOrders([]);
+              setSourceLocationId(val);
+              setItems([]);
             }}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Sélectionnez une boutique" />
+              <SelectValue placeholder="Sélectionnez la source" />
             </SelectTrigger>
             <SelectContent>
-              {locations.map((loc: any) => (
-                <SelectItem key={loc._id} value={loc._id}>
-                  {loc.name}
+              {sourceLocationOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
                 </SelectItem>
               ))}
             </SelectContent>
           </SelectUI>
         </div>
-      )}
+        <div className="grid gap-1">
+          <Label>Destination</Label>
+          <SelectUI
+            value={destinationLocationId ?? undefined}
+            onValueChange={(val) => {
+              setDestinationLocationId(val);
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Sélectionnez la destination" />
+            </SelectTrigger>
+            <SelectContent>
+              {destinationLocationOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </SelectUI>
+        </div>
+      </div>
 
       {/* Mode toggle */}
       <div className="mb-4 flex gap-1 rounded-lg border bg-[#F8F8F8] p-1">
@@ -409,9 +422,9 @@ const AddOrder: FC<AddOrderProps> = ({
         <Form {...form}>
           <form
             className="grid gap-4 py-4 rounded-lg border p-6"
-            onSubmit={form.handleSubmit(onAddOrder)}
+            onSubmit={form.handleSubmit(onAddTransferItem)}
           >
-            <div className=" grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-1">
                 <SelectInput
                   control={form.control}
@@ -421,7 +434,6 @@ const AddOrder: FC<AddOrderProps> = ({
                   options={typeOptions}
                 />
               </div>
-
               <div className="grid gap-1">
                 <SelectInput
                   control={form.control}
@@ -442,7 +454,9 @@ const AddOrder: FC<AddOrderProps> = ({
               />
             </div>
 
-            <div className={`grid gap-4${typeValue?.includes("polo") ? " grid-cols-2" : ""}`}>
+            <div
+              className={`grid gap-4${typeValue?.includes("polo") ? " grid-cols-2" : ""}`}
+            >
               <div className="grid gap-1">
                 <SelectInput
                   control={form.control}
@@ -452,7 +466,6 @@ const AddOrder: FC<AddOrderProps> = ({
                   options={colorOptions}
                 />
               </div>
-
               {typeValue?.includes("polo") && (
                 <div className="grid gap-1">
                   <SelectInput
@@ -465,6 +478,7 @@ const AddOrder: FC<AddOrderProps> = ({
                 </div>
               )}
             </div>
+
             <div className="grid gap-1">
               <SelectInput
                 control={form.control}
@@ -478,18 +492,14 @@ const AddOrder: FC<AddOrderProps> = ({
             <div className="mb-2 grid gap-1">
               <Input
                 control={form.control}
-                name="quantity"
-                label="Quantité"
+                name="transferQuantity"
+                label="Quantité à transférer"
                 type="number"
                 placeholder="Entrez la quantité"
               />
             </div>
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isPending || isPendingUpdate}
-            >
+            <Button type="submit" className="w-full" loading={isPending}>
               Ajouter
             </Button>
           </form>
@@ -498,7 +508,7 @@ const AddOrder: FC<AddOrderProps> = ({
         <Form {...packagingForm}>
           <form
             className="grid gap-4 py-4 rounded-lg border p-6"
-            onSubmit={packagingForm.handleSubmit(onAddPackagingOrder)}
+            onSubmit={packagingForm.handleSubmit(onAddPackagingTransfer)}
           >
             <div className="grid gap-1">
               <SelectInput
@@ -520,11 +530,7 @@ const AddOrder: FC<AddOrderProps> = ({
               />
             </div>
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isPending || isPendingUpdate}
-            >
+            <Button type="submit" className="w-full" loading={isPending}>
               Ajouter les articles
             </Button>
           </form>
@@ -537,32 +543,43 @@ const AddOrder: FC<AddOrderProps> = ({
             <TableRow>
               <TableHead className="text-center">Type</TableHead>
               <TableHead className="text-center">Marque</TableHead>
-              <TableHead className="text-center">Code</TableHead>
               <TableHead className="text-center">Couleur</TableHead>
               <TableHead className="text-center">Taille</TableHead>
-              <TableHead className="text-center">Quantité</TableHead>
-              <TableHead className="text-center">Prix</TableHead>
-              <TableHead className="text-center">Total</TableHead>
+              <TableHead className="text-center">Disponible</TableHead>
+              <TableHead className="text-center">À transférer</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {orders.map((item, index) => (
-              <TableRow key={index} onClick={() => null}>
+            {items.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center text-gray-500">
+                  Aucun article ajouté
+                </TableCell>
+              </TableRow>
+            )}
+            {items.map((item, index) => (
+              <TableRow key={index}>
                 <TableCell className="text-center">{item.type}</TableCell>
                 <TableCell className="text-center">{item.brand}</TableCell>
-                <TableCell className="text-center">{item.code || "-"}</TableCell>
-                <TableCell className="text-center">{item.color || "-"}</TableCell>
-                <TableCell className="text-center">{item.size || "-"}</TableCell>
-                <TableCell className="text-center">{item.quantity}</TableCell>
-                <TableCell className="text-center">{item.price}</TableCell>
-                <TableCell className="text-center">{item.total}</TableCell>
+                <TableCell className="text-center">
+                  {item.color || "-"}
+                </TableCell>
+                <TableCell className="text-center">
+                  {item.size || "-"}
+                </TableCell>
+                <TableCell className="text-center">
+                  {item.availableQuantity}
+                </TableCell>
+                <TableCell className="text-center">
+                  {item.transferQuantity}
+                </TableCell>
                 <TableCell className="text-right">
                   <Button
                     variant="link"
                     size="sm"
                     className="px-2"
-                    onClick={() => handleEditOrder(index)}
+                    onClick={() => handleEditItem(index)}
                   >
                     <Pencil className="text-gray-500" size={16} />
                   </Button>
@@ -570,26 +587,13 @@ const AddOrder: FC<AddOrderProps> = ({
                     variant="link"
                     size="sm"
                     className="p-0"
-                    onClick={() => handleRemoveFromOrders(index)}
+                    onClick={() => handleRemoveItem(index)}
                   >
                     <Trash className="text-red-500" size={16} />
                   </Button>
                 </TableCell>
               </TableRow>
             ))}
-            <TableRow className="bg-gray-100 hover:bg-gray-100">
-              <TableCell className="text-center font-bold">Total</TableCell>
-              <TableCell className="text-center" />
-              <TableCell className="text-center" />
-              <TableCell className="text-center" />
-              <TableCell className="text-center" />
-              <TableCell className="text-center" />
-              <TableCell className="text-center" />
-              <TableCell className="text-center font-bold">
-                {totalSize}
-              </TableCell>
-              <TableCell className="text-right" />
-            </TableRow>
           </TableBody>
         </Table>
       </div>
@@ -598,7 +602,7 @@ const AddOrder: FC<AddOrderProps> = ({
         <div className="flex gap-2">
           <Button
             className="w-full"
-            loading={isPending || isPendingUpdate}
+            loading={isPending}
             onClick={() => handleSubmit()}
           >
             Enregistrer
@@ -608,7 +612,7 @@ const AddOrder: FC<AddOrderProps> = ({
             onClick={() => {
               form.reset();
               packagingForm.reset();
-              setOrders([]);
+              setItems([]);
             }}
           >
             Annuler
@@ -619,4 +623,4 @@ const AddOrder: FC<AddOrderProps> = ({
   );
 };
 
-export default AddOrder;
+export default BulkTransferInventory;

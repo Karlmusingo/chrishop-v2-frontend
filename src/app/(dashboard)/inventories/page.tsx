@@ -10,6 +10,7 @@ import { DataList } from "@/components/custom/list/DataList";
 import { getColumns } from "./table";
 
 import AddInventory from "./AddInventory";
+import BulkTransferInventory from "./BulkTransferInventory";
 import LocationFilter from "@/components/custom/LocationFilter";
 import PageHeader from "@/components/custom/PageHeader";
 import TransferInventory from "./TransferInventory";
@@ -87,7 +88,12 @@ const InventoriesPage: FC<InventoriesPageProps> = () => {
             options: { tab: ["IN_STOCK", "LOW_STOCK", "OUT_OF_STOCK"] },
             filterKey: "status",
           }}
-          action={<AddInventory />}
+          action={
+            <div className="flex gap-2">
+              <BulkTransferInventory />
+              <AddInventory />
+            </div>
+          }
         />
       </div>
     </div>

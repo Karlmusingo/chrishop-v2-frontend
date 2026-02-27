@@ -16,6 +16,7 @@ import type * as functions_email from "../functions/email.js";
 import type * as functions_inventories from "../functions/inventories.js";
 import type * as functions_locations from "../functions/locations.js";
 import type * as functions_orders from "../functions/orders.js";
+import type * as functions_packagingTemplates from "../functions/packagingTemplates.js";
 import type * as functions_productBrands from "../functions/productBrands.js";
 import type * as functions_productColors from "../functions/productColors.js";
 import type * as functions_productSizes from "../functions/productSizes.js";
@@ -44,6 +45,7 @@ declare const fullApi: ApiFromModules<{
   "functions/inventories": typeof functions_inventories;
   "functions/locations": typeof functions_locations;
   "functions/orders": typeof functions_orders;
+  "functions/packagingTemplates": typeof functions_packagingTemplates;
   "functions/productBrands": typeof functions_productBrands;
   "functions/productColors": typeof functions_productColors;
   "functions/productSizes": typeof functions_productSizes;

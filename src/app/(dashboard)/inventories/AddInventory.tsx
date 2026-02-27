@@ -14,7 +14,7 @@ import { FC, useState } from "react";
 
 import { usePermission } from "@/hooks/usePermission";
 import { ROLES } from "@/interface/roles";
-import { useConvex } from "convex/react";
+import { useConvex, useQuery } from "convex/react";
 
 import { DialogFooter } from "@/components/ui/dialog";
 import { Pencil, Trash } from "lucide-react";
@@ -32,6 +32,10 @@ import {
   addInventoriesSchema,
   AddInventoriesSchemaType,
 } from "@/schemas/inventories/inventories.schema";
+import {
+  addPackagingInventorySchema,
+  AddPackagingInventorySchemaType,
+} from "@/schemas/inventories/addPackagingInventory.schema";
 import { useMutationWithToast } from "@/hooks/convex/useMutationWithToast";
 import { api } from "../../../../convex/_generated/api";
 import { useProductAttributes } from "@/hooks/convex/useProductAttributes";
@@ -44,6 +48,8 @@ type FormSchemaPlusProductIdType = AddInventoriesSchemaType & {
   productId: string;
 };
 
+type InventoryMode = "individual" | "packaging";
+
 const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
   const convex = useConvex();
   const { mutate, isPending } = useMutationWithToast(
@@ -55,14 +61,27 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
 
   const [isOpened, setOpened] = useState(false);
   const [inventory, setInventory] = useState<FormSchemaPlusProductIdType[]>([]);
+  const [mode, setMode] = useState<InventoryMode>("individual");
+
+  const packagingTemplates =
+    useQuery(api.functions.packagingTemplates.list, {}) ?? [];
 
   const form = useForm<AddInventoriesSchemaType>({
     resolver: zodResolver(addInventoriesSchema),
   });
   const typeValue = form.watch("type");
 
+  const packagingForm = useForm<AddPackagingInventorySchemaType>({
+    resolver: zodResolver(addPackagingInventorySchema),
+    defaultValues: {
+      // @ts-ignore
+      numberOfPackages: "1",
+    },
+  });
+
   function callbackOnSuccess() {
     form.reset();
+    packagingForm.reset();
     setOpened(false);
     setInventory([]);
     callback?.();
@@ -113,6 +132,59 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
     setInventory([...inventory, { ...values, productId: product._id }]);
   }
 
+  async function onAddPackagingInventory(
+    values: AddPackagingInventorySchemaType
+  ) {
+    try {
+      const result = await convex.query(
+        api.functions.packagingTemplates.expandToItems,
+        {
+          templateId: values.templateId as any,
+          numberOfPackages: values.numberOfPackages,
+        }
+      );
+
+      if (result.missingProducts.length > 0) {
+        toast.error(
+          `Produits manquants: ${result.missingProducts.join(", ")}`
+        );
+        return;
+      }
+
+      // Check for duplicates with existing inventory items
+      const duplicates = result.items.filter((item: any) =>
+        inventory.find((inv) => inv.productId === item.productId)
+      );
+      if (duplicates.length > 0) {
+        toast.error(
+          `Certains produits sont déjà dans la liste: ${duplicates.map((d: any) => d.size).join(", ")}`
+        );
+        return;
+      }
+
+      const newItems: FormSchemaPlusProductIdType[] = result.items.map(
+        (item: any) => ({
+          type: item.type,
+          brand: item.brand,
+          color: item.color,
+          size: item.size,
+          collarColor: item.collarColor,
+          code: undefined,
+          quantity: item.quantity,
+          price: values.price,
+          productId: item.productId,
+        })
+      );
+
+      setInventory([...inventory, ...newItems]);
+      packagingForm.reset();
+      // @ts-ignore
+      packagingForm.setValue("numberOfPackages", "1");
+    } catch (error: any) {
+      toast.error(error.message || "Erreur lors de l'expansion du modèle");
+    }
+  }
+
   const handleRemoveFromInventory = (index: number) => {
     const updatedInventory = [...inventory];
     updatedInventory.splice(index, 1);
@@ -136,7 +208,13 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
 
     updatedInventory.splice(index, 1);
     setInventory(updatedInventory);
+    setMode("individual");
   };
+
+  const templateOptions = packagingTemplates.map((t: any) => ({
+    label: `${t.name} (${t.packagingType === "BALE" ? "Balle" : "Douzaine"} - ${t.totalItems} pcs)`,
+    value: t._id,
+  }));
 
   return (
     <Modal
@@ -164,101 +242,171 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
         )
       }
     >
-      <Form {...form}>
-        <form
-          className="grid gap-4 py-4 rounded-lg border p-6"
-          onSubmit={form.handleSubmit(onAddInventory)}
+      {/* Mode toggle */}
+      <div className="mb-4 flex gap-1 rounded-lg border bg-[#F8F8F8] p-1">
+        <button
+          type="button"
+          onClick={() => setMode("individual")}
+          className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+            mode === "individual"
+              ? "bg-white text-[var(--text-primary)] shadow-sm"
+              : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+          }`}
         >
-          <div className=" grid grid-cols-2 gap-4">
-            <div className="grid gap-1">
-              <SelectInput
-                control={form.control}
-                name="type"
-                label="Type"
-                placeholder="Sélectionnez un type"
-                options={typeOptions}
-              />
-            </div>
+          Individuel
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("packaging")}
+          className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+            mode === "packaging"
+              ? "bg-white text-[var(--text-primary)] shadow-sm"
+              : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+          }`}
+        >
+          Emballage
+        </button>
+      </div>
 
-            <div className="grid gap-1">
-              <SelectInput
-                control={form.control}
-                name="brand"
-                label="Marque"
-                placeholder="Sélectionnez une marque"
-                options={brandOptions}
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-1">
-            <Input
-              control={form.control}
-              name="code"
-              label="Code"
-              placeholder="Entrez le code du produit"
-            />
-          </div>
-
-          <div className={`grid gap-4${typeValue?.includes("polo") ? " grid-cols-2" : ""}`}>
-            <div className="grid gap-1">
-              <SelectInput
-                control={form.control}
-                name="color"
-                label="Couleur"
-                placeholder="Sélectionnez les couleurs"
-                options={colorOptions}
-              />
-            </div>
-
-            {typeValue?.includes("polo") && (
+      {mode === "individual" ? (
+        <Form {...form}>
+          <form
+            className="grid gap-4 py-4 rounded-lg border p-6"
+            onSubmit={form.handleSubmit(onAddInventory)}
+          >
+            <div className=" grid grid-cols-2 gap-4">
               <div className="grid gap-1">
                 <SelectInput
                   control={form.control}
-                  name="collarColor"
-                  label="Couleur de la colle"
+                  name="type"
+                  label="Type"
+                  placeholder="Sélectionnez un type"
+                  options={typeOptions}
+                />
+              </div>
+
+              <div className="grid gap-1">
+                <SelectInput
+                  control={form.control}
+                  name="brand"
+                  label="Marque"
+                  placeholder="Sélectionnez une marque"
+                  options={brandOptions}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-1">
+              <Input
+                control={form.control}
+                name="code"
+                label="Code"
+                placeholder="Entrez le code du produit"
+              />
+            </div>
+
+            <div className={`grid gap-4${typeValue?.includes("polo") ? " grid-cols-2" : ""}`}>
+              <div className="grid gap-1">
+                <SelectInput
+                  control={form.control}
+                  name="color"
+                  label="Couleur"
                   placeholder="Sélectionnez les couleurs"
                   options={colorOptions}
                 />
               </div>
-            )}
-          </div>
-          <div className="grid gap-1">
-            <SelectInput
-              control={form.control}
-              name="size"
-              label="Taille"
-              placeholder="Sélectionnez les tailles"
-              options={sizeOptions}
-            />
-          </div>
 
-          <div className="mb-2 grid grid-cols-2 gap-4">
-            <div className="grid gap-1">
-              <Input
-                control={form.control}
-                name="quantity"
-                label="Quantité"
-                type="number"
-                placeholder="Entrez la quantité"
-              />
+              {typeValue?.includes("polo") && (
+                <div className="grid gap-1">
+                  <SelectInput
+                    control={form.control}
+                    name="collarColor"
+                    label="Couleur de la colle"
+                    placeholder="Sélectionnez les couleurs"
+                    options={colorOptions}
+                  />
+                </div>
+              )}
             </div>
             <div className="grid gap-1">
-              <Input
+              <SelectInput
                 control={form.control}
-                name="price"
-                label="Prix"
-                type="number"
-                placeholder="Entrez le prix"
+                name="size"
+                label="Taille"
+                placeholder="Sélectionnez les tailles"
+                options={sizeOptions}
               />
             </div>
-          </div>
 
-          <Button type="submit" className="w-full" loading={isPending}>
-            Ajouter
-          </Button>
-        </form>
-      </Form>
+            <div className="mb-2 grid grid-cols-2 gap-4">
+              <div className="grid gap-1">
+                <Input
+                  control={form.control}
+                  name="quantity"
+                  label="Quantité"
+                  type="number"
+                  placeholder="Entrez la quantité"
+                />
+              </div>
+              <div className="grid gap-1">
+                <Input
+                  control={form.control}
+                  name="price"
+                  label="Prix"
+                  type="number"
+                  placeholder="Entrez le prix"
+                />
+              </div>
+            </div>
+
+            <Button type="submit" className="w-full" loading={isPending}>
+              Ajouter
+            </Button>
+          </form>
+        </Form>
+      ) : (
+        <Form {...packagingForm}>
+          <form
+            className="grid gap-4 py-4 rounded-lg border p-6"
+            onSubmit={packagingForm.handleSubmit(onAddPackagingInventory)}
+          >
+            <div className="grid gap-1">
+              <SelectInput
+                control={packagingForm.control}
+                name="templateId"
+                label="Modèle d'emballage"
+                placeholder="Sélectionnez un modèle"
+                options={templateOptions}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-1">
+                <Input
+                  control={packagingForm.control}
+                  name="numberOfPackages"
+                  label="Nombre d'emballages"
+                  type="number"
+                  placeholder="1"
+                />
+              </div>
+              <div className="grid gap-1">
+                <Input
+                  control={packagingForm.control}
+                  name="price"
+                  label="Prix unitaire"
+                  type="number"
+                  placeholder="Entrez le prix"
+                />
+              </div>
+            </div>
+
+            <Button type="submit" className="w-full" loading={isPending}>
+              Ajouter les articles
+            </Button>
+          </form>
+        </Form>
+      )}
 
       <div className="overflow-hidden rounded-lg border">
         <Table>
@@ -321,6 +469,7 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
             variant="outline"
             onClick={() => {
               form.reset();
+              packagingForm.reset();
               setInventory([]);
             }}
           >

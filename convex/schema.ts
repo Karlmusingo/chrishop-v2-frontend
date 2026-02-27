@@ -138,4 +138,19 @@ export default defineSchema({
     value: v.string(),
     sortOrder: v.optional(v.number()),
   }).index("by_value", ["value"]),
+
+  packagingTemplates: defineTable({
+    name: v.string(),
+    packagingType: v.union(v.literal("BALE"), v.literal("DOZEN")),
+    totalItems: v.number(),
+    productType: v.string(),
+    productBrand: v.string(),
+    color: v.string(),
+    collarColor: v.optional(v.string()),
+    sizeDistribution: v.array(
+      v.object({ size: v.string(), quantity: v.number() })
+    ),
+  })
+    .index("by_name", ["name"])
+    .index("by_packagingType", ["packagingType"]),
 });

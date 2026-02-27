@@ -45,8 +45,6 @@ export const login = action({
       );
     }
 
-    console.log("user :>> ", user);
-
     return {
       id: user._id,
       email: user.email,

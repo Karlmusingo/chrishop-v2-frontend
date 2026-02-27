@@ -5,12 +5,14 @@ import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import PageHeader from "@/components/custom/PageHeader";
 import AttributeTable from "./AttributeTable";
+import PackagingTemplateTable from "./PackagingTemplateTable";
 
 const tabs = [
   { key: "types", label: "Types" },
   { key: "brands", label: "Marques" },
   { key: "colors", label: "Couleurs" },
   { key: "sizes", label: "Tailles" },
+  { key: "packaging", label: "Emballages" },
 ] as const;
 
 type TabKey = (typeof tabs)[number]["key"];
@@ -22,6 +24,8 @@ const ConfigurationPage: FC = () => {
   const brands = useQuery(api.functions.productBrands.list, {}) ?? [];
   const colors = useQuery(api.functions.productColors.list, {}) ?? [];
   const sizes = useQuery(api.functions.productSizes.list, {}) ?? [];
+  const packagingTemplates =
+    useQuery(api.functions.packagingTemplates.list, {}) ?? [];
 
   return (
     <div>
@@ -84,6 +88,10 @@ const ConfigurationPage: FC = () => {
           updateMutation={api.functions.productSizes.update}
           removeMutation={api.functions.productSizes.remove}
         />
+      )}
+
+      {activeTab === "packaging" && (
+        <PackagingTemplateTable items={packagingTemplates as any} />
       )}
     </div>
   );

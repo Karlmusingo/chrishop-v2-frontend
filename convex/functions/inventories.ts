@@ -299,3 +299,140 @@ export const transfer = mutation({
     return { success: true };
   },
 });
+
+export const findByProductAttributesAtSource = query({
+  args: {
+    type: v.string(),
+    brand: v.string(),
+    code: v.optional(v.string()),
+    color: v.optional(v.string()),
+    size: v.optional(v.string()),
+    collarColor: v.optional(v.string()),
+    locationId: v.optional(v.id("locations")),
+  },
+  handler: async (ctx, args) => {
+    let name: string;
+    if (args.code) {
+      name = `${args.type}|${args.brand}|${args.code}`;
+    } else {
+      const nameParts = [args.type, args.brand, args.color!, args.size!];
+      if (args.collarColor) {
+        nameParts.push(args.collarColor);
+      }
+      name = nameParts.join("|");
+    }
+
+    const product = await ctx.db
+      .query("products")
+      .withIndex("by_name", (q) => q.eq("name", name))
+      .first();
+
+    if (!product) return null;
+
+    const inventory = await ctx.db
+      .query("inventories")
+      .withIndex("by_productId_locationId", (q) =>
+        q.eq("productId", product._id).eq("locationId", args.locationId)
+      )
+      .first();
+
+    if (!inventory) return null;
+
+    return {
+      ...inventory,
+      product,
+      status: computeStatus(inventory.quantity),
+    };
+  },
+});
+
+export const bulkTransfer = mutation({
+  args: {
+    items: v.array(
+      v.object({
+        productId: v.id("products"),
+        quantity: v.number(),
+      })
+    ),
+    sourceLocationId: v.optional(v.id("locations")),
+    destinationLocationId: v.id("locations"),
+  },
+  handler: async (ctx, args) => {
+    if (args.sourceLocationId === args.destinationLocationId) {
+      throw new Error(
+        "La source et la destination ne peuvent pas être identiques"
+      );
+    }
+
+    if (args.items.length === 0) {
+      throw new Error("Veuillez ajouter au moins un article");
+    }
+
+    for (const item of args.items) {
+      if (item.quantity <= 0) {
+        throw new Error("La quantité doit être supérieure à 0");
+      }
+
+      const sourceInventory = await ctx.db
+        .query("inventories")
+        .withIndex("by_productId_locationId", (q) =>
+          q
+            .eq("productId", item.productId)
+            .eq("locationId", args.sourceLocationId)
+        )
+        .first();
+
+      if (!sourceInventory) {
+        const product = await ctx.db.get(item.productId);
+        throw new Error(
+          `Produit "${product?.name ?? item.productId}" introuvable à cette source`
+        );
+      }
+
+      if (sourceInventory.quantity < item.quantity) {
+        const product = await ctx.db.get(item.productId);
+        throw new Error(
+          `Stock insuffisant pour "${product?.name}": ${sourceInventory.quantity} disponible(s), ${item.quantity} demandé(s)`
+        );
+      }
+
+      // Find or create destination inventory
+      const destInventory = await ctx.db
+        .query("inventories")
+        .withIndex("by_productId_locationId", (q) =>
+          q
+            .eq("productId", item.productId)
+            .eq("locationId", args.destinationLocationId)
+        )
+        .first();
+
+      if (!destInventory) {
+        await ctx.db.insert("inventories", {
+          productName: sourceInventory.productName,
+          productId: item.productId,
+          locationId: args.destinationLocationId,
+          price: sourceInventory.price,
+          quantity: item.quantity,
+          expectedRevenue: sourceInventory.price * item.quantity,
+        });
+      } else {
+        await ctx.db.patch(destInventory._id, {
+          quantity: destInventory.quantity + item.quantity,
+          expectedRevenue:
+            (destInventory.expectedRevenue || 0) +
+            sourceInventory.price * item.quantity,
+        });
+      }
+
+      // Deduct from source
+      await ctx.db.patch(sourceInventory._id, {
+        quantity: sourceInventory.quantity - item.quantity,
+        expectedRevenue:
+          (sourceInventory.expectedRevenue || 0) -
+          sourceInventory.price * item.quantity,
+      });
+    }
+
+    return { success: true };
+  },
+});
