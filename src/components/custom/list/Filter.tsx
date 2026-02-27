@@ -63,6 +63,9 @@ const ListFilter: FC<TableFilterProps> = ({
                   IN_STOCK: "En stock",
                   LOW_STOCK: "Stock bas",
                   OUT_OF_STOCK: "Rupture",
+                  PENDING: "En attente",
+                  PAID: "Payé",
+                  CANCEL: "Annulé",
                 };
                 const label = labelMap[filter] || capitalize(filter?.split("_")?.join(" ") || "");
                 return (

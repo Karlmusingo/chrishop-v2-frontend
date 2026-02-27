@@ -5,6 +5,7 @@ import { orderStatusValidator } from "../schema";
 export const list = query({
   args: {
     location: v.optional(v.string()),
+    status: v.optional(v.string()),
     userLocationId: v.optional(v.id("locations")),
     userRole: v.optional(v.string()),
   },
@@ -13,6 +14,10 @@ export const list = query({
 
     if (args.location) {
       orders = orders.filter((o) => o.locationId === args.location);
+    }
+
+    if (args.status) {
+      orders = orders.filter((o) => o.status === args.status);
     }
 
     // Non-admin sees only their location

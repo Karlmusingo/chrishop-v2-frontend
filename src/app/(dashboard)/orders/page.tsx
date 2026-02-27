@@ -32,6 +32,7 @@ const OrdersPage: FC<OrdersPageProps> = () => {
   const orders =
     useQuery(api.functions.orders.list, {
       location: queryObj.location as string | undefined,
+      status: queryObj.status as string | undefined,
       userLocationId: profileData?.locationId,
       userRole: userRole,
     }) ?? [];
@@ -103,8 +104,8 @@ const OrdersPage: FC<OrdersPageProps> = () => {
           data={(orders || []) as any[]}
           state={{ loading: orders === undefined }}
           filter={{
-            options: { tab: [] },
-            filterKey: "filter_status",
+            options: { tab: ["PENDING", "PAID", "CANCEL"] },
+            filterKey: "status",
           }}
           action={
             <AddOrder
