@@ -8,10 +8,11 @@ import { Badge } from "@/components/ui/badge";
 type ActionsFuncType = {
   onEdit: (id: string, extraData?: IUnknown) => void;
   onView: (id: string, extraData?: IUnknown) => void;
+  onCancel: (id: string, extraData?: IUnknown) => void;
   profile?: IUnknown;
 };
 
-export const getColumns = ({ onEdit, onView, profile }: ActionsFuncType) => {
+export const getColumns = ({ onEdit, onView, onCancel, profile }: ActionsFuncType) => {
   const actions: {
     label: string;
     action?: (id: string, hooks?: IUnknown, extraData?: IUnknown) => void;
@@ -27,9 +28,20 @@ export const getColumns = ({ onEdit, onView, profile }: ActionsFuncType) => {
       label: "Editer",
       disable: (id, extraData) =>
         extraData?.status !== "PENDING" ||
-        extraData.locationId !== profile?.locationId,
+        (profile?.role !== "ADMIN" &&
+          extraData.locationId !== profile?.locationId),
       action: (id, _, extraData) => {
         onEdit(id, extraData);
+      },
+    },
+    {
+      label: "Annuler",
+      disable: (id, extraData) =>
+        extraData?.status !== "PENDING" ||
+        (profile?.role !== "ADMIN" &&
+          extraData.locationId !== profile?.locationId),
+      action: (id, _, extraData) => {
+        onCancel(id, extraData);
       },
     },
   ];

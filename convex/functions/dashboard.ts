@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
+import { DEFAULT_LOW_STOCK_THRESHOLD } from "../constants";
 
 export const getData = query({
   args: {
@@ -115,19 +116,21 @@ export const getData = query({
         (inv) => inv.locationId === locationId
       );
     }
-    const lowStockRaw = inventories
-      .filter((inv) => inv.quantity >= 1 && inv.quantity < 25)
+    const lowStockItems = (
+      await Promise.all(
+        inventories.map(async (inv) => {
+          const product = await ctx.db.get(inv.productId);
+          const threshold = product?.lowStockThreshold ?? DEFAULT_LOW_STOCK_THRESHOLD;
+          if (inv.quantity < 1 || inv.quantity >= threshold) return null;
+          const location = inv.locationId
+            ? await ctx.db.get(inv.locationId)
+            : null;
+          return { ...inv, product, location, status: "LOW_STOCK" };
+        })
+      )
+    )
+      .filter(Boolean)
       .slice(0, 10);
-
-    const lowStockItems = await Promise.all(
-      lowStockRaw.map(async (inv) => {
-        const product = await ctx.db.get(inv.productId);
-        const location = inv.locationId
-          ? await ctx.db.get(inv.locationId)
-          : null;
-        return { ...inv, product, location, status: "LOW_STOCK" };
-      })
-    );
 
     return {
       dailySales,

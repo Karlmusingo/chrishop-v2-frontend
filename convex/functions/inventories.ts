@@ -1,9 +1,10 @@
 import { v } from "convex/values";
 import { query, mutation } from "../_generated/server";
+import { DEFAULT_LOW_STOCK_THRESHOLD } from "../constants";
 
-function computeStatus(quantity: number): string {
+function computeStatus(quantity: number, threshold: number = DEFAULT_LOW_STOCK_THRESHOLD): string {
   if (quantity <= 0) return "OUT_OF_STOCK";
-  if (quantity < 25) return "LOW_STOCK";
+  if (quantity < threshold) return "LOW_STOCK";
   return "IN_STOCK";
 }
 
@@ -39,36 +40,30 @@ export const list = query({
       );
     }
 
-    // Status filtering (computed)
-    if (args.status) {
-      if (args.status === "IN_STOCK") {
-        inventories = inventories.filter((inv) => inv.quantity >= 25);
-      } else if (args.status === "LOW_STOCK") {
-        inventories = inventories.filter(
-          (inv) => inv.quantity >= 1 && inv.quantity < 25
-        );
-      } else if (args.status === "OUT_OF_STOCK") {
-        inventories = inventories.filter((inv) => inv.quantity <= 0);
-      }
-    }
-
-    // Join with products and locations, apply product filters
+    // Join with products and locations, compute status with per-product threshold
     const result = await Promise.all(
       inventories.map(async (inv) => {
         const product = await ctx.db.get(inv.productId);
         const location = inv.locationId
           ? await ctx.db.get(inv.locationId)
           : null;
+        const threshold = product?.lowStockThreshold ?? DEFAULT_LOW_STOCK_THRESHOLD;
         return {
           ...inv,
           product,
           location,
-          status: computeStatus(inv.quantity),
+          status: computeStatus(inv.quantity, threshold),
         };
       })
     );
 
-    let filtered = result;
+    // Status filtering (computed, using per-product threshold)
+    let afterStatusFilter = result;
+    if (args.status) {
+      afterStatusFilter = result.filter((inv) => inv.status === args.status);
+    }
+
+    let filtered = afterStatusFilter;
 
     if (args.search) {
       const search = args.search.toLowerCase();
@@ -136,10 +131,11 @@ export const findByProductAttributes = query({
 
     if (!inventory) return null;
 
+    const threshold = product.lowStockThreshold ?? DEFAULT_LOW_STOCK_THRESHOLD;
     return {
       ...inventory,
       product,
-      status: computeStatus(inventory.quantity),
+      status: computeStatus(inventory.quantity, threshold),
     };
   },
 });
@@ -152,12 +148,13 @@ export const get = query({
 
     const product = await ctx.db.get(inv.productId);
     const location = inv.locationId ? await ctx.db.get(inv.locationId) : null;
+    const threshold = product?.lowStockThreshold ?? DEFAULT_LOW_STOCK_THRESHOLD;
 
     return {
       ...inv,
       product,
       location,
-      status: computeStatus(inv.quantity),
+      status: computeStatus(inv.quantity, threshold),
     };
   },
 });
@@ -338,10 +335,11 @@ export const findByProductAttributesAtSource = query({
 
     if (!inventory) return null;
 
+    const threshold = product.lowStockThreshold ?? DEFAULT_LOW_STOCK_THRESHOLD;
     return {
       ...inventory,
       product,
-      status: computeStatus(inventory.quantity),
+      status: computeStatus(inventory.quantity, threshold),
     };
   },
 });

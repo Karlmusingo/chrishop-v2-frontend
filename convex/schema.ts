@@ -66,6 +66,7 @@ export default defineSchema({
     number: v.optional(v.string()),
     price: v.optional(v.number()),
     description: v.optional(v.string()),
+    lowStockThreshold: v.optional(v.number()),
   })
     .index("by_name", ["name"])
     .index("by_type", ["type"])

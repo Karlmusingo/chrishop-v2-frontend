@@ -5,6 +5,7 @@ import Dropdown from "@/components/custom/dropdown/Dropdown";
 import Icon from "@/components/custom/Icon";
 import { Badge } from "@/components/ui/badge";
 import { ROLES } from "@/interface/roles";
+import { DEFAULT_LOW_STOCK_THRESHOLD } from "../../../../convex/constants";
 
 type ActionsFuncType = {
   onAdd: (id: string, extraData?: IUnknown) => void;
@@ -111,7 +112,9 @@ export const getColumns = ({
       header: "Statut",
       accessorKey: "status",
       cell: ({ row }) => {
-        const status = row.original.status;
+        const rowData = row.original;
+        const status = rowData.status;
+        const threshold = rowData.product?.lowStockThreshold ?? DEFAULT_LOW_STOCK_THRESHOLD;
         const variantMap: Record<string, "success" | "warning" | "error"> = {
           IN_STOCK: "success",
           LOW_STOCK: "warning",
@@ -123,9 +126,16 @@ export const getColumns = ({
           OUT_OF_STOCK: "RUPTURE",
         };
         return (
-          <Badge variant={variantMap[status] || "neutral"}>
-            {labelMap[status] || status}
-          </Badge>
+          <span className="inline-flex items-center gap-1.5">
+            <Badge variant={variantMap[status] || "neutral"}>
+              {labelMap[status] || status}
+            </Badge>
+            {status === "LOW_STOCK" && (
+              <span className="text-[10px] text-muted-foreground">
+                &lt;{threshold}
+              </span>
+            )}
+          </span>
         );
       },
     },

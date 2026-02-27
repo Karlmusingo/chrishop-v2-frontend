@@ -254,6 +254,45 @@ export const update = mutation({
   },
 });
 
+export const cancel = mutation({
+  args: { id: v.id("orders") },
+  handler: async (ctx, args) => {
+    const order = await ctx.db.get(args.id);
+    if (!order) throw new Error("Order not found");
+    if (order.status !== "PENDING") {
+      throw new Error("Seules les commandes en attente peuvent être annulées");
+    }
+
+    const orderItems = await ctx.db
+      .query("orderItems")
+      .withIndex("by_orderId", (q) => q.eq("orderId", args.id))
+      .collect();
+
+    for (const item of orderItems) {
+      const inventory = await ctx.db
+        .query("inventories")
+        .withIndex("by_productId_locationId", (q) =>
+          q
+            .eq("productId", item.productId)
+            .eq("locationId", item.locationId)
+        )
+        .first();
+
+      if (inventory) {
+        await ctx.db.patch(inventory._id, {
+          quantity: inventory.quantity + item.quantity,
+          expectedRevenue:
+            (inventory.expectedRevenue || 0) +
+            item.unitPrice * item.quantity,
+        });
+      }
+    }
+
+    await ctx.db.patch(args.id, { status: "CANCEL" });
+    return { success: true, message: "Commande annulée avec succès" };
+  },
+});
+
 export const buy = mutation({
   args: {
     id: v.id("orders"),

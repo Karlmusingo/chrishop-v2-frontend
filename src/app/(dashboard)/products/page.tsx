@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useEffect } from "react";
+import { FC, useEffect, useState } from "react";
 
 import { useQueryString } from "@/hooks/useQueryString";
 import { useTable } from "@/hooks/useTable";
@@ -14,6 +14,8 @@ import AddProduct from "./AddProduct";
 import PageHeader from "@/components/custom/PageHeader";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import EditThresholdModal from "./EditThresholdModal";
+import { IUnknown } from "@/interface/Iunknown";
 
 interface ProductsPageProps {}
 
@@ -43,6 +45,10 @@ const ProductsPage: FC<ProductsPageProps> = () => {
     }
   }, [result?.meta, setData]);
 
+  const [thresholdProduct, setThresholdProduct] = useState<IUnknown | null>(
+    null
+  );
+
   const {} = useTable({ title: "" });
   return (
     <div>
@@ -50,7 +56,11 @@ const ProductsPage: FC<ProductsPageProps> = () => {
 
       <div className="py-4">
         <DataList
-          columns={getColumns({})}
+          columns={getColumns({
+            onEditThreshold: (_id, extraData) => {
+              setThresholdProduct(extraData ?? null);
+            },
+          })}
           data={(result?.data || []) as any[]}
           state={{ loading: result === undefined }}
           filter={{
@@ -60,6 +70,12 @@ const ProductsPage: FC<ProductsPageProps> = () => {
           action={<AddProduct />}
         />
       </div>
+
+      <EditThresholdModal
+        product={thresholdProduct}
+        isOpen={!!thresholdProduct}
+        onClose={() => setThresholdProduct(null)}
+      />
     </div>
   );
 };

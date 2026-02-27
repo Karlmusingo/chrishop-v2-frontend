@@ -202,24 +202,35 @@ export const update = mutation({
     collarColor: v.optional(v.string()),
     price: v.optional(v.number()),
     description: v.optional(v.string()),
+    lowStockThreshold: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const { id, ...rest } = args;
+    const { id, lowStockThreshold, ...rest } = args;
 
-    let name: string;
-    if (rest.code) {
-      name = `${rest.type}|${rest.brand}|${rest.code}`;
-    } else {
-      const nameParts = [rest.type, rest.brand, rest.color, rest.size];
-      if (rest.collarColor) {
-        nameParts.push(rest.collarColor);
+    const patch: Record<string, any> = {};
+
+    // Only recompute name if product attribute fields are provided
+    const hasNameFields = rest.type || rest.brand || rest.code || rest.color || rest.size;
+    if (hasNameFields) {
+      let name: string;
+      if (rest.code) {
+        name = `${rest.type}|${rest.brand}|${rest.code}`;
+      } else {
+        const nameParts = [rest.type, rest.brand, rest.color, rest.size];
+        if (rest.collarColor) {
+          nameParts.push(rest.collarColor);
+        }
+        name = nameParts.filter(Boolean).join("|");
       }
-      name = nameParts.filter(Boolean).join("|");
+      patch.name = name;
     }
 
-    const patch: Record<string, any> = { name };
     for (const [key, value] of Object.entries(rest)) {
       if (value !== undefined) patch[key] = value;
+    }
+
+    if (lowStockThreshold !== undefined) {
+      patch.lowStockThreshold = lowStockThreshold;
     }
 
     await ctx.db.patch(id, patch);

@@ -107,6 +107,8 @@ const AddOrder: FC<AddOrderProps> = ({
     },
   });
 
+  const isEditing = !!orderData?._id;
+
   useEffect(() => {
     if (orderData && orderData.orderItems) {
       setOrders(
@@ -125,6 +127,9 @@ const AddOrder: FC<AddOrderProps> = ({
           total: item.totalPrice,
         })),
       );
+      if (orderData.locationId) {
+        setSelectedLocationId(orderData.locationId);
+      }
     }
   }, [orderData]);
 
@@ -143,6 +148,11 @@ const AddOrder: FC<AddOrderProps> = ({
     const locationId = getLocationId();
     if (!locationId) {
       toast.error("Veuillez sélectionner une boutique");
+      return;
+    }
+
+    if (orders.length === 0) {
+      toast.error("Veuillez ajouter au moins un article");
       return;
     }
 
@@ -360,6 +370,7 @@ const AddOrder: FC<AddOrderProps> = ({
           <Label>Boutique</Label>
           <SelectUI
             value={selectedLocationId ?? undefined}
+            disabled={isEditing}
             onValueChange={(val) => {
               setSelectedLocationId(val);
               setOrders([]);
