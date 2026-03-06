@@ -82,7 +82,7 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
 
   const [isOpened, setOpened] = useState(false);
   const [items, setItems] = useState<TransferItem[]>([]);
-  const [mode, setMode] = useState<TransferMode>("individual");
+  const [mode, setMode] = useState<TransferMode>("packaging");
   const [sourceLocationId, setSourceLocationId] = useState<string | null>(null);
   const [destinationLocationId, setDestinationLocationId] = useState<
     string | null
@@ -297,7 +297,7 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
 
     updated.splice(index, 1);
     setItems(updated);
-    setMode("individual");
+    setMode("packaging");
   };
 
   const templateOptions = packagingTemplates.map((t: any) => ({
@@ -398,17 +398,6 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
       <div className="mb-4 flex gap-1 rounded-lg border bg-[#F8F8F8] p-1">
         <button
           type="button"
-          onClick={() => setMode("individual")}
-          className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-            mode === "individual"
-              ? "bg-white text-[var(--text-primary)] shadow-sm"
-              : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
-          }`}
-        >
-          Individuel
-        </button>
-        <button
-          type="button"
           onClick={() => setMode("packaging")}
           className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
             mode === "packaging"
@@ -417,6 +406,17 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
           }`}
         >
           Emballage
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("individual")}
+          className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+            mode === "individual"
+              ? "bg-white text-[var(--text-primary)] shadow-sm"
+              : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+          }`}
+        >
+          Individuel
         </button>
       </div>
 
