@@ -14,7 +14,6 @@ import {
 } from "@/schemas/configuration/packagingTemplate.schema";
 import { useMutationWithToast } from "@/hooks/convex/useMutationWithToast";
 import { api } from "../../../../convex/_generated/api";
-import { useProductAttributes } from "@/hooks/convex/useProductAttributes";
 import { useQuery } from "convex/react";
 
 const packagingTypeOptions = [
@@ -26,8 +25,6 @@ const AddPackagingTemplate: FC = () => {
   const { mutate, isPending } = useMutationWithToast(
     api.functions.packagingTemplates.create
   );
-  const { typeOptions, brandOptions, colorOptions, sizeOptions } =
-    useProductAttributes();
   const sizes = useQuery(api.functions.productSizes.list, {}) ?? [];
   const [isOpened, setOpened] = useState(false);
 
@@ -38,7 +35,6 @@ const AddPackagingTemplate: FC = () => {
     },
   });
 
-  const typeValue = form.watch("productType");
   const totalItems = form.watch("totalItems");
   const sizeDistribution = form.watch("sizeDistribution") ?? [];
   const currentSum = sizeDistribution.reduce(
@@ -75,10 +71,6 @@ const AddPackagingTemplate: FC = () => {
         name: values.name,
         packagingType: values.packagingType,
         totalItems: values.totalItems,
-        productType: values.productType,
-        productBrand: values.productBrand,
-        color: values.color,
-        ...(values.collarColor ? { collarColor: values.collarColor } : {}),
         sizeDistribution: nonZeroSizes,
       },
       {
@@ -114,7 +106,7 @@ const AddPackagingTemplate: FC = () => {
             name="name"
             label="Nom"
             control={form.control}
-            placeholder="Ex: Balle Rouge d'Inde"
+            placeholder="Ex: Balle Standard 240"
           />
 
           <div className="grid grid-cols-2 gap-4">
@@ -132,44 +124,6 @@ const AddPackagingTemplate: FC = () => {
               type="number"
               placeholder="Ex: 240"
             />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <SelectInput
-              control={form.control}
-              name="productType"
-              label="Type de produit"
-              placeholder="Sélectionnez un type"
-              options={typeOptions}
-            />
-            <SelectInput
-              control={form.control}
-              name="productBrand"
-              label="Marque"
-              placeholder="Sélectionnez une marque"
-              options={brandOptions}
-            />
-          </div>
-
-          <div
-            className={`grid gap-4${typeValue?.includes("polo") ? " grid-cols-2" : ""}`}
-          >
-            <SelectInput
-              control={form.control}
-              name="color"
-              label="Couleur"
-              placeholder="Sélectionnez une couleur"
-              options={colorOptions}
-            />
-            {typeValue?.includes("polo") && (
-              <SelectInput
-                control={form.control}
-                name="collarColor"
-                label="Couleur du col"
-                placeholder="Sélectionnez une couleur"
-                options={colorOptions}
-              />
-            )}
           </div>
 
           <div className="space-y-2">

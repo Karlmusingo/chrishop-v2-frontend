@@ -21,10 +21,6 @@ interface PackagingTemplate {
   name: string;
   packagingType: "BALE" | "DOZEN";
   totalItems: number;
-  productType: string;
-  productBrand: string;
-  color: string;
-  collarColor?: string;
   sizeDistribution: Array<{ size: string; quantity: number }>;
 }
 
@@ -61,8 +57,6 @@ const PackagingTemplateTable: FC<PackagingTemplateTableProps> = ({ items }) => {
             <TableRow>
               <TableHead>Nom</TableHead>
               <TableHead className="text-center">Type</TableHead>
-              <TableHead className="text-center">Produit</TableHead>
-              <TableHead className="text-center">Couleur</TableHead>
               <TableHead className="text-center">Total</TableHead>
               <TableHead className="text-center">Distribution</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -71,7 +65,7 @@ const PackagingTemplateTable: FC<PackagingTemplateTableProps> = ({ items }) => {
           <TableBody>
             {items.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-gray-500">
+                <TableCell colSpan={5} className="text-center text-gray-500">
                   Aucun modèle d&apos;emballage
                 </TableCell>
               </TableRow>
@@ -81,13 +75,6 @@ const PackagingTemplateTable: FC<PackagingTemplateTableProps> = ({ items }) => {
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell className="text-center">
                   {packagingTypeLabels[item.packagingType] ?? item.packagingType}
-                </TableCell>
-                <TableCell className="text-center">
-                  {item.productType} / {item.productBrand}
-                </TableCell>
-                <TableCell className="text-center">
-                  {item.color}
-                  {item.collarColor ? ` (col: ${item.collarColor})` : ""}
                 </TableCell>
                 <TableCell className="text-center">{item.totalItems}</TableCell>
                 <TableCell className="text-center font-mono text-xs">

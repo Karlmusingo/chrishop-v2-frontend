@@ -33,10 +33,6 @@ export const create = mutation({
     name: v.string(),
     packagingType: v.union(v.literal("BALE"), v.literal("DOZEN")),
     totalItems: v.number(),
-    productType: v.string(),
-    productBrand: v.string(),
-    color: v.string(),
-    collarColor: v.optional(v.string()),
     sizeDistribution: v.array(
       v.object({ size: v.string(), quantity: v.number() })
     ),
@@ -77,39 +73,10 @@ export const create = mutation({
       );
     }
 
-    // Auto-create missing products for each size
-    for (const entry of args.sizeDistribution) {
-      const nameParts = [args.productType, args.productBrand, args.color, entry.size];
-      if (args.collarColor) {
-        nameParts.push(args.collarColor);
-      }
-      const productName = nameParts.join("|");
-
-      const existingProduct = await ctx.db
-        .query("products")
-        .withIndex("by_name", (q) => q.eq("name", productName))
-        .first();
-
-      if (!existingProduct) {
-        await ctx.db.insert("products", {
-          name: productName,
-          type: args.productType,
-          brand: args.productBrand,
-          color: args.color,
-          size: entry.size,
-          ...(args.collarColor ? { collarColor: args.collarColor } : {}),
-        });
-      }
-    }
-
     const id = await ctx.db.insert("packagingTemplates", {
       name: args.name,
       packagingType: args.packagingType,
       totalItems: args.totalItems,
-      productType: args.productType,
-      productBrand: args.productBrand,
-      color: args.color,
-      ...(args.collarColor ? { collarColor: args.collarColor } : {}),
       sizeDistribution: args.sizeDistribution,
     });
 
@@ -125,10 +92,6 @@ export const update = mutation({
       v.union(v.literal("BALE"), v.literal("DOZEN"))
     ),
     totalItems: v.optional(v.number()),
-    productType: v.optional(v.string()),
-    productBrand: v.optional(v.string()),
-    color: v.optional(v.string()),
-    collarColor: v.optional(v.string()),
     sizeDistribution: v.optional(
       v.array(v.object({ size: v.string(), quantity: v.number() }))
     ),
@@ -179,36 +142,6 @@ export const update = mutation({
       );
     }
 
-    // Auto-create missing products if product attributes or sizes changed
-    const productType = args.productType ?? current.productType;
-    const productBrand = args.productBrand ?? current.productBrand;
-    const color = args.color ?? current.color;
-    const collarColor = args.collarColor !== undefined ? args.collarColor : current.collarColor;
-
-    for (const entry of sizeDistribution) {
-      const nameParts = [productType, productBrand, color, entry.size];
-      if (collarColor) {
-        nameParts.push(collarColor);
-      }
-      const productName = nameParts.join("|");
-
-      const existingProduct = await ctx.db
-        .query("products")
-        .withIndex("by_name", (q) => q.eq("name", productName))
-        .first();
-
-      if (!existingProduct) {
-        await ctx.db.insert("products", {
-          name: productName,
-          type: productType,
-          brand: productBrand,
-          color,
-          size: entry.size,
-          ...(collarColor ? { collarColor } : {}),
-        });
-      }
-    }
-
     const { id, ...rest } = args;
     const patch: Record<string, any> = {};
     for (const [key, value] of Object.entries(rest)) {
@@ -238,6 +171,10 @@ export const expandToItems = query({
   args: {
     templateId: v.id("packagingTemplates"),
     numberOfPackages: v.optional(v.number()),
+    productType: v.string(),
+    productBrand: v.string(),
+    color: v.string(),
+    collarColor: v.optional(v.string()),
     locationId: v.optional(v.id("locations")),
     checkInventory: v.optional(v.boolean()),
   },
@@ -269,13 +206,13 @@ export const expandToItems = query({
 
     for (const entry of template.sizeDistribution) {
       const nameParts = [
-        template.productType,
-        template.productBrand,
-        template.color,
+        args.productType,
+        args.productBrand,
+        args.color,
         entry.size,
       ];
-      if (template.collarColor) {
-        nameParts.push(template.collarColor);
+      if (args.collarColor) {
+        nameParts.push(args.collarColor);
       }
       const productName = nameParts.join("|");
 
@@ -330,11 +267,11 @@ export const expandToItems = query({
         productName,
         size: entry.size,
         quantity,
-        type: template.productType,
-        brand: template.productBrand,
-        color: template.color,
-        ...(template.collarColor
-          ? { collarColor: template.collarColor }
+        type: args.productType,
+        brand: args.productBrand,
+        color: args.color,
+        ...(args.collarColor
+          ? { collarColor: args.collarColor }
           : {}),
         ...(inventoryPrice !== undefined ? { inventoryPrice } : {}),
         ...(availableQuantity !== undefined ? { availableQuantity } : {}),
@@ -342,5 +279,45 @@ export const expandToItems = query({
     }
 
     return { items, missingProducts, insufficientStock };
+  },
+});
+
+export const ensureProductsExist = mutation({
+  args: {
+    productType: v.string(),
+    productBrand: v.string(),
+    color: v.string(),
+    collarColor: v.optional(v.string()),
+    sizes: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await requireCurrentUser(ctx);
+    requireRole(user, ["ADMIN"]);
+
+    for (const size of args.sizes) {
+      const nameParts = [args.productType, args.productBrand, args.color, size];
+      if (args.collarColor) {
+        nameParts.push(args.collarColor);
+      }
+      const productName = nameParts.join("|");
+
+      const existingProduct = await ctx.db
+        .query("products")
+        .withIndex("by_name", (q) => q.eq("name", productName))
+        .first();
+
+      if (!existingProduct) {
+        await ctx.db.insert("products", {
+          name: productName,
+          type: args.productType,
+          brand: args.productBrand,
+          color: args.color,
+          size,
+          ...(args.collarColor ? { collarColor: args.collarColor } : {}),
+        });
+      }
+    }
+
+    return { success: true };
   },
 });

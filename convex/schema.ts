@@ -144,12 +144,8 @@ export default defineSchema({
     name: v.string(),
     packagingType: v.union(v.literal("BALE"), v.literal("DOZEN")),
     totalItems: v.number(),
-    productType: v.string(),
-    productBrand: v.string(),
-    color: v.string(),
-    collarColor: v.optional(v.string()),
     sizeDistribution: v.array(
-      v.object({ size: v.string(), quantity: v.number() })
+      v.object({ size: v.string(), quantity: v.number() }),
     ),
   })
     .index("by_name", ["name"])

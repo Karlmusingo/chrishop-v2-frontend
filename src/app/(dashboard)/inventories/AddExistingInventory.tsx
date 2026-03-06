@@ -35,7 +35,7 @@ const AddExistingInventory: FC<AddExistingInventoryProps> = ({
   isOpen = false,
 }) => {
   const { mutate, isPending } = useMutationWithToast(
-    api.functions.inventories.add
+    api.functions.inventories.add,
   );
   const { typeOptions, brandOptions, colorOptions, sizeOptions } =
     useProductAttributes();
@@ -60,7 +60,7 @@ const AddExistingInventory: FC<AddExistingInventoryProps> = ({
       {
         successMessage: "Inventory added successfully",
         onSuccess: callbackOnSuccess,
-      }
+      },
     );
   };
 
@@ -71,7 +71,7 @@ const AddExistingInventory: FC<AddExistingInventoryProps> = ({
     form.setValue("size", inventoryData?.product?.size);
     form.setValue(
       "collarColor",
-      inventoryData?.product?.collarColor || undefined
+      inventoryData?.product?.collarColor || undefined,
     );
     // @ts-ignore
     form.setValue("quantity", inventoryData?.quantity?.toString());
@@ -120,7 +120,9 @@ const AddExistingInventory: FC<AddExistingInventoryProps> = ({
             </div>
           </div>
 
-          <div className={`grid gap-4${typeValue?.includes("polo") ? " grid-cols-2" : ""}`}>
+          <div
+            className={`grid gap-4${typeValue?.toLowerCase()?.includes("polo") ? " grid-cols-2" : ""}`}
+          >
             <div className="grid gap-1">
               <SelectInput
                 control={form.control}
@@ -132,7 +134,7 @@ const AddExistingInventory: FC<AddExistingInventoryProps> = ({
               />
             </div>
 
-            {typeValue?.includes("polo") && (
+            {typeValue?.toLowerCase()?.includes("polo") && (
               <div className="grid gap-1">
                 <SelectInput
                   control={form.control}

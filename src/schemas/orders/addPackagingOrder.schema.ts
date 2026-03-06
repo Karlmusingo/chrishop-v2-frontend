@@ -19,6 +19,16 @@ export const addPackagingOrderSchema = z.object({
       }
       return parsed;
     }),
+  productType: z
+    .string({ message: "Veuillez sélectionner un type" })
+    .min(1, "Veuillez sélectionner un type"),
+  productBrand: z
+    .string({ message: "Veuillez sélectionner une marque" })
+    .min(1, "Veuillez sélectionner une marque"),
+  color: z
+    .string({ message: "Veuillez sélectionner une couleur" })
+    .min(1, "Veuillez sélectionner une couleur"),
+  collarColor: z.string().optional(),
 });
 
 export type AddPackagingOrderSchemaType = z.infer<

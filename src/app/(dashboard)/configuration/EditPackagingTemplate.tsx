@@ -14,7 +14,6 @@ import {
 } from "@/schemas/configuration/packagingTemplate.schema";
 import { useMutationWithToast } from "@/hooks/convex/useMutationWithToast";
 import { api } from "../../../../convex/_generated/api";
-import { useProductAttributes } from "@/hooks/convex/useProductAttributes";
 import { useQuery } from "convex/react";
 
 const packagingTypeOptions = [
@@ -27,10 +26,6 @@ interface PackagingTemplateItem {
   name: string;
   packagingType: "BALE" | "DOZEN";
   totalItems: number;
-  productType: string;
-  productBrand: string;
-  color: string;
-  collarColor?: string;
   sizeDistribution: Array<{ size: string; quantity: number }>;
 }
 
@@ -48,14 +43,12 @@ const EditPackagingTemplate: FC<EditPackagingTemplateProps> = ({
   const { mutate, isPending } = useMutationWithToast(
     api.functions.packagingTemplates.update
   );
-  const { typeOptions, brandOptions, colorOptions } = useProductAttributes();
   const sizes = useQuery(api.functions.productSizes.list, {}) ?? [];
 
   const form = useForm<PackagingTemplateSchemaType>({
     resolver: zodResolver(packagingTemplateSchema),
   });
 
-  const typeValue = form.watch("productType");
   const totalItems = form.watch("totalItems");
   const sizeDistribution = form.watch("sizeDistribution") ?? [];
   const currentSum = sizeDistribution.reduce(
@@ -69,10 +62,6 @@ const EditPackagingTemplate: FC<EditPackagingTemplateProps> = ({
       form.setValue("packagingType", item.packagingType);
       // @ts-ignore
       form.setValue("totalItems", item.totalItems.toString());
-      form.setValue("productType", item.productType);
-      form.setValue("productBrand", item.productBrand);
-      form.setValue("color", item.color);
-      form.setValue("collarColor", item.collarColor ?? "");
 
       // Map existing distribution to all sizes
       const dist = sizes.map((s) => {
@@ -98,10 +87,6 @@ const EditPackagingTemplate: FC<EditPackagingTemplateProps> = ({
         name: values.name,
         packagingType: values.packagingType,
         totalItems: values.totalItems,
-        productType: values.productType,
-        productBrand: values.productBrand,
-        color: values.color,
-        ...(values.collarColor ? { collarColor: values.collarColor } : {}),
         sizeDistribution: nonZeroSizes,
       },
       {
@@ -135,7 +120,7 @@ const EditPackagingTemplate: FC<EditPackagingTemplateProps> = ({
             name="name"
             label="Nom"
             control={form.control}
-            placeholder="Ex: Balle Rouge d'Inde"
+            placeholder="Ex: Balle Standard 240"
           />
 
           <div className="grid grid-cols-2 gap-4">
@@ -153,44 +138,6 @@ const EditPackagingTemplate: FC<EditPackagingTemplateProps> = ({
               type="number"
               placeholder="Ex: 240"
             />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <SelectInput
-              control={form.control}
-              name="productType"
-              label="Type de produit"
-              placeholder="Sélectionnez un type"
-              options={typeOptions}
-            />
-            <SelectInput
-              control={form.control}
-              name="productBrand"
-              label="Marque"
-              placeholder="Sélectionnez une marque"
-              options={brandOptions}
-            />
-          </div>
-
-          <div
-            className={`grid gap-4${typeValue?.includes("polo") ? " grid-cols-2" : ""}`}
-          >
-            <SelectInput
-              control={form.control}
-              name="color"
-              label="Couleur"
-              placeholder="Sélectionnez une couleur"
-              options={colorOptions}
-            />
-            {typeValue?.includes("polo") && (
-              <SelectInput
-                control={form.control}
-                name="collarColor"
-                label="Couleur du col"
-                placeholder="Sélectionnez une couleur"
-                options={colorOptions}
-              />
-            )}
           </div>
 
           <div className="space-y-2">

@@ -70,7 +70,7 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
 }) => {
   const convex = useConvex();
   const { mutate, isPending } = useMutationWithToast(
-    api.functions.inventories.bulkTransfer
+    api.functions.inventories.bulkTransfer,
   );
   const { userRole } = usePermission();
   const { typeOptions, brandOptions, colorOptions, sizeOptions } =
@@ -100,6 +100,7 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
       numberOfPackages: "1",
     },
   });
+  const packagingTypeValue = packagingForm.watch("productType");
 
   function callbackOnSuccess() {
     form.reset();
@@ -142,7 +143,7 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
       {
         successMessage: "Transfert effectué avec succès",
         onSuccess: callbackOnSuccess,
-      }
+      },
     );
   };
 
@@ -162,11 +163,11 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
         ...(values.code ? { code: values.code } : {}),
         ...(values.color ? { color: values.color } : {}),
         ...(values.size ? { size: values.size } : {}),
-        ...(typeValue?.includes("polo") && values.collarColor
+        ...(typeValue?.toLowerCase()?.includes("polo") && values.collarColor
           ? { collarColor: values.collarColor }
           : {}),
         locationId: sourceLocId as any,
-      }
+      },
     );
 
     if (!inventory || inventory.quantity <= 0) {
@@ -181,7 +182,7 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
 
     if (inventory.quantity < values.transferQuantity) {
       toast.error(
-        "Quantité insuffisante, quantité disponible: " + inventory.quantity
+        "Quantité insuffisante, quantité disponible: " + inventory.quantity,
       );
       return;
     }
@@ -205,7 +206,7 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
   }
 
   async function onAddPackagingTransfer(
-    values: BulkTransferPackagingSchemaType
+    values: BulkTransferPackagingSchemaType,
   ) {
     if (!sourceLocationId) {
       toast.error("Veuillez sélectionner une source");
@@ -220,23 +221,24 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
         {
           templateId: values.templateId as any,
           numberOfPackages: values.numberOfPackages,
+          productType: values.productType,
+          productBrand: values.productBrand,
+          color: values.color,
+          ...(values.collarColor ? { collarColor: values.collarColor } : {}),
           locationId: sourceLocId as any,
           checkInventory: true,
-        }
+        },
       );
 
       if (result.missingProducts.length > 0) {
-        toast.error(
-          `Produits manquants: ${result.missingProducts.join(", ")}`
-        );
+        toast.error(`Produits manquants: ${result.missingProducts.join(", ")}`);
         return;
       }
 
       if (result.insufficientStock.length > 0) {
         const details = result.insufficientStock
           .map(
-            (s: any) =>
-              `${s.size}: ${s.available}/${s.required} disponible(s)`
+            (s: any) => `${s.size}: ${s.available}/${s.required} disponible(s)`,
           )
           .join(", ");
         toast.error(`Stock insuffisant - ${details}`);
@@ -245,11 +247,11 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
 
       // Check for duplicates
       const duplicates = result.items.filter((item: any) =>
-        items.find((existing) => existing.productId === item.productId)
+        items.find((existing) => existing.productId === item.productId),
       );
       if (duplicates.length > 0) {
         toast.error(
-          `Certains produits sont déjà dans la liste: ${duplicates.map((d: any) => d.size).join(", ")}`
+          `Certains produits sont déjà dans la liste: ${duplicates.map((d: any) => d.size).join(", ")}`,
         );
         return;
       }
@@ -455,7 +457,7 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
             </div>
 
             <div
-              className={`grid gap-4${typeValue?.includes("polo") ? " grid-cols-2" : ""}`}
+              className={`grid gap-4${typeValue?.toLowerCase()?.includes("polo") ? " grid-cols-2" : ""}`}
             >
               <div className="grid gap-1">
                 <SelectInput
@@ -466,7 +468,7 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
                   options={colorOptions}
                 />
               </div>
-              {typeValue?.includes("polo") && (
+              {typeValue?.toLowerCase()?.includes("polo") && (
                 <div className="grid gap-1">
                   <SelectInput
                     control={form.control}
@@ -510,25 +512,59 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
             className="grid gap-4 py-4 rounded-lg border p-6"
             onSubmit={packagingForm.handleSubmit(onAddPackagingTransfer)}
           >
-            <div className="grid gap-1">
+            <SelectInput
+              control={packagingForm.control}
+              name="templateId"
+              label="Modèle d'emballage"
+              placeholder="Sélectionnez un modèle"
+              options={templateOptions}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
               <SelectInput
                 control={packagingForm.control}
-                name="templateId"
-                label="Modèle d'emballage"
-                placeholder="Sélectionnez un modèle"
-                options={templateOptions}
+                name="productType"
+                label="Type de produit"
+                placeholder="Sélectionnez un type"
+                options={typeOptions}
+              />
+              <SelectInput
+                control={packagingForm.control}
+                name="productBrand"
+                label="Marque"
+                placeholder="Sélectionnez une marque"
+                options={brandOptions}
               />
             </div>
 
-            <div className="grid gap-1">
-              <Input
+            <div
+              className={`grid gap-4${packagingTypeValue?.toLowerCase()?.includes("polo") ? " grid-cols-2" : ""}`}
+            >
+              <SelectInput
                 control={packagingForm.control}
-                name="numberOfPackages"
-                label="Nombre d'emballages"
-                type="number"
-                placeholder="1"
+                name="color"
+                label="Couleur"
+                placeholder="Sélectionnez une couleur"
+                options={colorOptions}
               />
+              {packagingTypeValue?.toLowerCase()?.includes("polo") && (
+                <SelectInput
+                  control={packagingForm.control}
+                  name="collarColor"
+                  label="Couleur du col"
+                  placeholder="Sélectionnez une couleur"
+                  options={colorOptions}
+                />
+              )}
             </div>
+
+            <Input
+              control={packagingForm.control}
+              name="numberOfPackages"
+              label="Nombre d'emballages"
+              type="number"
+              placeholder="1"
+            />
 
             <Button type="submit" className="w-full" loading={isPending}>
               Ajouter les articles

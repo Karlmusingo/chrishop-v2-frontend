@@ -29,7 +29,7 @@ interface AddProductProps {
 
 const AddProduct: FC<AddProductProps> = ({ callback }) => {
   const { mutate, isPending, error, isError } = useMutationWithToast(
-    api.functions.products.create
+    api.functions.products.create,
   );
   const { userRole } = usePermission();
   const { typeOptions, brandOptions, colorOptions, sizeOptions } =
@@ -54,7 +54,7 @@ const AddProduct: FC<AddProductProps> = ({ callback }) => {
       {
         successMessage: "Produit créé avec succès",
         onSuccess: callbackOnSuccess,
-      }
+      },
     );
   };
 
@@ -120,7 +120,9 @@ const AddProduct: FC<AddProductProps> = ({ callback }) => {
             />
           </div>
 
-          <div className={`grid gap-4${typeValue?.includes("polo") ? " grid-cols-2" : ""}`}>
+          <div
+            className={`grid gap-4${typeValue?.toLowerCase()?.includes("polo") ? " grid-cols-2" : ""}`}
+          >
             <div className="grid gap-1">
               <MultiSelect
                 control={form.control}
@@ -131,7 +133,7 @@ const AddProduct: FC<AddProductProps> = ({ callback }) => {
               />
             </div>
 
-            {typeValue?.includes("polo") && (
+            {typeValue?.toLowerCase()?.includes("polo") && (
               <div className="grid gap-1">
                 <MultiSelect
                   control={form.control}
