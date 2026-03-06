@@ -96,25 +96,26 @@ export const getColumns = ({
         return rowData.product?.size;
       },
     },
-    {
-      header: "Prix",
-      accessorKey: "price",
-    },
+    // {
+    //   header: "Prix",
+    //   accessorKey: "price",
+    // },
     {
       header: "Quantité",
       accessorKey: "quantity",
     },
-    {
-      header: "Revenu",
-      accessorKey: "expectedRevenue",
-    },
+    // {
+    //   header: "Revenu",
+    //   accessorKey: "expectedRevenue",
+    // },
     {
       header: "Statut",
       accessorKey: "status",
       cell: ({ row }) => {
         const rowData = row.original;
         const status = rowData.status;
-        const threshold = rowData.product?.lowStockThreshold ?? DEFAULT_LOW_STOCK_THRESHOLD;
+        const threshold =
+          rowData.product?.lowStockThreshold ?? DEFAULT_LOW_STOCK_THRESHOLD;
         const variantMap: Record<string, "success" | "warning" | "error"> = {
           IN_STOCK: "success",
           LOW_STOCK: "warning",
@@ -204,10 +205,10 @@ export const getNewInventoryColums = ({}: ActionsFuncTypeNewInventory) => {
       header: "Taille",
       accessorKey: "size",
     },
-    {
-      header: "Prix",
-      accessorKey: "price",
-    },
+    // {
+    //   header: "Prix",
+    //   accessorKey: "price",
+    // },
     {
       header: "Quantité",
       accessorKey: "quantity",
