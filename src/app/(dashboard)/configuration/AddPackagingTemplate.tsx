@@ -17,7 +17,7 @@ import { api } from "../../../../convex/_generated/api";
 import { useQuery } from "convex/react";
 
 const packagingTypeOptions = [
-  { label: "Balle", value: "BALE" },
+  { label: "Ballon", value: "BALE" },
   { label: "Douzaine", value: "DOZEN" },
 ];
 
@@ -106,7 +106,7 @@ const AddPackagingTemplate: FC = () => {
             name="name"
             label="Nom"
             control={form.control}
-            placeholder="Ex: Balle Standard 240"
+            placeholder="Ex: Ballon Standard 240"
           />
 
           <div className="grid grid-cols-2 gap-4">

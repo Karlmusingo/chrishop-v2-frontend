@@ -339,7 +339,7 @@ const AddOrder: FC<AddOrderProps> = ({
   const totalSize = orders.reduce((acc, curr) => acc + curr.total, 0);
 
   const templateOptions = packagingTemplates.map((t: any) => ({
-    label: `${t.name} (${t.packagingType === "BALE" ? "Balle" : "Douzaine"} - ${t.totalItems} pcs)`,
+    label: `${t.name} (${t.packagingType === "BALE" ? "Ballon" : "Douzaine"} - ${t.totalItems} pcs)`,
     value: t._id,
   }));
 

@@ -301,7 +301,7 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
   };
 
   const templateOptions = packagingTemplates.map((t: any) => ({
-    label: `${t.name} (${t.packagingType === "BALE" ? "Balle" : "Douzaine"} - ${t.totalItems} pcs)`,
+    label: `${t.name} (${t.packagingType === "BALE" ? "Ballon" : "Douzaine"} - ${t.totalItems} pcs)`,
     value: t._id,
   }));
 

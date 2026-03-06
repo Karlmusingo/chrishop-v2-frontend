@@ -29,7 +29,7 @@ interface PackagingTemplateTableProps {
 }
 
 const packagingTypeLabels: Record<string, string> = {
-  BALE: "Balle",
+  BALE: "Ballon",
   DOZEN: "Douzaine",
 };
 
