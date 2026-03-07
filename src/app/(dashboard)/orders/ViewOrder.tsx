@@ -131,9 +131,15 @@ const ViewOrder: FC<ViewOrderProps> = ({
               <div>
                 <CardTitle className="text-2xl font-bold">Facture</CardTitle>
                 <p className="text-sm">
-                  Numero: #{`${(orderData?._id || "")?.toString().slice(0, 8).toUpperCase()}`}
+                  Numero: #
+                  {`${(orderData?._id || "")?.toString().slice(0, 8).toUpperCase()}`}
                 </p>
-                <p className="text-sm">Statut: {{ PAID: "PAYÉ", PENDING: "EN ATTENTE", CANCEL: "ANNULÉ" }[orderData.status as string] || orderData.status}</p>
+                <p className="text-sm">
+                  Statut:{" "}
+                  {{ PAID: "PAYÉ", PENDING: "EN ATTENTE", CANCEL: "ANNULÉ" }[
+                    orderData.status as string
+                  ] || orderData.status}
+                </p>
               </div>
               <div className="text-right">
                 <p className="text-sm">
@@ -173,7 +179,9 @@ const ViewOrder: FC<ViewOrderProps> = ({
                   <TableRow>
                     <TableHead className="text-white h-auto">Article</TableHead>
                     <TableHead className="text-white h-auto">Taille</TableHead>
-                    <TableHead className="text-white h-auto">Quant</TableHead>
+                    <TableHead className="text-white h-auto">
+                      Quantite
+                    </TableHead>
                     <TableHead className="text-white h-auto">Prix</TableHead>
                     <TableHead className="text-white h-auto">Total</TableHead>
                   </TableRow>
@@ -183,23 +191,14 @@ const ViewOrder: FC<ViewOrderProps> = ({
                     <TableRow key={item._id || item.id}>
                       <TableCell>
                         <div className="text-xs leading-tight">
-                          <div>
-                            <span className="font-medium">Type:</span>{" "}
-                            {item?.product?.type}
-                          </div>
-                          <div>
-                            <span className="font-medium">Marque:</span>{" "}
-                            {item?.product?.brand}
-                          </div>
-                          <div>
-                            <span className="font-medium">Couleur:</span>{" "}
-                            {item?.product?.color}
-                          </div>
+                          <div>{item?.product?.type}</div>
+                          <div>{item?.product?.brand}</div>
+                          <div>{item?.product?.color}</div>
                           {item?.product?.collarColor && (
-                            <div>
-                              <span className="font-medium">Colle:</span>{" "}
-                              {item?.product?.collarColor}
-                            </div>
+                            <div>{item?.product?.collarColor}</div>
+                          )}
+                          {item?.product?.code && (
+                            <div>{item?.product?.code}</div>
                           )}
                         </div>
                       </TableCell>
