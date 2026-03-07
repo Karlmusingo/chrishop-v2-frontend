@@ -36,10 +36,12 @@ export const getColumns = ({ onEdit, onView, onCancel, profile }: ActionsFuncTyp
     },
     {
       label: "Annuler",
-      disable: (id, extraData) =>
-        extraData?.status !== "PENDING" ||
-        (profile?.role !== "ADMIN" &&
-          extraData.locationId !== profile?.locationId),
+      disable: (id, extraData) => {
+        if (profile?.role === "ADMIN") {
+          return extraData?.status === "CANCEL";
+        }
+        return extraData?.status !== "PENDING" || extraData.locationId !== profile?.locationId;
+      },
       action: (id, _, extraData) => {
         onCancel(id, extraData);
       },

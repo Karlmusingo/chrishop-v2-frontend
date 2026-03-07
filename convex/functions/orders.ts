@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "../_generated/server";
 import { orderStatusValidator } from "../schema";
+import { requireCurrentUser, requireRole } from "../lib/auth";
 
 export const list = query({
   args: {
@@ -36,17 +37,21 @@ export const list = query({
           orderItems.map(async (item) => {
             const product = await ctx.db.get(item.productId);
             return { ...item, product };
-          })
+          }),
         );
 
         const location = await ctx.db.get(order.locationId);
         const user = await ctx.db.get(order.userId);
         const seller = user
-          ? { firstName: user.firstName, lastName: user.lastName, name: user.name }
+          ? {
+              firstName: user.firstName,
+              lastName: user.lastName,
+              name: user.name,
+            }
           : null;
 
         return { ...order, orderItems: itemsWithProduct, location, seller };
-      })
+      }),
     );
 
     return result;
@@ -68,7 +73,7 @@ export const get = query({
       orderItems.map(async (item) => {
         const product = await ctx.db.get(item.productId);
         return { ...item, product };
-      })
+      }),
     );
 
     const location = await ctx.db.get(order.locationId);
@@ -87,7 +92,7 @@ export const create = mutation({
       v.object({
         productId: v.id("products"),
         quantity: v.number(),
-      })
+      }),
     ),
     userId: v.id("users"),
     locationId: v.id("locations"),
@@ -101,14 +106,12 @@ export const create = mutation({
         .withIndex("by_productId_locationId", (q) =>
           q
             .eq("productId", orderItem.productId)
-            .eq("locationId", args.locationId)
+            .eq("locationId", args.locationId),
         )
         .first();
 
       if (!inventory || inventory.quantity < orderItem.quantity) {
-        throw new Error(
-          "There is no inventory available for this product"
-        );
+        throw new Error("There is no inventory available for this product");
       }
 
       // Deduct inventory
@@ -131,7 +134,7 @@ export const create = mutation({
 
     const totalAmount = ordersToInsert.reduce(
       (acc, cur) => acc + cur.totalPrice,
-      0
+      0,
     );
 
     const orderId = await ctx.db.insert("orders", {
@@ -159,7 +162,7 @@ export const update = mutation({
       v.object({
         productId: v.id("products"),
         quantity: v.number(),
-      })
+      }),
     ),
     userId: v.id("users"),
     locationId: v.id("locations"),
@@ -183,7 +186,7 @@ export const update = mutation({
         .withIndex("by_productId_locationId", (q) =>
           q
             .eq("productId", oldItem.productId)
-            .eq("locationId", oldItem.locationId)
+            .eq("locationId", oldItem.locationId),
         )
         .first();
 
@@ -210,14 +213,12 @@ export const update = mutation({
         .withIndex("by_productId_locationId", (q) =>
           q
             .eq("productId", orderItem.productId)
-            .eq("locationId", args.locationId)
+            .eq("locationId", args.locationId),
         )
         .first();
 
       if (!inventory || inventory.quantity < orderItem.quantity) {
-        throw new Error(
-          "There is no inventory available for this product"
-        );
+        throw new Error("There is no inventory available for this product");
       }
 
       await ctx.db.patch(inventory._id, {
@@ -237,10 +238,7 @@ export const update = mutation({
       });
     }
 
-    const totalAmount = newItems.reduce(
-      (acc, cur) => acc + cur.totalPrice,
-      0
-    );
+    const totalAmount = newItems.reduce((acc, cur) => acc + cur.totalPrice, 0);
 
     await ctx.db.patch(args.id, {
       totalAmount,
@@ -263,9 +261,15 @@ export const cancel = mutation({
   args: { id: v.id("orders") },
   handler: async (ctx, args) => {
     const order = await ctx.db.get(args.id);
-    if (!order) throw new Error("Order not found");
-    if (order.status !== "PENDING") {
-      throw new Error("Seules les commandes en attente peuvent être annulées");
+    if (!order) throw new Error("Commande introuvable");
+
+    if (order.status === "CANCEL") {
+      throw new Error("Cette commande est déjà annulée");
+    }
+
+    const user = await requireCurrentUser(ctx);
+    if (order.status === "PAID") {
+      requireRole(user, ["ADMIN"]);
     }
 
     const orderItems = await ctx.db
@@ -277,9 +281,7 @@ export const cancel = mutation({
       const inventory = await ctx.db
         .query("inventories")
         .withIndex("by_productId_locationId", (q) =>
-          q
-            .eq("productId", item.productId)
-            .eq("locationId", item.locationId)
+          q.eq("productId", item.productId).eq("locationId", item.locationId),
         )
         .first();
 
@@ -287,8 +289,7 @@ export const cancel = mutation({
         await ctx.db.patch(inventory._id, {
           quantity: inventory.quantity + item.quantity,
           expectedRevenue:
-            (inventory.expectedRevenue || 0) +
-            item.unitPrice * item.quantity,
+            (inventory.expectedRevenue || 0) + item.unitPrice * item.quantity,
         });
       }
     }
