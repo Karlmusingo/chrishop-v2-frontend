@@ -56,7 +56,7 @@ const ViewOrder: FC<ViewOrderProps> = ({
           paperSize: "A6",
           margin: 0,
           scale: 0.7,
-          fileName: "facture",
+          fileName: title.toLowerCase(),
         },
         () =>
           setTimeout(() => {
@@ -115,6 +115,8 @@ const ViewOrder: FC<ViewOrderProps> = ({
     );
   };
 
+  const title = (orderData?.status === "PAID" || isPaid) ? "Reçu" : "Facture";
+
   const totalInvoicePrice = orderData?.orderItems?.reduce(
     (acc: number, curr: IUnknown) => acc + curr.totalPrice,
     0,
@@ -122,7 +124,7 @@ const ViewOrder: FC<ViewOrderProps> = ({
 
   return (
     <Modal
-      title="Facture"
+      title={title}
       description=""
       onClose={() => onClose?.()}
       isOpened={isOpen || false}
@@ -137,7 +139,7 @@ const ViewOrder: FC<ViewOrderProps> = ({
           <div ref={printRef} id="print-invoice">
             <CardHeader className="flex flex-row justify-between items-center">
               <div>
-                <CardTitle className="text-2xl font-bold">Facture</CardTitle>
+                <CardTitle className="text-2xl font-bold">{title}</CardTitle>
                 <p className="text-sm">
                   Numero: #
                   {`${(orderData?._id || "")?.toString().slice(0, 8).toUpperCase()}`}

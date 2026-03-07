@@ -2,6 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "InterPDF";
+  font-weight: 400;
+  src: url("/fonts/Inter-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "InterPDF";
+  font-weight: 600;
+  src: url("/fonts/Inter-SemiBold.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "InterPDF";
+  font-weight: 700;
+  src: url("/fonts/Inter-Bold.ttf") format("truetype");
+}
+
+#print-invoice,
+#print-invoice * {
+  font-family: "InterPDF", sans-serif !important;
+}
+
 @layer base {
   :root {
     --background: 0 0% 98%;
