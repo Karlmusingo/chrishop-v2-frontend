@@ -5,7 +5,7 @@ import Button from "@/components/custom/Button";
 import { Switch } from "@/components/ui/switch";
 import { savePDF } from "@progress/kendo-react-pdf";
 
-import { FC, useRef, useState } from "react";
+import { FC, useEffect, useRef, useState } from "react";
 
 import { IUnknown } from "@/interface/Iunknown";
 import { Printer } from "lucide-react";
@@ -84,6 +84,14 @@ const ViewOrder: FC<ViewOrderProps> = ({
       handleSubmit("PENDING");
     }
   };
+
+  useEffect(() => {
+    if (orderData?.status === "PAID") {
+      setIsPaid(true);
+    } else {
+      setIsPaid(false);
+    }
+  }, [orderData?.status]);
 
   function callbackOnSuccess() {
     if (isPaid) {
@@ -227,6 +235,11 @@ const ViewOrder: FC<ViewOrderProps> = ({
               <Switch
                 id="paid"
                 checked={orderData?.status === "PAID" || isPaid}
+                disabled={
+                  orderData?.status === "CANCEL" ||
+                  orderData?.status === "PAID" ||
+                  isPaid
+                }
                 onCheckedChange={onCheckChange}
               />
               <Label htmlFor="paid">Facture payée</Label>
@@ -235,7 +248,7 @@ const ViewOrder: FC<ViewOrderProps> = ({
               onClick={handlePrint}
               className="no-print"
               loading={isPending}
-              disabled={!(orderData?.status === "PAID" || isPaid)}
+              disabled={orderData?.status === "CANCEL"}
             >
               <Printer className="mr-2 h-4 w-4" /> Imprimer
             </Button>
