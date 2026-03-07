@@ -70,6 +70,7 @@ const TransferInventory: FC<TransferInventoryProps> = ({
   useEffect(() => {
     form.setValue("type", inventoryData?.product?.type);
     form.setValue("brand", inventoryData?.product?.brand);
+    form.setValue("code", inventoryData?.product?.code || undefined);
     form.setValue("color", inventoryData?.product?.color);
     form.setValue("size", inventoryData?.product?.size);
     form.setValue(
@@ -121,6 +122,16 @@ const TransferInventory: FC<TransferInventoryProps> = ({
                 options={brandOptions}
               />
             </div>
+          </div>
+
+          <div className="grid gap-1">
+            <Input
+              control={form.control}
+              name="code"
+              label="Code"
+              disabled
+              placeholder="Code du produit"
+            />
           </div>
 
           <div

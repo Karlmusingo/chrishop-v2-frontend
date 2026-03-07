@@ -48,6 +48,8 @@ import {
 import { useMutationWithToast } from "@/hooks/convex/useMutationWithToast";
 import { api } from "../../../../convex/_generated/api";
 import { useProductAttributes } from "@/hooks/convex/useProductAttributes";
+import SizeDistributionGrid from "@/components/custom/SizeDistributionGrid";
+import FormErrorAlert from "@/components/custom/FormErrorAlert";
 
 interface AddOrderProps {
   callback?: () => void;
@@ -57,7 +59,14 @@ interface AddOrderProps {
   moveToNext?: (data?: IUnknown) => void;
 }
 
-type FormSchemaPlusProductIdType = AddOrderSchemaType & {
+type OrderItemType = {
+  type: string;
+  brand: string;
+  code?: string;
+  color?: string;
+  collarColor?: string;
+  size?: string;
+  quantity: number;
   productId: string;
   price: number;
   total: number;
@@ -82,22 +91,29 @@ const AddOrder: FC<AddOrderProps> = ({
   const isAdmin = profile?.role === ROLES.ADMIN;
   const locations =
     useQuery(api.functions.locations.list, isAdmin ? {} : "skip") ?? [];
-  const { typeOptions, brandOptions, colorOptions, sizeOptions } =
+  const { typeOptions, brandOptions, colorOptions } =
     useProductAttributes();
+  const sizes = useQuery(api.functions.productSizes.list, {}) ?? [];
 
-  const [orders, setOrders] = useState<FormSchemaPlusProductIdType[]>([]);
+  const [orders, setOrders] = useState<OrderItemType[]>([]);
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
     null,
   );
   const [mode, setMode] = useState<OrderMode>("individual");
+  const [formErrors, setFormErrors] = useState<string[]>([]);
 
   const packagingTemplates =
     useQuery(api.functions.packagingTemplates.list, {}) ?? [];
 
   const form = useForm<AddOrderSchemaType>({
     resolver: zodResolver(addOrderSchema),
+    defaultValues: {
+      sizeDistribution: sizes.map((s) => ({ size: s.value, quantity: 0 })),
+    },
   });
   const typeValue = form.watch("type");
+  const codeValue = form.watch("code");
+  const sizeDistribution = form.watch("sizeDistribution") ?? [];
 
   const packagingForm = useForm<AddPackagingOrderSchemaType>({
     resolver: zodResolver(addPackagingOrderSchema),
@@ -110,11 +126,30 @@ const AddOrder: FC<AddOrderProps> = ({
 
   const isEditing = !!orderData?._id;
 
+  // Keep sizeDistribution in sync with available sizes
+  const ensureSizeDistribution = () => {
+    const current = form.getValues("sizeDistribution") ?? [];
+    if (current.length !== sizes.length) {
+      form.setValue(
+        "sizeDistribution",
+        sizes.map((s) => {
+          const existing = current.find((c) => c.size === s.value);
+          return { size: s.value, quantity: existing?.quantity ?? 0 };
+        }),
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (sizes.length > 0) {
+      ensureSizeDistribution();
+    }
+  }, [sizes.length]);
+
   useEffect(() => {
     if (orderData && orderData.orderItems) {
       setOrders(
         orderData.orderItems.map((item: any) => ({
-          ...item,
           type: item.product.type,
           brand: item.product.brand,
           code: item.product.code,
@@ -122,7 +157,6 @@ const AddOrder: FC<AddOrderProps> = ({
           size: item.product.size,
           quantity: item.quantity,
           collarColor: item.product.collarColor,
-
           productId: item.productId,
           price: item.unitPrice,
           total: item.totalPrice,
@@ -198,47 +232,126 @@ const AddOrder: FC<AddOrderProps> = ({
       return;
     }
 
-    const inventory = await convex.query(
-      api.functions.inventories.findByProductAttributes,
-      {
-        type: values.type,
-        brand: values.brand,
-        ...(values.code ? { code: values.code } : {}),
-        ...(values.color ? { color: values.color } : {}),
-        ...(values.size ? { size: values.size } : {}),
-        ...(typeValue?.toLowerCase()?.includes("polo") && values.collarColor
-          ? { collarColor: values.collarColor }
-          : {}),
-        locationId: locationId as any,
-      },
+    setFormErrors([]);
+
+    // Code mode: single item lookup
+    if (values.code && values.code.length > 0) {
+      const qty = parseInt(values.quantity || "0");
+      if (!qty || qty <= 0) {
+        setFormErrors(["La quantité doit être supérieure à 0"]);
+        return;
+      }
+
+      const inventory = await convex.query(
+        api.functions.inventories.findByProductAttributes,
+        {
+          type: values.type,
+          brand: values.brand,
+          code: values.code,
+          ...(typeValue?.toLowerCase()?.includes("polo") && values.collarColor
+            ? { collarColor: values.collarColor }
+            : {}),
+          locationId: locationId as any,
+        },
+      );
+
+      if (!inventory || inventory.quantity <= 0) {
+        setFormErrors(["Ce produit n'a pas d'inventaire"]);
+        return;
+      }
+
+      if (orders.find((item) => item.productId === inventory.productId)) {
+        setFormErrors(["Ce produit est déjà dans la liste"]);
+        return;
+      }
+
+      if (inventory.quantity < qty) {
+        setFormErrors([
+          "Quantité insuffisante, quantité disponible: " + inventory.quantity,
+        ]);
+        return;
+      }
+
+      setOrders([
+        ...orders,
+        {
+          ...values,
+          quantity: qty,
+          productId: inventory.productId,
+          price: inventory.price,
+          total: (inventory.price ?? 1) * qty,
+        },
+      ]);
+      form.reset();
+      ensureSizeDistribution();
+      return;
+    }
+
+    // Size distribution mode
+    const nonZeroSizes = values.sizeDistribution.filter((s) => s.quantity > 0);
+    const errors: string[] = [];
+    const newItems: OrderItemType[] = [];
+
+    const results = await Promise.allSettled(
+      nonZeroSizes.map(async (entry) => {
+        const inventory = await convex.query(
+          api.functions.inventories.findByProductAttributes,
+          {
+            type: values.type,
+            brand: values.brand,
+            ...(values.color ? { color: values.color } : {}),
+            size: entry.size,
+            ...(typeValue?.toLowerCase()?.includes("polo") && values.collarColor
+              ? { collarColor: values.collarColor }
+              : {}),
+            locationId: locationId as any,
+          },
+        );
+        return { entry, inventory };
+      }),
     );
 
-    if (!inventory || inventory.quantity <= 0) {
-      toast.error("Ce produit n'a pas d'inventaire");
-      return;
-    }
-
-    if (orders.find((item) => item.productId === inventory.productId)) {
-      toast.error("Ce produit est déjà dans la liste");
-      return;
-    }
-
-    if (inventory.quantity < values.quantity) {
-      toast.error(
-        "Quantité insuffisante, quantité disponible: " + inventory.quantity,
-      );
-      return;
-    }
-
-    setOrders([
-      ...orders,
-      {
-        ...values,
+    for (const result of results) {
+      if (result.status === "rejected") {
+        errors.push("Erreur lors de la recherche d'un produit");
+        continue;
+      }
+      const { entry, inventory } = result.value;
+      if (!inventory || inventory.quantity <= 0) {
+        errors.push(`Taille ${entry.size}: pas d'inventaire`);
+        continue;
+      }
+      if (orders.find((item) => item.productId === inventory.productId)) {
+        errors.push(`Taille ${entry.size}: déjà dans la liste`);
+        continue;
+      }
+      if (inventory.quantity < entry.quantity) {
+        errors.push(
+          `Taille ${entry.size}: quantité insuffisante (disponible: ${inventory.quantity})`,
+        );
+        continue;
+      }
+      newItems.push({
+        type: values.type,
+        brand: values.brand,
+        color: values.color,
+        size: entry.size,
+        collarColor: values.collarColor,
+        quantity: entry.quantity,
         productId: inventory.productId,
         price: inventory.price,
-        total: (inventory.price ?? 1) * values.quantity,
-      },
-    ]);
+        total: (inventory.price ?? 1) * entry.quantity,
+      });
+    }
+
+    if (errors.length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    setOrders([...orders, ...newItems]);
+    form.reset();
+    ensureSizeDistribution();
   }
 
   async function onAddPackagingOrder(values: AddPackagingOrderSchemaType) {
@@ -288,7 +401,7 @@ const AddOrder: FC<AddOrderProps> = ({
         return;
       }
 
-      const newItems: FormSchemaPlusProductIdType[] = result.items.map(
+      const newItems: OrderItemType[] = result.items.map(
         (item: any) => ({
           type: item.type,
           brand: item.brand,
@@ -326,17 +439,30 @@ const AddOrder: FC<AddOrderProps> = ({
     form.setValue("brand", orderItem.brand);
     form.setValue("code", orderItem.code);
     form.setValue("color", orderItem.color);
-    form.setValue("size", orderItem.size);
     form.setValue("collarColor", orderItem.collarColor);
-    // @ts-ignore
-    form.setValue("quantity", orderItem.quantity.toString());
+
+    // Set the size distribution: only the edited size gets a quantity
+    if (orderItem.size) {
+      form.setValue(
+        "sizeDistribution",
+        sizes.map((s) => ({
+          size: s.value,
+          quantity: s.value === orderItem.size ? orderItem.quantity : 0,
+        })),
+      );
+    }
+    if (orderItem.code) {
+      form.setValue("quantity", orderItem.quantity.toString());
+    }
 
     updatedOrder.splice(index, 1);
     setOrders(updatedOrder);
     setMode("individual");
+    setFormErrors([]);
   };
 
   const totalSize = orders.reduce((acc, curr) => acc + curr.total, 0);
+  const hasCode = codeValue && codeValue.length > 0;
 
   const templateOptions = packagingTemplates.map((t: any) => ({
     label: `${t.name} (${t.packagingType === "BALE" ? "Ballon" : "Douzaine"} - ${t.totalItems} pcs)`,
@@ -396,7 +522,7 @@ const AddOrder: FC<AddOrderProps> = ({
       <div className="mb-4 flex gap-1 rounded-lg border bg-[#F8F8F8] p-1">
         <button
           type="button"
-          onClick={() => setMode("individual")}
+          onClick={() => { setMode("individual"); setFormErrors([]); }}
           className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
             mode === "individual"
               ? "bg-white text-[var(--text-primary)] shadow-sm"
@@ -407,7 +533,7 @@ const AddOrder: FC<AddOrderProps> = ({
         </button>
         <button
           type="button"
-          onClick={() => setMode("packaging")}
+          onClick={() => { setMode("packaging"); setFormErrors([]); }}
           className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
             mode === "packaging"
               ? "bg-white text-[var(--text-primary)] shadow-sm"
@@ -455,50 +581,58 @@ const AddOrder: FC<AddOrderProps> = ({
               />
             </div>
 
-            <div
-              className={`grid gap-4${typeValue?.toLowerCase()?.includes("polo") ? " grid-cols-2" : ""}`}
-            >
-              <div className="grid gap-1">
-                <SelectInput
+            {!hasCode && (
+              <>
+                <div
+                  className={`grid gap-4${typeValue?.toLowerCase()?.includes("polo") ? " grid-cols-2" : ""}`}
+                >
+                  <div className="grid gap-1">
+                    <SelectInput
+                      control={form.control}
+                      name="color"
+                      label="Couleur"
+                      placeholder="Sélectionnez les couleurs"
+                      options={colorOptions}
+                    />
+                  </div>
+
+                  {typeValue?.toLowerCase()?.includes("polo") && (
+                    <div className="grid gap-1">
+                      <SelectInput
+                        control={form.control}
+                        name="collarColor"
+                        label="Couleur de la colle"
+                        placeholder="Sélectionnez les couleurs"
+                        options={colorOptions}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <SizeDistributionGrid
+                  sizes={sizes}
+                  values={sizeDistribution}
+                  onChange={(index, size, quantity) => {
+                    form.setValue(`sizeDistribution.${index}.size`, size);
+                    form.setValue(`sizeDistribution.${index}.quantity`, quantity);
+                  }}
+                />
+              </>
+            )}
+
+            {hasCode && (
+              <div className="mb-2 grid gap-1">
+                <Input
                   control={form.control}
-                  name="color"
-                  label="Couleur"
-                  placeholder="Sélectionnez les couleurs"
-                  options={colorOptions}
+                  name="quantity"
+                  label="Quantité"
+                  type="number"
+                  placeholder="Entrez la quantité"
                 />
               </div>
+            )}
 
-              {typeValue?.toLowerCase()?.includes("polo") && (
-                <div className="grid gap-1">
-                  <SelectInput
-                    control={form.control}
-                    name="collarColor"
-                    label="Couleur de la colle"
-                    placeholder="Sélectionnez les couleurs"
-                    options={colorOptions}
-                  />
-                </div>
-              )}
-            </div>
-            <div className="grid gap-1">
-              <SelectInput
-                control={form.control}
-                name="size"
-                label="Taille"
-                placeholder="Sélectionnez les tailles"
-                options={sizeOptions}
-              />
-            </div>
-
-            <div className="mb-2 grid gap-1">
-              <Input
-                control={form.control}
-                name="quantity"
-                label="Quantité"
-                type="number"
-                placeholder="Entrez la quantité"
-              />
-            </div>
+            <FormErrorAlert errors={formErrors} onDismiss={() => setFormErrors([])} />
 
             <Button
               type="submit"
@@ -664,6 +798,7 @@ const AddOrder: FC<AddOrderProps> = ({
               form.reset();
               packagingForm.reset();
               setOrders([]);
+              setFormErrors([]);
             }}
           >
             Annuler

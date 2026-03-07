@@ -10,7 +10,7 @@ import Modal from "@/components/ui/modal";
 import Button from "@/components/custom/Button";
 import Input from "@/components/custom/form/Input";
 
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 
 import { usePermission } from "@/hooks/usePermission";
 import { ROLES } from "@/interface/roles";
@@ -46,6 +46,8 @@ import {
 import { useMutationWithToast } from "@/hooks/convex/useMutationWithToast";
 import { api } from "../../../../convex/_generated/api";
 import { useProductAttributes } from "@/hooks/convex/useProductAttributes";
+import SizeDistributionGrid from "@/components/custom/SizeDistributionGrid";
+import FormErrorAlert from "@/components/custom/FormErrorAlert";
 
 interface BulkTransferInventoryProps {
   callback?: () => void;
@@ -73,8 +75,9 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
     api.functions.inventories.bulkTransfer,
   );
   const { userRole } = usePermission();
-  const { typeOptions, brandOptions, colorOptions, sizeOptions } =
+  const { typeOptions, brandOptions, colorOptions } =
     useProductAttributes();
+  const sizes = useQuery(api.functions.productSizes.list, {}) ?? [];
 
   const locations = useQuery(api.functions.locations.list, {}) ?? [];
   const packagingTemplates =
@@ -87,11 +90,17 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
   const [destinationLocationId, setDestinationLocationId] = useState<
     string | null
   >(null);
+  const [formErrors, setFormErrors] = useState<string[]>([]);
 
   const form = useForm<BulkTransferIndividualSchemaType>({
     resolver: zodResolver(bulkTransferIndividualSchema),
+    defaultValues: {
+      sizeDistribution: sizes.map((s) => ({ size: s.value, quantity: 0 })),
+    },
   });
   const typeValue = form.watch("type");
+  const codeValue = form.watch("code");
+  const sizeDistribution = form.watch("sizeDistribution") ?? [];
 
   const packagingForm = useForm<BulkTransferPackagingSchemaType>({
     resolver: zodResolver(bulkTransferPackagingSchema),
@@ -102,6 +111,25 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
   });
   const packagingTypeValue = packagingForm.watch("productType");
 
+  const ensureSizeDistribution = () => {
+    const current = form.getValues("sizeDistribution") ?? [];
+    if (current.length !== sizes.length) {
+      form.setValue(
+        "sizeDistribution",
+        sizes.map((s) => {
+          const existing = current.find((c) => c.size === s.value);
+          return { size: s.value, quantity: existing?.quantity ?? 0 };
+        }),
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (sizes.length > 0) {
+      ensureSizeDistribution();
+    }
+  }, [sizes.length]);
+
   function callbackOnSuccess() {
     form.reset();
     packagingForm.reset();
@@ -109,6 +137,7 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
     setItems([]);
     setSourceLocationId(null);
     setDestinationLocationId(null);
+    setFormErrors([]);
     callback?.();
   }
 
@@ -153,56 +182,128 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
       return;
     }
 
+    setFormErrors([]);
     const sourceLocId = getSourceLocationIdForQuery();
 
-    const inventory = await convex.query(
-      api.functions.inventories.findByProductAttributesAtSource,
-      {
-        type: values.type,
-        brand: values.brand,
-        ...(values.code ? { code: values.code } : {}),
-        ...(values.color ? { color: values.color } : {}),
-        ...(values.size ? { size: values.size } : {}),
-        ...(typeValue?.toLowerCase()?.includes("polo") && values.collarColor
-          ? { collarColor: values.collarColor }
-          : {}),
-        locationId: sourceLocId as any,
-      },
+    // Code mode: single item lookup
+    if (values.code && values.code.length > 0) {
+      const qty = parseInt(values.transferQuantity || "0");
+      if (!qty || qty <= 0) {
+        setFormErrors(["La quantité doit être supérieure à 0"]);
+        return;
+      }
+
+      const inventory = await convex.query(
+        api.functions.inventories.findByProductAttributesAtSource,
+        {
+          type: values.type,
+          brand: values.brand,
+          code: values.code,
+          ...(typeValue?.toLowerCase()?.includes("polo") && values.collarColor
+            ? { collarColor: values.collarColor }
+            : {}),
+          locationId: sourceLocId as any,
+        },
+      );
+
+      if (!inventory || inventory.quantity <= 0) {
+        setFormErrors(["Ce produit n'a pas d'inventaire à cette source"]);
+        return;
+      }
+
+      if (items.find((item) => item.productId === inventory.productId)) {
+        setFormErrors(["Ce produit est déjà dans la liste"]);
+        return;
+      }
+
+      if (inventory.quantity < qty) {
+        setFormErrors([
+          "Quantité insuffisante, quantité disponible: " + inventory.quantity,
+        ]);
+        return;
+      }
+
+      setItems([
+        ...items,
+        {
+          type: values.type,
+          brand: values.brand,
+          code: values.code,
+          collarColor: values.collarColor,
+          productId: inventory.productId,
+          transferQuantity: qty,
+          availableQuantity: inventory.quantity,
+        },
+      ]);
+      form.reset();
+      ensureSizeDistribution();
+      return;
+    }
+
+    // Size distribution mode
+    const nonZeroSizes = values.sizeDistribution.filter((s) => s.quantity > 0);
+    const errors: string[] = [];
+    const newItems: TransferItem[] = [];
+
+    const results = await Promise.allSettled(
+      nonZeroSizes.map(async (entry) => {
+        const inventory = await convex.query(
+          api.functions.inventories.findByProductAttributesAtSource,
+          {
+            type: values.type,
+            brand: values.brand,
+            ...(values.color ? { color: values.color } : {}),
+            size: entry.size,
+            ...(typeValue?.toLowerCase()?.includes("polo") && values.collarColor
+              ? { collarColor: values.collarColor }
+              : {}),
+            locationId: sourceLocId as any,
+          },
+        );
+        return { entry, inventory };
+      }),
     );
 
-    if (!inventory || inventory.quantity <= 0) {
-      toast.error("Ce produit n'a pas d'inventaire à cette source");
-      return;
-    }
-
-    if (items.find((item) => item.productId === inventory.productId)) {
-      toast.error("Ce produit est déjà dans la liste");
-      return;
-    }
-
-    if (inventory.quantity < values.transferQuantity) {
-      toast.error(
-        "Quantité insuffisante, quantité disponible: " + inventory.quantity,
-      );
-      return;
-    }
-
-    form.reset();
-
-    setItems([
-      ...items,
-      {
+    for (const result of results) {
+      if (result.status === "rejected") {
+        errors.push("Erreur lors de la recherche d'un produit");
+        continue;
+      }
+      const { entry, inventory } = result.value;
+      if (!inventory || inventory.quantity <= 0) {
+        errors.push(`Taille ${entry.size}: pas d'inventaire à cette source`);
+        continue;
+      }
+      if (items.find((item) => item.productId === inventory.productId)) {
+        errors.push(`Taille ${entry.size}: déjà dans la liste`);
+        continue;
+      }
+      if (inventory.quantity < entry.quantity) {
+        errors.push(
+          `Taille ${entry.size}: quantité insuffisante (disponible: ${inventory.quantity})`,
+        );
+        continue;
+      }
+      newItems.push({
         type: values.type,
         brand: values.brand,
-        code: values.code,
         color: values.color,
-        size: values.size,
+        size: entry.size,
         collarColor: values.collarColor,
         productId: inventory.productId,
-        transferQuantity: values.transferQuantity,
+        transferQuantity: entry.quantity,
         availableQuantity: inventory.quantity,
-      },
-    ]);
+      });
+    }
+
+    if (errors.length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    setItems([...items, ...newItems]);
+    form.reset();
+    ensureSizeDistribution();
   }
 
   async function onAddPackagingTransfer(
@@ -290,14 +391,26 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
     form.setValue("brand", item.brand);
     form.setValue("code", item.code);
     form.setValue("color", item.color);
-    form.setValue("size", item.size);
     form.setValue("collarColor", item.collarColor);
-    // @ts-ignore
-    form.setValue("transferQuantity", item.transferQuantity.toString());
+
+    // Set the size distribution: only the edited size gets a quantity
+    if (item.size) {
+      form.setValue(
+        "sizeDistribution",
+        sizes.map((s) => ({
+          size: s.value,
+          quantity: s.value === item.size ? item.transferQuantity : 0,
+        })),
+      );
+    }
+    if (item.code) {
+      form.setValue("transferQuantity", item.transferQuantity.toString());
+    }
 
     updated.splice(index, 1);
     setItems(updated);
-    setMode("packaging");
+    setMode("individual");
+    setFormErrors([]);
   };
 
   const templateOptions = packagingTemplates.map((t: any) => ({
@@ -324,6 +437,8 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
       label: loc.name,
       value: loc._id,
     }));
+
+  const hasCode = codeValue && codeValue.length > 0;
 
   return (
     <Modal
@@ -398,7 +513,7 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
       <div className="mb-4 flex gap-1 rounded-lg border bg-[#F8F8F8] p-1">
         <button
           type="button"
-          onClick={() => setMode("packaging")}
+          onClick={() => { setMode("packaging"); setFormErrors([]); }}
           className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
             mode === "packaging"
               ? "bg-white text-[var(--text-primary)] shadow-sm"
@@ -409,7 +524,7 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
         </button>
         <button
           type="button"
-          onClick={() => setMode("individual")}
+          onClick={() => { setMode("individual"); setFormErrors([]); }}
           className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
             mode === "individual"
               ? "bg-white text-[var(--text-primary)] shadow-sm"
@@ -456,50 +571,57 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
               />
             </div>
 
-            <div
-              className={`grid gap-4${typeValue?.toLowerCase()?.includes("polo") ? " grid-cols-2" : ""}`}
-            >
-              <div className="grid gap-1">
-                <SelectInput
+            {!hasCode && (
+              <>
+                <div
+                  className={`grid gap-4${typeValue?.toLowerCase()?.includes("polo") ? " grid-cols-2" : ""}`}
+                >
+                  <div className="grid gap-1">
+                    <SelectInput
+                      control={form.control}
+                      name="color"
+                      label="Couleur"
+                      placeholder="Sélectionnez les couleurs"
+                      options={colorOptions}
+                    />
+                  </div>
+                  {typeValue?.toLowerCase()?.includes("polo") && (
+                    <div className="grid gap-1">
+                      <SelectInput
+                        control={form.control}
+                        name="collarColor"
+                        label="Couleur de la colle"
+                        placeholder="Sélectionnez les couleurs"
+                        options={colorOptions}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <SizeDistributionGrid
+                  sizes={sizes}
+                  values={sizeDistribution}
+                  onChange={(index, size, quantity) => {
+                    form.setValue(`sizeDistribution.${index}.size`, size);
+                    form.setValue(`sizeDistribution.${index}.quantity`, quantity);
+                  }}
+                />
+              </>
+            )}
+
+            {hasCode && (
+              <div className="mb-2 grid gap-1">
+                <Input
                   control={form.control}
-                  name="color"
-                  label="Couleur"
-                  placeholder="Sélectionnez les couleurs"
-                  options={colorOptions}
+                  name="transferQuantity"
+                  label="Quantité à transférer"
+                  type="number"
+                  placeholder="Entrez la quantité"
                 />
               </div>
-              {typeValue?.toLowerCase()?.includes("polo") && (
-                <div className="grid gap-1">
-                  <SelectInput
-                    control={form.control}
-                    name="collarColor"
-                    label="Couleur de la colle"
-                    placeholder="Sélectionnez les couleurs"
-                    options={colorOptions}
-                  />
-                </div>
-              )}
-            </div>
+            )}
 
-            <div className="grid gap-1">
-              <SelectInput
-                control={form.control}
-                name="size"
-                label="Taille"
-                placeholder="Sélectionnez les tailles"
-                options={sizeOptions}
-              />
-            </div>
-
-            <div className="mb-2 grid gap-1">
-              <Input
-                control={form.control}
-                name="transferQuantity"
-                label="Quantité à transférer"
-                type="number"
-                placeholder="Entrez la quantité"
-              />
-            </div>
+            <FormErrorAlert errors={formErrors} onDismiss={() => setFormErrors([])} />
 
             <Button type="submit" className="w-full" loading={isPending}>
               Ajouter
@@ -582,7 +704,7 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
               <TableHead className="text-center">Couleur</TableHead>
               <TableHead className="text-center">Taille</TableHead>
               <TableHead className="text-center">Disponible</TableHead>
-              <TableHead className="text-center">À transférer</TableHead>
+              <TableHead className="text-center">A transferer</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -649,6 +771,7 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
               form.reset();
               packagingForm.reset();
               setItems([]);
+              setFormErrors([]);
             }}
           >
             Annuler

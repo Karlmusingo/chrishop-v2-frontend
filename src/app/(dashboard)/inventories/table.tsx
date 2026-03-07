@@ -70,6 +70,15 @@ export const getColumns = ({
       },
     },
     {
+      header: "Code",
+      accessorKey: "code",
+      cell: ({ row }) => {
+        const rowData = row.original;
+
+        return rowData.product?.code;
+      },
+    },
+    {
       header: "Couleur",
       accessorKey: "color",
       cell: ({ row }) => {

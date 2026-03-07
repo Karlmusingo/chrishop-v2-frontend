@@ -10,7 +10,7 @@ import Modal from "@/components/ui/modal";
 import Button from "@/components/custom/Button";
 import Input from "@/components/custom/form/Input";
 
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 
 import { usePermission } from "@/hooks/usePermission";
 import { ROLES } from "@/interface/roles";
@@ -39,12 +39,22 @@ import {
 import { useMutationWithToast } from "@/hooks/convex/useMutationWithToast";
 import { api } from "../../../../convex/_generated/api";
 import { useProductAttributes } from "@/hooks/convex/useProductAttributes";
+import SizeDistributionGrid from "@/components/custom/SizeDistributionGrid";
+import FormErrorAlert from "@/components/custom/FormErrorAlert";
 
 interface AddInventoryProps {
   callback?: () => void;
 }
 
-type FormSchemaPlusProductIdType = AddInventoriesSchemaType & {
+type InventoryItemType = {
+  type: string;
+  brand: string;
+  code?: string;
+  color?: string;
+  collarColor?: string;
+  size?: string;
+  quantity: number;
+  price: number;
   productId: string;
 };
 
@@ -59,20 +69,27 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
     api.functions.packagingTemplates.ensureProductsExist,
   );
   const { userRole } = usePermission();
-  const { typeOptions, brandOptions, colorOptions, sizeOptions } =
+  const { typeOptions, brandOptions, colorOptions } =
     useProductAttributes();
+  const sizes = useQuery(api.functions.productSizes.list, {}) ?? [];
 
   const [isOpened, setOpened] = useState(false);
-  const [inventory, setInventory] = useState<FormSchemaPlusProductIdType[]>([]);
+  const [inventory, setInventory] = useState<InventoryItemType[]>([]);
   const [mode, setMode] = useState<InventoryMode>("packaging");
+  const [formErrors, setFormErrors] = useState<string[]>([]);
 
   const packagingTemplates =
     useQuery(api.functions.packagingTemplates.list, {}) ?? [];
 
   const form = useForm<AddInventoriesSchemaType>({
     resolver: zodResolver(addInventoriesSchema),
+    defaultValues: {
+      sizeDistribution: sizes.map((s) => ({ size: s.value, quantity: 0 })),
+    },
   });
   const typeValue = form.watch("type");
+  const codeValue = form.watch("code");
+  const sizeDistribution = form.watch("sizeDistribution") ?? [];
 
   const packagingForm = useForm<AddPackagingInventorySchemaType>({
     resolver: zodResolver(addPackagingInventorySchema),
@@ -83,11 +100,31 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
   });
   const packagingTypeValue = packagingForm.watch("productType");
 
+  const ensureSizeDistribution = () => {
+    const current = form.getValues("sizeDistribution") ?? [];
+    if (current.length !== sizes.length) {
+      form.setValue(
+        "sizeDistribution",
+        sizes.map((s) => {
+          const existing = current.find((c) => c.size === s.value);
+          return { size: s.value, quantity: existing?.quantity ?? 0 };
+        }),
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (sizes.length > 0) {
+      ensureSizeDistribution();
+    }
+  }, [sizes.length]);
+
   function callbackOnSuccess() {
     form.reset();
     packagingForm.reset();
     setOpened(false);
     setInventory([]);
+    setFormErrors([]);
     callback?.();
   }
 
@@ -108,32 +145,112 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
   };
 
   async function onAddInventory(values: AddInventoriesSchemaType) {
-    const product = await convex.query(
-      api.functions.products.findByAttributes,
-      {
-        type: values.type,
-        brand: values.brand,
-        ...(values.code ? { code: values.code } : {}),
-        ...(values.color ? { color: values.color } : {}),
-        ...(values.size ? { size: values.size } : {}),
-        ...(typeValue?.toLowerCase()?.includes("polo") && values.collarColor
-          ? { collarColor: values.collarColor }
-          : {}),
-      },
+    setFormErrors([]);
+
+    // Code mode: single item lookup
+    if (values.code && values.code.length > 0) {
+      const qty = parseInt(values.quantity || "0");
+      if (!qty || qty <= 0) {
+        setFormErrors(["La quantité doit être supérieure à 0"]);
+        return;
+      }
+
+      const product = await convex.query(
+        api.functions.products.findByAttributes,
+        {
+          type: values.type,
+          brand: values.brand,
+          code: values.code,
+          ...(typeValue?.toLowerCase()?.includes("polo") && values.collarColor
+            ? { collarColor: values.collarColor }
+            : {}),
+        },
+      );
+
+      if (!product) {
+        setFormErrors(["Produit non trouvé"]);
+        return;
+      }
+
+      if (inventory.find((item) => item.productId === product._id)) {
+        setFormErrors(["Ce produit est déjà dans l'inventaire"]);
+        return;
+      }
+
+      setInventory([
+        ...inventory,
+        {
+          type: values.type,
+          brand: values.brand,
+          code: values.code,
+          collarColor: values.collarColor,
+          quantity: qty,
+          price: values.price,
+          productId: product._id,
+        },
+      ]);
+      form.reset();
+      ensureSizeDistribution();
+      return;
+    }
+
+    // Size distribution mode
+    const nonZeroSizes = values.sizeDistribution.filter((s) => s.quantity > 0);
+    const errors: string[] = [];
+    const newItems: InventoryItemType[] = [];
+
+    const results = await Promise.allSettled(
+      nonZeroSizes.map(async (entry) => {
+        const product = await convex.query(
+          api.functions.products.findByAttributes,
+          {
+            type: values.type,
+            brand: values.brand,
+            ...(values.color ? { color: values.color } : {}),
+            size: entry.size,
+            ...(typeValue?.toLowerCase()?.includes("polo") && values.collarColor
+              ? { collarColor: values.collarColor }
+              : {}),
+          },
+        );
+        return { entry, product };
+      }),
     );
 
-    if (!product) {
-      toast.error("Produit non trouvé");
+    for (const result of results) {
+      if (result.status === "rejected") {
+        errors.push("Erreur lors de la recherche d'un produit");
+        continue;
+      }
+      const { entry, product } = result.value;
+      if (!product) {
+        errors.push(`Taille ${entry.size}: produit non trouvé`);
+        continue;
+      }
+      if (inventory.find((item) => item.productId === product._id)) {
+        errors.push(`Taille ${entry.size}: déjà dans l'inventaire`);
+        continue;
+      }
+      newItems.push({
+        type: values.type,
+        brand: values.brand,
+        color: values.color,
+        size: entry.size,
+        collarColor: values.collarColor,
+        quantity: entry.quantity,
+        price: values.price,
+        productId: product._id,
+      });
+    }
+
+    if (errors.length > 0) {
+      setFormErrors(errors);
       return;
     }
 
-    if (inventory.find((item) => item.productId === product._id)) {
-      toast.error("Ce produit est déjà dans l'inventaire");
-      return;
-    }
+    setInventory([...inventory, ...newItems]);
     form.reset();
-
-    setInventory([...inventory, { ...values, productId: product._id }]);
+    ensureSizeDistribution();
   }
 
   async function onAddPackagingInventory(
@@ -187,7 +304,7 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
         return;
       }
 
-      const newItems: FormSchemaPlusProductIdType[] = result.items.map(
+      const newItems: InventoryItemType[] = result.items.map(
         (item: any) => ({
           type: item.type,
           brand: item.brand,
@@ -224,22 +341,36 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
     form.setValue("brand", inventoryItem.brand);
     form.setValue("code", inventoryItem.code);
     form.setValue("color", inventoryItem.color);
-    form.setValue("size", inventoryItem.size);
     form.setValue("collarColor", inventoryItem.collarColor);
     // @ts-ignore
-    form.setValue("quantity", inventoryItem.quantity.toString());
-    // @ts-ignore
     form.setValue("price", inventoryItem.price.toString());
+
+    // Set the size distribution: only the edited size gets a quantity
+    if (inventoryItem.size) {
+      form.setValue(
+        "sizeDistribution",
+        sizes.map((s) => ({
+          size: s.value,
+          quantity: s.value === inventoryItem.size ? inventoryItem.quantity : 0,
+        })),
+      );
+    }
+    if (inventoryItem.code) {
+      form.setValue("quantity", inventoryItem.quantity.toString());
+    }
 
     updatedInventory.splice(index, 1);
     setInventory(updatedInventory);
     setMode("individual");
+    setFormErrors([]);
   };
 
   const templateOptions = packagingTemplates.map((t: any) => ({
     label: `${t.name} (${t.packagingType === "BALE" ? "Ballon" : "Douzaine"} - ${t.totalItems} pcs)`,
     value: t._id,
   }));
+
+  const hasCode = codeValue && codeValue.length > 0;
 
   return (
     <Modal
@@ -271,7 +402,7 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
       <div className="mb-4 flex gap-1 rounded-lg border bg-[#F8F8F8] p-1">
         <button
           type="button"
-          onClick={() => setMode("packaging")}
+          onClick={() => { setMode("packaging"); setFormErrors([]); }}
           className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
             mode === "packaging"
               ? "bg-white text-[var(--text-primary)] shadow-sm"
@@ -282,7 +413,7 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
         </button>
         <button
           type="button"
-          onClick={() => setMode("individual")}
+          onClick={() => { setMode("individual"); setFormErrors([]); }}
           className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
             mode === "individual"
               ? "bg-white text-[var(--text-primary)] shadow-sm"
@@ -330,43 +461,47 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
               />
             </div>
 
-            <div
-              className={`grid gap-4${typeValue?.toLowerCase()?.includes("polo") ? " grid-cols-2" : ""}`}
-            >
-              <div className="grid gap-1">
-                <SelectInput
-                  control={form.control}
-                  name="color"
-                  label="Couleur"
-                  placeholder="Sélectionnez les couleurs"
-                  options={colorOptions}
-                />
-              </div>
+            {!hasCode && (
+              <>
+                <div
+                  className={`grid gap-4${typeValue?.toLowerCase()?.includes("polo") ? " grid-cols-2" : ""}`}
+                >
+                  <div className="grid gap-1">
+                    <SelectInput
+                      control={form.control}
+                      name="color"
+                      label="Couleur"
+                      placeholder="Sélectionnez les couleurs"
+                      options={colorOptions}
+                    />
+                  </div>
 
-              {typeValue?.toLowerCase()?.includes("polo") && (
-                <div className="grid gap-1">
-                  <SelectInput
-                    control={form.control}
-                    name="collarColor"
-                    label="Couleur de la colle"
-                    placeholder="Sélectionnez les couleurs"
-                    options={colorOptions}
-                  />
+                  {typeValue?.toLowerCase()?.includes("polo") && (
+                    <div className="grid gap-1">
+                      <SelectInput
+                        control={form.control}
+                        name="collarColor"
+                        label="Couleur de la colle"
+                        placeholder="Sélectionnez les couleurs"
+                        options={colorOptions}
+                      />
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            <div className="grid gap-1">
-              <SelectInput
-                control={form.control}
-                name="size"
-                label="Taille"
-                placeholder="Sélectionnez les tailles"
-                options={sizeOptions}
-              />
-            </div>
 
-            <div className="mb-2 grid grid-cols-2 gap-4">
-              <div className="grid gap-1">
+                <SizeDistributionGrid
+                  sizes={sizes}
+                  values={sizeDistribution}
+                  onChange={(index, size, quantity) => {
+                    form.setValue(`sizeDistribution.${index}.size`, size);
+                    form.setValue(`sizeDistribution.${index}.quantity`, quantity);
+                  }}
+                />
+              </>
+            )}
+
+            {hasCode && (
+              <div className="mb-2 grid gap-1">
                 <Input
                   control={form.control}
                   name="quantity"
@@ -375,16 +510,19 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
                   placeholder="Entrez la quantité"
                 />
               </div>
-              <div className="grid gap-1">
-                <Input
-                  control={form.control}
-                  name="price"
-                  label="Prix"
-                  type="number"
-                  placeholder="Entrez le prix"
-                />
-              </div>
+            )}
+
+            <div className="mb-2 grid gap-1">
+              <Input
+                control={form.control}
+                name="price"
+                label="Prix"
+                type="number"
+                placeholder="Entrez le prix"
+              />
             </div>
+
+            <FormErrorAlert errors={formErrors} onDismiss={() => setFormErrors([])} />
 
             <Button type="submit" className="w-full" loading={isPending}>
               Ajouter
@@ -536,6 +674,7 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
               form.reset();
               packagingForm.reset();
               setInventory([]);
+              setFormErrors([]);
             }}
           >
             Annuler
