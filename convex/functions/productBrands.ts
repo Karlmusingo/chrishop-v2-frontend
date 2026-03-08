@@ -25,17 +25,22 @@ export const create = mutation({
     const user = await requireCurrentUser(ctx);
     requireRole(user, ["ADMIN"]);
 
-    const existing = await ctx.db
-      .query("productBrands")
-      .withIndex("by_value", (q) => q.eq("value", args.value))
-      .first();
+    const normalizedValue = args.value.trim();
+    if (!normalizedValue) {
+      throw new Error("La valeur ne peut pas être vide");
+    }
 
-    if (existing) {
+    const allItems = await ctx.db.query("productBrands").collect();
+    const duplicate = allItems.find(
+      (item) => item.value.toLowerCase() === normalizedValue.toLowerCase()
+    );
+
+    if (duplicate) {
       throw new Error("Une marque avec cette valeur existe déjà");
     }
 
     const id = await ctx.db.insert("productBrands", {
-      value: args.value,
+      value: normalizedValue,
       sortOrder: args.sortOrder,
     });
 
@@ -56,14 +61,16 @@ export const update = mutation({
     const current = await ctx.db.get(args.id);
     if (!current) throw new Error("Marque non trouvée");
 
-    const newValue = args.value;
+    const newValue = args.value?.trim();
     if (newValue && newValue !== current.value) {
-      const existing = await ctx.db
-        .query("productBrands")
-        .withIndex("by_value", (q) => q.eq("value", newValue))
-        .first();
+      const allItems = await ctx.db.query("productBrands").collect();
+      const duplicate = allItems.find(
+        (item) =>
+          item._id !== args.id &&
+          item.value.toLowerCase() === newValue.toLowerCase()
+      );
 
-      if (existing) {
+      if (duplicate) {
         throw new Error("Une marque avec cette valeur existe déjà");
       }
 
