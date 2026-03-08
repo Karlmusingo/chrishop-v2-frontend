@@ -126,7 +126,10 @@ export default defineSchema({
     label: v.optional(v.string()),
     value: v.string(),
     sortOrder: v.optional(v.number()),
-  }).index("by_value", ["value"]),
+    typeId: v.optional(v.id("productTypes")),
+  })
+    .index("by_value", ["value"])
+    .index("by_typeId", ["typeId"]),
 
   productColors: defineTable({
     label: v.optional(v.string()),

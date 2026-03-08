@@ -11,6 +11,8 @@ export function useProductAttributes() {
     (items ?? []).map((item) => ({ label: item.value, value: item.value }));
 
   return {
+    types: types ?? [],
+    brands: brands ?? [],
     typeOptions: toOptions(types),
     brandOptions: toOptions(brands),
     colorOptions: toOptions(colors),

@@ -10,7 +10,7 @@ import Modal from "@/components/ui/modal";
 import Button from "@/components/custom/Button";
 import Input from "@/components/custom/form/Input";
 
-import { FC, useState } from "react";
+import { FC, useEffect, useMemo, useState } from "react";
 import {
   addProductSchema,
   AddProductSchemaType,
@@ -32,7 +32,7 @@ const AddProduct: FC<AddProductProps> = ({ callback }) => {
     api.functions.products.create,
   );
   const { userRole } = usePermission();
-  const { typeOptions, brandOptions, colorOptions, sizeOptions } =
+  const { types, brands, typeOptions, colorOptions, sizeOptions } =
     useProductAttributes();
 
   const [isOpened, setOpened] = useState(false);
@@ -41,6 +41,21 @@ const AddProduct: FC<AddProductProps> = ({ callback }) => {
     resolver: zodResolver(addProductSchema),
   });
   const typeValue = form.watch("type");
+
+  // Filter brands by selected type
+  const filteredBrandOptions = useMemo(() => {
+    if (!typeValue) return brands.map((b) => ({ label: b.value, value: b.value }));
+    const selectedType = types.find((t) => t.value === typeValue);
+    if (!selectedType) return brands.map((b) => ({ label: b.value, value: b.value }));
+    return brands
+      .filter((b) => b.typeId === selectedType._id || !b.typeId)
+      .map((b) => ({ label: b.value, value: b.value }));
+  }, [typeValue, types, brands]);
+
+  // Reset brand when type changes
+  useEffect(() => {
+    form.setValue("brand", "");
+  }, [typeValue]);
 
   function callbackOnSuccess() {
     form.reset();
@@ -106,7 +121,7 @@ const AddProduct: FC<AddProductProps> = ({ callback }) => {
                 name="brand"
                 label="Marque"
                 placeholder="Sélectionnez une marque"
-                options={brandOptions}
+                options={filteredBrandOptions}
               />
             </div>
           </div>

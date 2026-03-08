@@ -5,6 +5,7 @@ import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import PageHeader from "@/components/custom/PageHeader";
 import AttributeTable from "./AttributeTable";
+import BrandTable from "./BrandTable";
 import PackagingTemplateTable from "./PackagingTemplateTable";
 
 const tabs = [
@@ -61,12 +62,9 @@ const ConfigurationPage: FC = () => {
       )}
 
       {activeTab === "brands" && (
-        <AttributeTable
-          categoryLabel="Marque"
-          items={brands}
-          createMutation={api.functions.productBrands.create}
-          updateMutation={api.functions.productBrands.update}
-          removeMutation={api.functions.productBrands.remove}
+        <BrandTable
+          brands={brands}
+          typeOptions={types.map((t) => ({ label: t.value, value: t._id }))}
         />
       )}
 

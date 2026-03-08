@@ -10,7 +10,7 @@ import Modal from "@/components/ui/modal";
 import Button from "@/components/custom/Button";
 import Input from "@/components/custom/form/Input";
 
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect, useMemo, useState } from "react";
 
 import { usePermission } from "@/hooks/usePermission";
 import { ROLES } from "@/interface/roles";
@@ -91,7 +91,7 @@ const AddOrder: FC<AddOrderProps> = ({
   const isAdmin = profile?.role === ROLES.ADMIN;
   const locations =
     useQuery(api.functions.locations.list, isAdmin ? {} : "skip") ?? [];
-  const { typeOptions, brandOptions, colorOptions } =
+  const { types, brands, typeOptions, colorOptions } =
     useProductAttributes();
   const sizes = useQuery(api.functions.productSizes.list, {}) ?? [];
 
@@ -123,6 +123,29 @@ const AddOrder: FC<AddOrderProps> = ({
     },
   });
   const packagingTypeValue = packagingForm.watch("productType");
+
+  // Filter brands by selected type
+  const filteredBrandOptions = useMemo(() => {
+    if (!typeValue) return brands.map((b) => ({ label: b.value, value: b.value }));
+    const selectedType = types.find((t) => t.value === typeValue);
+    if (!selectedType) return brands.map((b) => ({ label: b.value, value: b.value }));
+    return brands
+      .filter((b) => b.typeId === selectedType._id || !b.typeId)
+      .map((b) => ({ label: b.value, value: b.value }));
+  }, [typeValue, types, brands]);
+
+  const filteredPackagingBrandOptions = useMemo(() => {
+    if (!packagingTypeValue) return brands.map((b) => ({ label: b.value, value: b.value }));
+    const selectedType = types.find((t) => t.value === packagingTypeValue);
+    if (!selectedType) return brands.map((b) => ({ label: b.value, value: b.value }));
+    return brands
+      .filter((b) => b.typeId === selectedType._id || !b.typeId)
+      .map((b) => ({ label: b.value, value: b.value }));
+  }, [packagingTypeValue, types, brands]);
+
+  // Reset brand when type changes
+  useEffect(() => { form.setValue("brand", ""); }, [typeValue]);
+  useEffect(() => { packagingForm.setValue("productBrand", ""); }, [packagingTypeValue]);
 
   const isEditing = !!orderData?._id;
 
@@ -567,7 +590,7 @@ const AddOrder: FC<AddOrderProps> = ({
                   name="brand"
                   label="Marque"
                   placeholder="Sélectionnez une marque"
-                  options={brandOptions}
+                  options={filteredBrandOptions}
                 />
               </div>
             </div>
@@ -670,7 +693,7 @@ const AddOrder: FC<AddOrderProps> = ({
                 name="productBrand"
                 label="Marque"
                 placeholder="Sélectionnez une marque"
-                options={brandOptions}
+                options={filteredPackagingBrandOptions}
               />
             </div>
 

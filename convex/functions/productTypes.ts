@@ -119,6 +119,18 @@ export const remove = mutation({
       );
     }
 
+    // Check if any brands reference this type
+    const brands = await ctx.db
+      .query("productBrands")
+      .withIndex("by_typeId", (q) => q.eq("typeId", args.id))
+      .collect();
+
+    if (brands.length > 0) {
+      throw new Error(
+        `Impossible de supprimer: ${brands.length} marque(s) sont liées à ce type`
+      );
+    }
+
     await ctx.db.delete(args.id);
     return { success: true };
   },
