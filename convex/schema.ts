@@ -117,25 +117,25 @@ export default defineSchema({
     .index("by_productId", ["productId"]),
 
   productTypes: defineTable({
-    label: v.string(),
+    label: v.optional(v.string()),
     value: v.string(),
     sortOrder: v.optional(v.number()),
   }).index("by_value", ["value"]),
 
   productBrands: defineTable({
-    label: v.string(),
+    label: v.optional(v.string()),
     value: v.string(),
     sortOrder: v.optional(v.number()),
   }).index("by_value", ["value"]),
 
   productColors: defineTable({
-    label: v.string(),
+    label: v.optional(v.string()),
     value: v.string(),
     sortOrder: v.optional(v.number()),
   }).index("by_value", ["value"]),
 
   productSizes: defineTable({
-    label: v.string(),
+    label: v.optional(v.string()),
     value: v.string(),
     sortOrder: v.optional(v.number()),
   }).index("by_value", ["value"]),

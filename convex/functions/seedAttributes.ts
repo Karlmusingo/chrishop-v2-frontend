@@ -1,43 +1,65 @@
 import { mutation } from "../_generated/server";
 
 const TYPES = [
-  { label: "Polo", value: "polo", sortOrder: 0 },
-  { label: "T-shirt", value: "t-shirt", sortOrder: 1 },
-  {
-    label: "T-shirt manches longues",
-    value: "longsleeves t-shirt",
-    sortOrder: 2,
-  },
-  { label: "Polo manches longues", value: "longsleeves polo", sortOrder: 3 },
+  { value: "Polo", sortOrder: 0 },
+  { value: "T-shirt", sortOrder: 1 },
+  { value: "T-shirt manches longues", sortOrder: 2 },
+  { value: "Polo manches longues", sortOrder: 3 },
 ];
 
 const BRANDS = [
-  { label: "Shuttle", value: "shuttle", sortOrder: 0 },
-  { label: "Whatsapp", value: "whatsapp", sortOrder: 1 },
-  { label: "KAF", value: "kaf", sortOrder: 2 },
+  { value: "Shuttle", sortOrder: 0 },
+  { value: "Whatsapp", sortOrder: 1 },
+  { value: "KAF", sortOrder: 2 },
 ];
 
 const COLORS = [
-  { label: "Yellow", value: "yellow", sortOrder: 0 },
-  { label: "Red", value: "red", sortOrder: 1 },
-  { label: "White", value: "white", sortOrder: 2 },
-  { label: "Black", value: "black", sortOrder: 3 },
-  { label: "Lemon Green", value: "lemon green", sortOrder: 4 },
-  { label: "Green", value: "green", sortOrder: 5 },
-  { label: "Bleu", value: "bleu", sortOrder: 6 },
-  { label: "Orange", value: "orange", sortOrder: 7 },
+  { value: "Yellow", sortOrder: 0 },
+  { value: "Red", sortOrder: 1 },
+  { value: "White", sortOrder: 2 },
+  { value: "Black", sortOrder: 3 },
+  { value: "Lemon Green", sortOrder: 4 },
+  { value: "Green", sortOrder: 5 },
+  { value: "Bleu", sortOrder: 6 },
+  { value: "Orange", sortOrder: 7 },
 ];
 
 const SIZES = [
-  { label: "XS", value: "XS", sortOrder: 0 },
-  { label: "S", value: "S", sortOrder: 1 },
-  { label: "M", value: "M", sortOrder: 2 },
-  { label: "L", value: "L", sortOrder: 3 },
-  { label: "XL", value: "XL", sortOrder: 4 },
-  { label: "2XL", value: "2XL", sortOrder: 5 },
-  { label: "3XL", value: "3XL", sortOrder: 6 },
-  { label: "4XL", value: "4XL", sortOrder: 7 },
+  { value: "XS", sortOrder: 0 },
+  { value: "S", sortOrder: 1 },
+  { value: "M", sortOrder: 2 },
+  { value: "L", sortOrder: 3 },
+  { value: "XL", sortOrder: 4 },
+  { value: "2XL", sortOrder: 5 },
+  { value: "3XL", sortOrder: 6 },
+  { value: "4XL", sortOrder: 7 },
 ];
+
+export const removeLabelField = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const tables = [
+      "productTypes",
+      "productBrands",
+      "productColors",
+      "productSizes",
+    ] as const;
+    let count = 0;
+
+    for (const table of tables) {
+      const items = await ctx.db.query(table).collect();
+      for (const item of items) {
+        if ("label" in item) {
+          const { label, ...rest } = item as any;
+          await ctx.db.replace(item._id, rest);
+          count++;
+        }
+      }
+    }
+
+    return { updated: count };
+  },
+});
 
 export const seedAll = mutation({
   args: {},

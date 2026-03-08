@@ -11,14 +11,13 @@ export const list = query({
         return a.sortOrder - b.sortOrder;
       if (a.sortOrder !== undefined) return -1;
       if (b.sortOrder !== undefined) return 1;
-      return a.label.localeCompare(b.label);
+      return a.value.localeCompare(b.value);
     });
   },
 });
 
 export const create = mutation({
   args: {
-    label: v.string(),
     value: v.string(),
     sortOrder: v.optional(v.number()),
   },
@@ -36,7 +35,6 @@ export const create = mutation({
     }
 
     const id = await ctx.db.insert("productColors", {
-      label: args.label,
       value: args.value,
       sortOrder: args.sortOrder,
     });
@@ -48,7 +46,6 @@ export const create = mutation({
 export const update = mutation({
   args: {
     id: v.id("productColors"),
-    label: v.optional(v.string()),
     value: v.optional(v.string()),
     sortOrder: v.optional(v.number()),
   },

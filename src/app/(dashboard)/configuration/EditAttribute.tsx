@@ -17,7 +17,7 @@ import { FunctionReference } from "convex/server";
 interface EditAttributeProps {
   categoryLabel: string;
   updateMutation: FunctionReference<"mutation", "public", any, any>;
-  item: { _id: string; label: string; value: string; sortOrder?: number } | null;
+  item: { _id: string; value: string; sortOrder?: number } | null;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -37,7 +37,6 @@ const EditAttribute: FC<EditAttributeProps> = ({
 
   useEffect(() => {
     if (item) {
-      form.setValue("label", item.label);
       form.setValue("value", item.value);
       // @ts-ignore
       form.setValue("sortOrder", item.sortOrder?.toString() ?? "");
@@ -50,7 +49,6 @@ const EditAttribute: FC<EditAttributeProps> = ({
     mutate(
       {
         id: item._id as any,
-        label: values.label,
         value: values.value,
         ...(values.sortOrder !== undefined
           ? { sortOrder: values.sortOrder }
@@ -84,16 +82,10 @@ const EditAttribute: FC<EditAttributeProps> = ({
           className="w-full space-y-4"
         >
           <Input
-            name="label"
-            label="Libellé"
+            name="value"
+            label="Nom"
             control={form.control}
             placeholder="Ex: Polo manches longues"
-          />
-          <Input
-            name="value"
-            label="Valeur"
-            control={form.control}
-            placeholder="Ex: longsleeves polo"
           />
           <Input
             name="sortOrder"

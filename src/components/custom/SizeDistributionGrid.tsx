@@ -1,6 +1,6 @@
 import { FC } from "react";
 
-type SizeOption = { label: string; value: string };
+type SizeOption = { value: string };
 type SizeEntry = { size: string; quantity: number };
 
 interface SizeDistributionGridProps {
@@ -20,7 +20,7 @@ const SizeDistributionGrid: FC<SizeDistributionGridProps> = ({
       <div className="grid grid-cols-2 gap-2 rounded-lg border p-3 sm:grid-cols-3">
         {sizes.map((size, index) => (
           <div key={size.value} className="flex items-center gap-2">
-            <label className="w-12 text-sm font-medium">{size.label}</label>
+            <label className="w-12 text-sm font-medium">{size.value}</label>
             <input
               type="number"
               min={0}

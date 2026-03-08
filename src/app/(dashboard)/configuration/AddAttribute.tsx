@@ -39,7 +39,6 @@ const AddAttribute: FC<AddAttributeProps> = ({
   const handleSubmit = (values: AttributeSchemaType) => {
     mutate(
       {
-        label: values.label,
         value: values.value,
         ...(values.sortOrder !== undefined
           ? { sortOrder: values.sortOrder }
@@ -79,16 +78,10 @@ const AddAttribute: FC<AddAttributeProps> = ({
           className="w-full space-y-4"
         >
           <Input
-            name="label"
-            label="Libellé"
+            name="value"
+            label="Nom"
             control={form.control}
             placeholder="Ex: Polo manches longues"
-          />
-          <Input
-            name="value"
-            label="Valeur"
-            control={form.control}
-            placeholder="Ex: longsleeves polo"
           />
           <Input
             name="sortOrder"

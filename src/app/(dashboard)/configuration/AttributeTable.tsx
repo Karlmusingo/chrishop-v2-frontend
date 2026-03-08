@@ -18,7 +18,6 @@ import { FunctionReference } from "convex/server";
 
 interface AttributeItem {
   _id: string;
-  label: string;
   value: string;
   sortOrder?: number;
 }
@@ -64,8 +63,7 @@ const AttributeTable: FC<AttributeTableProps> = ({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Libellé</TableHead>
-              <TableHead>Valeur</TableHead>
+              <TableHead>Nom</TableHead>
               <TableHead className="text-center">Ordre</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -73,17 +71,14 @@ const AttributeTable: FC<AttributeTableProps> = ({
           <TableBody>
             {items.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-gray-500">
+                <TableCell colSpan={3} className="text-center text-gray-500">
                   Aucun élément
                 </TableCell>
               </TableRow>
             )}
             {items.map((item) => (
               <TableRow key={item._id}>
-                <TableCell>{item.label}</TableCell>
-                <TableCell className="font-mono text-sm">
-                  {item.value}
-                </TableCell>
+                <TableCell>{item.value}</TableCell>
                 <TableCell className="text-center">
                   {item.sortOrder ?? "-"}
                 </TableCell>

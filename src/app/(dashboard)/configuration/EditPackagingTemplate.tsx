@@ -159,7 +159,7 @@ const EditPackagingTemplate: FC<EditPackagingTemplateProps> = ({
               {sizes.map((size, index) => (
                 <div key={size.value} className="flex items-center gap-2">
                   <label className="w-12 text-sm font-medium">
-                    {size.label}
+                    {size.value}
                   </label>
                   <input
                     type="number"

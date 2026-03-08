@@ -7,8 +7,8 @@ export function useProductAttributes() {
   const colors = useQuery(api.functions.productColors.list, {});
   const sizes = useQuery(api.functions.productSizes.list, {});
 
-  const toOptions = (items: Array<{ label: string; value: string }> | undefined) =>
-    (items ?? []).map((item) => ({ label: item.label, value: item.value }));
+  const toOptions = (items: Array<{ value: string }> | undefined) =>
+    (items ?? []).map((item) => ({ label: item.value, value: item.value }));
 
   return {
     typeOptions: toOptions(types),
