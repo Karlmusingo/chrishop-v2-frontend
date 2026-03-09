@@ -106,7 +106,10 @@ export const findByProductAttributes = query({
   handler: async (ctx, args) => {
     let name: string;
     if (args.code) {
-      name = `${args.type}|${args.brand}|${args.code}`;
+      const nameParts = [args.type, args.brand, args.code];
+      if (args.color) nameParts.push(args.color);
+      if (args.collarColor) nameParts.push(args.collarColor);
+      name = nameParts.join("|");
     } else {
       const nameParts = [args.type, args.brand, args.color!, args.size!];
       if (args.collarColor) {
@@ -310,7 +313,10 @@ export const findByProductAttributesAtSource = query({
   handler: async (ctx, args) => {
     let name: string;
     if (args.code) {
-      name = `${args.type}|${args.brand}|${args.code}`;
+      const nameParts = [args.type, args.brand, args.code];
+      if (args.color) nameParts.push(args.color);
+      if (args.collarColor) nameParts.push(args.collarColor);
+      name = nameParts.join("|");
     } else {
       const nameParts = [args.type, args.brand, args.color!, args.size!];
       if (args.collarColor) {

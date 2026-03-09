@@ -41,6 +41,7 @@ const AddProduct: FC<AddProductProps> = ({ callback }) => {
     resolver: zodResolver(addProductSchema),
   });
   const typeValue = form.watch("type");
+  const codeValue = form.watch("code");
 
   // Filter brands by selected type
   const filteredBrandOptions = useMemo(() => {
@@ -160,15 +161,17 @@ const AddProduct: FC<AddProductProps> = ({ callback }) => {
               </div>
             )}
           </div>
-          <div className="grid gap-1">
-            <MultiSelect
-              control={form.control}
-              name="size"
-              label="Taille"
-              placeholder="Sélectionnez les tailles"
-              options={sizeOptions}
-            />
-          </div>
+          {!codeValue && (
+            <div className="grid gap-1">
+              <MultiSelect
+                control={form.control}
+                name="size"
+                label="Taille"
+                placeholder="Sélectionnez les tailles"
+                options={sizeOptions}
+              />
+            </div>
+          )}
 
           <div className="grid gap-1">
             <Input

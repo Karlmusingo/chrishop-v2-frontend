@@ -271,6 +271,7 @@ const AddOrder: FC<AddOrderProps> = ({
           type: values.type,
           brand: values.brand,
           code: values.code,
+          ...(values.color ? { color: values.color } : {}),
           ...(typeValue?.toLowerCase()?.includes("polo") && values.collarColor
             ? { collarColor: values.collarColor }
             : {}),
@@ -298,7 +299,11 @@ const AddOrder: FC<AddOrderProps> = ({
       setOrders([
         ...orders,
         {
-          ...values,
+          type: values.type,
+          brand: values.brand,
+          code: values.code,
+          color: values.color,
+          collarColor: values.collarColor,
           quantity: qty,
           productId: inventory.productId,
           price: inventory.price,
@@ -604,43 +609,41 @@ const AddOrder: FC<AddOrderProps> = ({
               />
             </div>
 
-            {!hasCode && (
-              <>
-                <div
-                  className={`grid gap-4${typeValue?.toLowerCase()?.includes("polo") ? " grid-cols-2" : ""}`}
-                >
-                  <div className="grid gap-1">
-                    <SelectInput
-                      control={form.control}
-                      name="color"
-                      label="Couleur"
-                      placeholder="Sélectionnez les couleurs"
-                      options={colorOptions}
-                    />
-                  </div>
-
-                  {typeValue?.toLowerCase()?.includes("polo") && (
-                    <div className="grid gap-1">
-                      <SelectInput
-                        control={form.control}
-                        name="collarColor"
-                        label="Couleur de la colle"
-                        placeholder="Sélectionnez les couleurs"
-                        options={colorOptions}
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <SizeDistributionGrid
-                  sizes={sizes}
-                  values={sizeDistribution}
-                  onChange={(index, size, quantity) => {
-                    form.setValue(`sizeDistribution.${index}.size`, size);
-                    form.setValue(`sizeDistribution.${index}.quantity`, quantity);
-                  }}
+            <div
+              className={`grid gap-4${typeValue?.toLowerCase()?.includes("polo") ? " grid-cols-2" : ""}`}
+            >
+              <div className="grid gap-1">
+                <SelectInput
+                  control={form.control}
+                  name="color"
+                  label="Couleur"
+                  placeholder="Sélectionnez les couleurs"
+                  options={colorOptions}
                 />
-              </>
+              </div>
+
+              {typeValue?.toLowerCase()?.includes("polo") && (
+                <div className="grid gap-1">
+                  <SelectInput
+                    control={form.control}
+                    name="collarColor"
+                    label="Couleur de la colle"
+                    placeholder="Sélectionnez les couleurs"
+                    options={colorOptions}
+                  />
+                </div>
+              )}
+            </div>
+
+            {!hasCode && (
+              <SizeDistributionGrid
+                sizes={sizes}
+                values={sizeDistribution}
+                onChange={(index, size, quantity) => {
+                  form.setValue(`sizeDistribution.${index}.size`, size);
+                  form.setValue(`sizeDistribution.${index}.quantity`, quantity);
+                }}
+              />
             )}
 
             {hasCode && (

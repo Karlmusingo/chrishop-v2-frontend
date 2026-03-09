@@ -75,7 +75,10 @@ export const findByAttributes = query({
   handler: async (ctx, args) => {
     let name: string;
     if (args.code) {
-      name = `${args.type}|${args.brand}|${args.code}`;
+      const nameParts = [args.type, args.brand, args.code];
+      if (args.color) nameParts.push(args.color);
+      if (args.collarColor) nameParts.push(args.collarColor);
+      name = nameParts.join("|");
     } else {
       const nameParts = [args.type, args.brand, args.color!, args.size!];
       if (args.collarColor) {
@@ -118,18 +121,68 @@ export const create = mutation({
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    // Code-based product: single product creation
+    // Code-based product creation
     if (args.code) {
-      const name = `${args.type}|${args.brand}|${args.code}`;
-      const id = await ctx.db.insert("products", {
-        name,
-        type: args.type,
-        brand: args.brand,
-        code: args.code,
-        price: args.price,
-        description: args.description,
-      });
-      return { count: 1 };
+      // No colors: single product
+      if (!args.color?.length) {
+        const name = `${args.type}|${args.brand}|${args.code}`;
+        await ctx.db.insert("products", {
+          name,
+          type: args.type,
+          brand: args.brand,
+          code: args.code,
+          price: args.price,
+          description: args.description,
+        });
+        return { count: 1 };
+      }
+
+      // With colors: generate combinations
+      type CodeProduct = {
+        name: string;
+        type: string;
+        brand: string;
+        code: string;
+        color: string;
+        collarColor?: string;
+        price?: number;
+        description?: string;
+      };
+
+      const codeProducts: CodeProduct[] = [];
+      for (const color of args.color) {
+        if (args.collarColor?.length) {
+          for (const collar of args.collarColor) {
+            const name = `${args.type}|${args.brand}|${args.code}|${color}|${collar}`;
+            codeProducts.push({
+              name,
+              type: args.type,
+              brand: args.brand,
+              code: args.code,
+              color,
+              collarColor: collar,
+              price: args.price,
+              description: args.description,
+            });
+          }
+        } else {
+          const name = `${args.type}|${args.brand}|${args.code}|${color}`;
+          codeProducts.push({
+            name,
+            type: args.type,
+            brand: args.brand,
+            code: args.code,
+            color,
+            price: args.price,
+            description: args.description,
+          });
+        }
+      }
+
+      for (const product of codeProducts) {
+        await ctx.db.insert("products", product);
+      }
+      return { count: codeProducts.length };
     }
 
     // Standard bulk creation: color + size required
