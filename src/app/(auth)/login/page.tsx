@@ -78,14 +78,13 @@ export default function Login() {
             height={58}
             className=""
           />
-          <div className="flex flex-col leading-tight text-white">
-            <span className="text-2xl font-bold uppercase tracking-widest">
-              Family
-            </span>
-            <span className="text-xl font-bold uppercase tracking-wider">
-              Mini Shop
-            </span>
-          </div>
+          <Image
+            src="/logo-text-only.png"
+            alt="Family Mini Shop"
+            width={160}
+            height={58}
+            className="brightness-0 invert"
+          />
         </div>
         <p className="text-center text-[#999] text-lg max-w-md leading-relaxed">
           Gérez votre inventaire, vos ventes et vos boutiques en toute
@@ -105,14 +104,12 @@ export default function Login() {
               height={32}
               className=""
             />
-            <div className="flex flex-col leading-tight">
-              <span className="text-base font-bold uppercase tracking-widest">
-                Family
-              </span>
-              <span className="text-sm font-bold uppercase tracking-wider">
-                Mini Shop
-              </span>
-            </div>
+            <Image
+              src="/logo-text-only.png"
+              alt="Family Mini Shop"
+              width={90}
+              height={32}
+            />
           </div>
 
           <div className="space-y-2">

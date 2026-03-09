@@ -87,14 +87,13 @@ export function Sidebar() {
           height={36}
           className=""
         />
-        <div className="flex flex-col leading-tight">
-          <span className="text-sm font-bold uppercase tracking-widest">
-            Family
-          </span>
-          <span className="text-xs font-bold uppercase tracking-wider">
-            Mini Shop
-          </span>
-        </div>
+        <Image
+          src="/logo-text-only.png"
+          alt="Family Mini Shop"
+          width={100}
+          height={36}
+          className="brightness-0 invert"
+        />
       </div>
 
       {/* Menu label */}
