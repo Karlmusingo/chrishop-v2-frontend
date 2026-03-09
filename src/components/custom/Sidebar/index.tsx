@@ -11,9 +11,9 @@ import {
   Users,
   User,
   LogOut,
-  Shirt,
   Settings,
 } from "lucide-react";
+import Image from "next/image";
 import { useProfile } from "@/hooks/convex/useProfile";
 import { UserRoles } from "@/interface/roles";
 import { useAuthActions } from "@convex-dev/auth/react";
@@ -26,13 +26,33 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { name: "Tableau de bord", path: "/", icon: LayoutDashboard, roles: [UserRoles.ADMIN] },
+  {
+    name: "Tableau de bord",
+    path: "/",
+    icon: LayoutDashboard,
+    roles: [UserRoles.ADMIN],
+  },
   { name: "Ventes", path: "/orders", icon: ShoppingCart, roles: [] },
   { name: "Inventaire", path: "/inventories", icon: Package, roles: [] },
   { name: "Produits", path: "/products", icon: Box, roles: [] },
-  { name: "Boutiques", path: "/locations", icon: Store, roles: [UserRoles.ADMIN] },
-  { name: "Utilisateurs", path: "/users", icon: Users, roles: [UserRoles.ADMIN] },
-  { name: "Configuration", path: "/configuration", icon: Settings, roles: [UserRoles.ADMIN] },
+  {
+    name: "Boutiques",
+    path: "/locations",
+    icon: Store,
+    roles: [UserRoles.ADMIN],
+  },
+  {
+    name: "Utilisateurs",
+    path: "/users",
+    icon: Users,
+    roles: [UserRoles.ADMIN],
+  },
+  {
+    name: "Configuration",
+    path: "/configuration",
+    icon: Settings,
+    roles: [UserRoles.ADMIN],
+  },
 ];
 
 export function Sidebar() {
@@ -60,12 +80,21 @@ export function Sidebar() {
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-sidebar flex-col bg-[#1A1A1A] text-white">
       {/* Logo */}
       <div className="flex items-center gap-3 px-6 py-6">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--accent-primary)]">
-          <Shirt className="h-5 w-5 text-white" />
+        <Image
+          src="/logo.png"
+          alt="Chrishop Logo"
+          width={36}
+          height={36}
+          className=""
+        />
+        <div className="flex flex-col leading-tight">
+          <span className="text-sm font-bold uppercase tracking-widest">
+            Family
+          </span>
+          <span className="text-xs font-bold uppercase tracking-wider">
+            Mini Shop
+          </span>
         </div>
-        <span className="font-serif text-xl font-semibold tracking-tight">
-          ThreadCraft
-        </span>
       </div>
 
       {/* Menu label */}

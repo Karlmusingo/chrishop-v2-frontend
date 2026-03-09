@@ -5,7 +5,7 @@ import { Form } from "@/components/ui/form";
 import { useActionWithToast } from "@/hooks/convex/useActionWithToast";
 import { loginSchema, LoginSchemaType } from "@/schemas/auth/login.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Shirt } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { useAuthActions } from "@convex-dev/auth/react";
@@ -15,7 +15,9 @@ import { api } from "../../../../convex/_generated/api";
 export default function Login() {
   const router = useRouter();
   const { signIn } = useAuthActions();
-  const resetAuthAccount = useAction(api.functions.authActions.resetAuthAccount);
+  const resetAuthAccount = useAction(
+    api.functions.authActions.resetAuthAccount,
+  );
   const { mutate, isPending, error } = useActionWithToast(
     api.functions.authActions.login,
   );
@@ -69,11 +71,25 @@ export default function Login() {
       {/* Left brand panel */}
       <div className="hidden lg:flex lg:w-1/2 bg-[#1A1A1A] flex-col items-center justify-center px-12">
         <div className="flex items-center gap-3 mb-6">
-          <Shirt className="h-10 w-10 text-[var(--accent-primary)]" />
-          <span className="font-serif text-4xl font-bold text-white">ThreadCraft</span>
+          <Image
+            src="/logo.png"
+            alt="Chrishop Logo"
+            width={58}
+            height={58}
+            className=""
+          />
+          <div className="flex flex-col leading-tight text-white">
+            <span className="text-2xl font-bold uppercase tracking-widest">
+              Family
+            </span>
+            <span className="text-xl font-bold uppercase tracking-wider">
+              Mini Shop
+            </span>
+          </div>
         </div>
         <p className="text-center text-[#999] text-lg max-w-md leading-relaxed">
-          Gérez votre inventaire, vos ventes et vos boutiques en toute simplicité.
+          Gérez votre inventaire, vos ventes et vos boutiques en toute
+          simplicité.
         </p>
       </div>
 
@@ -82,8 +98,21 @@ export default function Login() {
         <div className="w-full max-w-md space-y-8">
           {/* Mobile logo */}
           <div className="flex items-center gap-2 lg:hidden justify-center mb-4">
-            <Shirt className="h-7 w-7 text-[var(--accent-primary)]" />
-            <span className="font-serif text-2xl font-bold">ThreadCraft</span>
+            <Image
+              src="/logo.png"
+              alt="Chrishop Logo"
+              width={32}
+              height={32}
+              className=""
+            />
+            <div className="flex flex-col leading-tight">
+              <span className="text-base font-bold uppercase tracking-widest">
+                Family
+              </span>
+              <span className="text-sm font-bold uppercase tracking-wider">
+                Mini Shop
+              </span>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -114,13 +143,11 @@ export default function Login() {
                 placeholder="Votre mot de passe"
               />
               {error?.message && (
-                <p className="text-sm text-[var(--status-error)]">{error.message}</p>
+                <p className="text-sm text-[var(--status-error)]">
+                  {error.message}
+                </p>
               )}
-              <Button
-                loading={isPending}
-                type="submit"
-                className="w-full"
-              >
+              <Button loading={isPending} type="submit" className="w-full">
                 Se connecter
               </Button>
             </form>
