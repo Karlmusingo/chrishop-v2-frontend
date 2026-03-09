@@ -36,6 +36,7 @@ export const create = mutation({
     sizeDistribution: v.array(
       v.object({ size: v.string(), quantity: v.number() })
     ),
+    ageCategory: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await requireCurrentUser(ctx);
@@ -78,6 +79,7 @@ export const create = mutation({
       packagingType: args.packagingType,
       totalItems: args.totalItems,
       sizeDistribution: args.sizeDistribution,
+      ageCategory: args.ageCategory,
     });
 
     return { _id: id };
@@ -95,6 +97,7 @@ export const update = mutation({
     sizeDistribution: v.optional(
       v.array(v.object({ size: v.string(), quantity: v.number() }))
     ),
+    ageCategory: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await requireCurrentUser(ctx);
@@ -289,6 +292,7 @@ export const ensureProductsExist = mutation({
     color: v.string(),
     collarColor: v.optional(v.string()),
     sizes: v.array(v.string()),
+    ageCategory: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await requireCurrentUser(ctx);
@@ -314,6 +318,7 @@ export const ensureProductsExist = mutation({
           color: args.color,
           size,
           ...(args.collarColor ? { collarColor: args.collarColor } : {}),
+          ...(args.ageCategory ? { ageCategory: args.ageCategory } : {}),
         });
       }
     }

@@ -16,6 +16,7 @@ export const addProductSchema = z.strictObject({
     )
     .optional(),
   collarColor: z.array(z.string()).optional(),
+  ageCategory: z.string().optional(),
   size: z
     .array(
       z.string({

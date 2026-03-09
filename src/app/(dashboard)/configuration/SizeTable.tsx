@@ -11,88 +11,75 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Button from "@/components/custom/Button";
-import AddPackagingTemplate from "./AddPackagingTemplate";
-import EditPackagingTemplate from "./EditPackagingTemplate";
+import AddSize from "./AddSize";
+import EditSize from "./EditSize";
 import { useMutationWithToast } from "@/hooks/convex/useMutationWithToast";
 import { api } from "../../../../convex/_generated/api";
 
-interface PackagingTemplate {
+interface SizeItem {
   _id: string;
-  name: string;
-  packagingType: "BALE" | "DOZEN";
-  totalItems: number;
-  sizeDistribution: Array<{ size: string; quantity: number }>;
+  value: string;
+  sortOrder?: number;
   ageCategory?: string;
 }
 
-interface PackagingTemplateTableProps {
-  items: PackagingTemplate[];
+interface SizeTableProps {
+  sizes: SizeItem[];
 }
-
-const packagingTypeLabels: Record<string, string> = {
-  BALE: "Ballon",
-  DOZEN: "Douzaine",
-};
 
 const ageCategoryLabels: Record<string, string> = {
   adult: "Adulte",
   child: "Enfant",
 };
 
-const PackagingTemplateTable: FC<PackagingTemplateTableProps> = ({ items }) => {
+const SizeTable: FC<SizeTableProps> = ({ sizes }) => {
   const { mutate: removeMutate, isPending: isRemoving } =
-    useMutationWithToast(api.functions.packagingTemplates.remove);
-  const [editItem, setEditItem] = useState<PackagingTemplate | null>(null);
+    useMutationWithToast(api.functions.productSizes.remove);
+  const [editItem, setEditItem] = useState<SizeItem | null>(null);
 
-  const handleDelete = (item: PackagingTemplate) => {
+  const handleDelete = (item: SizeItem) => {
     removeMutate(
       { id: item._id as any },
-      { successMessage: "Modèle supprimé avec succès" }
+      {
+        successMessage: "Taille supprimée avec succès",
+      }
     );
   };
 
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <AddPackagingTemplate />
+        <AddSize />
       </div>
 
       <div className="overflow-hidden rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Catégorie</TableHead>
               <TableHead>Nom</TableHead>
-              <TableHead className="text-center">Catégorie</TableHead>
-              <TableHead className="text-center">Type</TableHead>
-              <TableHead className="text-center">Total</TableHead>
-              <TableHead className="text-center">Distribution</TableHead>
+              <TableHead className="text-center">Ordre</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {items.length === 0 && (
+            {sizes.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-gray-500">
-                  Aucun modèle d&apos;emballage
+                <TableCell colSpan={4} className="text-center text-gray-500">
+                  Aucun élément
                 </TableCell>
               </TableRow>
             )}
-            {items.map((item) => (
+            {sizes.map((item) => (
               <TableRow key={item._id}>
-                <TableCell className="font-medium">{item.name}</TableCell>
-                <TableCell className="text-center text-gray-500">
+                <TableCell className="text-gray-500">
                   {item.ageCategory
                     ? ageCategoryLabels[item.ageCategory] ?? item.ageCategory
-                    : "-"}
+                    : "Non défini"}
                 </TableCell>
+                <TableCell>{item.value}</TableCell>
                 <TableCell className="text-center">
-                  {packagingTypeLabels[item.packagingType] ?? item.packagingType}
-                </TableCell>
-                <TableCell className="text-center">{item.totalItems}</TableCell>
-                <TableCell className="text-center font-mono text-xs">
-                  {item.sizeDistribution
-                    .map((s) => `${s.size}:${s.quantity}`)
-                    .join(", ")}
+                  {item.sortOrder ?? "-"}
                 </TableCell>
                 <TableCell className="text-right">
                   <Button
@@ -119,7 +106,7 @@ const PackagingTemplateTable: FC<PackagingTemplateTableProps> = ({ items }) => {
         </Table>
       </div>
 
-      <EditPackagingTemplate
+      <EditSize
         item={editItem}
         isOpen={!!editItem}
         onClose={() => setEditItem(null)}
@@ -128,4 +115,4 @@ const PackagingTemplateTable: FC<PackagingTemplateTableProps> = ({ items }) => {
   );
 };
 
-export default PackagingTemplateTable;
+export default SizeTable;

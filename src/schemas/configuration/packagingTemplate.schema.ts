@@ -29,6 +29,7 @@ export const packagingTemplateSchema = z
         return parsed;
       }),
     sizeDistribution: z.array(sizeDistributionItemSchema),
+    ageCategory: z.string().optional(),
   })
   .refine(
     (data) => {

@@ -17,6 +17,14 @@ import { ROLES } from "@/interface/roles";
 import { useConvex, useMutation, useQuery } from "convex/react";
 
 import { DialogFooter } from "@/components/ui/dialog";
+import {
+  Select as SelectUI,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Pencil, Trash } from "lucide-react";
 import {
   Table,
@@ -71,15 +79,23 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
   const { userRole } = usePermission();
   const { types, brands, typeOptions, colorOptions } =
     useProductAttributes();
-  const sizes = useQuery(api.functions.productSizes.list, {}) ?? [];
+  const allSizes = useQuery(api.functions.productSizes.list, {}) ?? [];
 
   const [isOpened, setOpened] = useState(false);
   const [inventory, setInventory] = useState<InventoryItemType[]>([]);
   const [mode, setMode] = useState<InventoryMode>("packaging");
   const [formErrors, setFormErrors] = useState<string[]>([]);
+  const [isAddingPackaging, setIsAddingPackaging] = useState(false);
 
   const packagingTemplates =
     useQuery(api.functions.packagingTemplates.list, {}) ?? [];
+
+  const [ageCategory, setAgeCategory] = useState<string>("");
+
+  const sizes = useMemo(() => {
+    if (!ageCategory) return allSizes;
+    return allSizes.filter((s) => s.ageCategory === ageCategory);
+  }, [ageCategory, allSizes]);
 
   const form = useForm<AddInventoriesSchemaType>({
     resolver: zodResolver(addInventoriesSchema),
@@ -124,16 +140,14 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
   useEffect(() => { packagingForm.setValue("productBrand", ""); }, [packagingTypeValue]);
 
   const ensureSizeDistribution = () => {
-    const current = form.getValues("sizeDistribution") ?? [];
-    if (current.length !== sizes.length) {
-      form.setValue(
-        "sizeDistribution",
-        sizes.map((s) => {
-          const existing = current.find((c) => c.size === s.value);
-          return { size: s.value, quantity: existing?.quantity ?? 0 };
-        }),
-      );
-    }
+    form.setValue(
+      "sizeDistribution",
+      sizes.map((s) => {
+        const current = form.getValues("sizeDistribution") ?? [];
+        const existing = current.find((c) => c.size === s.value);
+        return { size: s.value, quantity: existing?.quantity ?? 0 };
+      }),
+    );
   };
 
   useEffect(() => {
@@ -141,6 +155,14 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
       ensureSizeDistribution();
     }
   }, [sizes.length]);
+
+  // Reset size distribution when ageCategory changes
+  useEffect(() => {
+    form.setValue(
+      "sizeDistribution",
+      sizes.map((s) => ({ size: s.value, quantity: 0 })),
+    );
+  }, [ageCategory]);
 
   function callbackOnSuccess() {
     form.reset();
@@ -299,6 +321,7 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
   async function onAddPackagingInventory(
     values: AddPackagingInventorySchemaType,
   ) {
+    setIsAddingPackaging(true);
     try {
       // Get template to know the sizes for product creation
       const template = await convex.query(
@@ -317,6 +340,7 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
         color: values.color,
         ...(values.collarColor ? { collarColor: values.collarColor } : {}),
         sizes: template.sizeDistribution.map((s) => s.size),
+        ...(template.ageCategory ? { ageCategory: template.ageCategory } : {}),
       });
 
       const result = await convex.query(
@@ -374,6 +398,8 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
       });
     } catch (error: any) {
       toast.error(error.message || "Erreur lors de l'expansion du modèle");
+    } finally {
+      setIsAddingPackaging(false);
     }
   }
 
@@ -538,14 +564,31 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
             </div>
 
             {!hasCode && (
-              <SizeDistributionGrid
-                sizes={sizes}
-                values={sizeDistribution}
-                onChange={(index, size, quantity) => {
-                  form.setValue(`sizeDistribution.${index}.size`, size);
-                  form.setValue(`sizeDistribution.${index}.quantity`, quantity);
-                }}
-              />
+              <>
+                <div className="grid gap-1">
+                  <Label>Catégorie</Label>
+                  <SelectUI
+                    value={ageCategory || undefined}
+                    onValueChange={(val) => setAgeCategory(val)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Adulte / Enfant" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="adult">Adulte</SelectItem>
+                      <SelectItem value="child">Enfant</SelectItem>
+                    </SelectContent>
+                  </SelectUI>
+                </div>
+                <SizeDistributionGrid
+                  sizes={sizes}
+                  values={sizeDistribution}
+                  onChange={(index, size, quantity) => {
+                    form.setValue(`sizeDistribution.${index}.size`, size);
+                    form.setValue(`sizeDistribution.${index}.quantity`, quantity);
+                  }}
+                />
+              </>
             )}
 
             {hasCode && (
@@ -646,7 +689,7 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
               />
             </div>
 
-            <Button type="submit" className="w-full" loading={isPending}>
+            <Button type="submit" className="w-full" loading={isAddingPackaging}>
               Ajouter les articles
             </Button>
           </form>

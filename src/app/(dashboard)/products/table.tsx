@@ -51,6 +51,16 @@ export const getColumns = ({ onEditThreshold }: ActionsFuncType) => {
       accessorKey: "size",
     },
     {
+      header: "Catégorie",
+      accessorKey: "ageCategory",
+      cell: ({ row }) => {
+        const val = row.original.ageCategory;
+        if (val === "adult") return "Adulte";
+        if (val === "child") return "Enfant";
+        return val || "-";
+      },
+    },
+    {
       header: "Seuil stock",
       accessorKey: "lowStockThreshold",
       cell: ({ row }) => {

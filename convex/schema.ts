@@ -67,10 +67,12 @@ export default defineSchema({
     price: v.optional(v.number()),
     description: v.optional(v.string()),
     lowStockThreshold: v.optional(v.number()),
+    ageCategory: v.optional(v.string()),
   })
     .index("by_name", ["name"])
     .index("by_type", ["type"])
-    .index("by_brand", ["brand"]),
+    .index("by_brand", ["brand"])
+    .index("by_size", ["size"]),
 
   locations: defineTable({
     name: v.string(),
@@ -141,7 +143,10 @@ export default defineSchema({
     label: v.optional(v.string()),
     value: v.string(),
     sortOrder: v.optional(v.number()),
-  }).index("by_value", ["value"]),
+    ageCategory: v.optional(v.string()),
+  })
+    .index("by_value", ["value"])
+    .index("by_ageCategory", ["ageCategory"]),
 
   packagingTemplates: defineTable({
     name: v.string(),
@@ -150,6 +155,7 @@ export default defineSchema({
     sizeDistribution: v.array(
       v.object({ size: v.string(), quantity: v.number() }),
     ),
+    ageCategory: v.optional(v.string()),
   })
     .index("by_name", ["name"])
     .index("by_packagingType", ["packagingType"]),

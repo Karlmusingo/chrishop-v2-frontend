@@ -119,6 +119,7 @@ export const create = mutation({
     collarColor: v.optional(v.array(v.string())),
     price: v.optional(v.number()),
     description: v.optional(v.string()),
+    ageCategory: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // Code-based product creation
@@ -197,6 +198,7 @@ export const create = mutation({
       price?: number;
       collarColor?: string;
       description?: string;
+      ageCategory?: string;
     };
 
     const insertProducts = args.color.reduce<InsertProduct[]>(
@@ -211,6 +213,7 @@ export const create = mutation({
             size,
             price: args.price,
             description: args.description,
+            ageCategory: args.ageCategory,
           };
         });
 
@@ -250,6 +253,7 @@ export const update = mutation({
     price: v.optional(v.number()),
     description: v.optional(v.string()),
     lowStockThreshold: v.optional(v.number()),
+    ageCategory: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { id, lowStockThreshold, ...rest } = args;

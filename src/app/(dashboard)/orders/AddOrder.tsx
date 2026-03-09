@@ -93,7 +93,7 @@ const AddOrder: FC<AddOrderProps> = ({
     useQuery(api.functions.locations.list, isAdmin ? {} : "skip") ?? [];
   const { types, brands, typeOptions, colorOptions } =
     useProductAttributes();
-  const sizes = useQuery(api.functions.productSizes.list, {}) ?? [];
+  const allSizes = useQuery(api.functions.productSizes.list, {}) ?? [];
 
   const [orders, setOrders] = useState<OrderItemType[]>([]);
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
@@ -101,6 +101,12 @@ const AddOrder: FC<AddOrderProps> = ({
   );
   const [mode, setMode] = useState<OrderMode>("individual");
   const [formErrors, setFormErrors] = useState<string[]>([]);
+  const [ageCategory, setAgeCategory] = useState<string>("");
+
+  const sizes = useMemo(() => {
+    if (!ageCategory) return allSizes;
+    return allSizes.filter((s) => s.ageCategory === ageCategory);
+  }, [ageCategory, allSizes]);
 
   const packagingTemplates =
     useQuery(api.functions.packagingTemplates.list, {}) ?? [];
@@ -151,16 +157,14 @@ const AddOrder: FC<AddOrderProps> = ({
 
   // Keep sizeDistribution in sync with available sizes
   const ensureSizeDistribution = () => {
-    const current = form.getValues("sizeDistribution") ?? [];
-    if (current.length !== sizes.length) {
-      form.setValue(
-        "sizeDistribution",
-        sizes.map((s) => {
-          const existing = current.find((c) => c.size === s.value);
-          return { size: s.value, quantity: existing?.quantity ?? 0 };
-        }),
-      );
-    }
+    form.setValue(
+      "sizeDistribution",
+      sizes.map((s) => {
+        const current = form.getValues("sizeDistribution") ?? [];
+        const existing = current.find((c) => c.size === s.value);
+        return { size: s.value, quantity: existing?.quantity ?? 0 };
+      }),
+    );
   };
 
   useEffect(() => {
@@ -168,6 +172,14 @@ const AddOrder: FC<AddOrderProps> = ({
       ensureSizeDistribution();
     }
   }, [sizes.length]);
+
+  // Reset size distribution when ageCategory changes
+  useEffect(() => {
+    form.setValue(
+      "sizeDistribution",
+      sizes.map((s) => ({ size: s.value, quantity: 0 })),
+    );
+  }, [ageCategory]);
 
   useEffect(() => {
     if (orderData && orderData.orderItems) {
@@ -659,14 +671,31 @@ const AddOrder: FC<AddOrderProps> = ({
             </div>
 
             {!hasCode && (
-              <SizeDistributionGrid
-                sizes={sizes}
-                values={sizeDistribution}
-                onChange={(index, size, quantity) => {
-                  form.setValue(`sizeDistribution.${index}.size`, size);
-                  form.setValue(`sizeDistribution.${index}.quantity`, quantity);
-                }}
-              />
+              <>
+                <div className="grid gap-1">
+                  <Label>Catégorie</Label>
+                  <SelectUI
+                    value={ageCategory || undefined}
+                    onValueChange={(val) => setAgeCategory(val)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Adulte / Enfant" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="adult">Adulte</SelectItem>
+                      <SelectItem value="child">Enfant</SelectItem>
+                    </SelectContent>
+                  </SelectUI>
+                </div>
+                <SizeDistributionGrid
+                  sizes={sizes}
+                  values={sizeDistribution}
+                  onChange={(index, size, quantity) => {
+                    form.setValue(`sizeDistribution.${index}.size`, size);
+                    form.setValue(`sizeDistribution.${index}.quantity`, quantity);
+                  }}
+                />
+              </>
             )}
 
             {hasCode && (

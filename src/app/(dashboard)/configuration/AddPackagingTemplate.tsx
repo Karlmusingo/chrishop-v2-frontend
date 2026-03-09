@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useState } from "react";
+import { FC, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
@@ -8,6 +8,14 @@ import Modal from "@/components/ui/modal";
 import Button from "@/components/custom/Button";
 import Input from "@/components/custom/form/Input";
 import SelectInput from "@/components/custom/SelectInput";
+import {
+  Select as SelectUI,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import {
   packagingTemplateSchema,
   PackagingTemplateSchemaType,
@@ -25,8 +33,14 @@ const AddPackagingTemplate: FC = () => {
   const { mutate, isPending } = useMutationWithToast(
     api.functions.packagingTemplates.create
   );
-  const sizes = useQuery(api.functions.productSizes.list, {}) ?? [];
+  const allSizes = useQuery(api.functions.productSizes.list, {}) ?? [];
   const [isOpened, setOpened] = useState(false);
+  const [ageCategory, setAgeCategory] = useState<string>("");
+
+  const sizes = useMemo(() => {
+    if (!ageCategory) return allSizes;
+    return allSizes.filter((s) => s.ageCategory === ageCategory);
+  }, [ageCategory, allSizes]);
 
   const form = useForm<PackagingTemplateSchemaType>({
     resolver: zodResolver(packagingTemplateSchema),
@@ -72,6 +86,7 @@ const AddPackagingTemplate: FC = () => {
         packagingType: values.packagingType,
         totalItems: values.totalItems,
         sizeDistribution: nonZeroSizes,
+        ageCategory: ageCategory || undefined,
       },
       {
         successMessage: "Modèle d'emballage créé avec succès",
@@ -124,6 +139,30 @@ const AddPackagingTemplate: FC = () => {
               type="number"
               placeholder="Ex: 240"
             />
+          </div>
+
+          <div className="grid gap-1">
+            <Label>Catégorie</Label>
+            <SelectUI
+              value={ageCategory || undefined}
+              onValueChange={(val) => {
+                setAgeCategory(val);
+                // Reset size distribution for new category
+                const newSizes = allSizes.filter((s) => s.ageCategory === val);
+                form.setValue(
+                  "sizeDistribution",
+                  newSizes.map((s) => ({ size: s.value, quantity: 0 }))
+                );
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Adulte / Enfant" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="adult">Adulte</SelectItem>
+                <SelectItem value="child">Enfant</SelectItem>
+              </SelectContent>
+            </SelectUI>
           </div>
 
           <div className="space-y-2">

@@ -3,9 +3,19 @@ import { query, mutation } from "../_generated/server";
 import { requireCurrentUser, requireRole } from "../lib/auth";
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
-    const items = await ctx.db.query("productSizes").collect();
+  args: {
+    ageCategory: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    let items;
+    if (args.ageCategory) {
+      items = await ctx.db
+        .query("productSizes")
+        .withIndex("by_ageCategory", (q) => q.eq("ageCategory", args.ageCategory))
+        .collect();
+    } else {
+      items = await ctx.db.query("productSizes").collect();
+    }
     return items.sort((a, b) => {
       if (a.sortOrder !== undefined && b.sortOrder !== undefined)
         return a.sortOrder - b.sortOrder;
@@ -20,6 +30,7 @@ export const create = mutation({
   args: {
     value: v.string(),
     sortOrder: v.optional(v.number()),
+    ageCategory: v.string(),
   },
   handler: async (ctx, args) => {
     const user = await requireCurrentUser(ctx);
@@ -42,6 +53,7 @@ export const create = mutation({
     const id = await ctx.db.insert("productSizes", {
       value: normalizedValue,
       sortOrder: args.sortOrder,
+      ageCategory: args.ageCategory,
     });
 
     return { _id: id };
@@ -53,6 +65,7 @@ export const update = mutation({
     id: v.id("productSizes"),
     value: v.optional(v.string()),
     sortOrder: v.optional(v.number()),
+    ageCategory: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await requireCurrentUser(ctx);
@@ -88,6 +101,20 @@ export const update = mutation({
             name: nameParts.join("|"),
           });
         }
+      }
+    }
+
+    // If ageCategory changed, cascade to products
+    if (args.ageCategory && args.ageCategory !== current.ageCategory) {
+      const sizeValue = newValue || current.value;
+      const products = await ctx.db
+        .query("products")
+        .withIndex("by_size", (q) => q.eq("size", sizeValue))
+        .collect();
+      for (const product of products) {
+        await ctx.db.patch(product._id, {
+          ageCategory: args.ageCategory,
+        });
       }
     }
 

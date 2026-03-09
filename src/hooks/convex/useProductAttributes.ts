@@ -13,6 +13,7 @@ export function useProductAttributes() {
   return {
     types: types ?? [],
     brands: brands ?? [],
+    sizes: sizes ?? [],
     typeOptions: toOptions(types),
     brandOptions: toOptions(brands),
     colorOptions: toOptions(colors),

@@ -77,7 +77,7 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
   const { userRole } = usePermission();
   const { types, brands, typeOptions, colorOptions } =
     useProductAttributes();
-  const sizes = useQuery(api.functions.productSizes.list, {}) ?? [];
+  const allSizes = useQuery(api.functions.productSizes.list, {}) ?? [];
 
   const locations = useQuery(api.functions.locations.list, {}) ?? [];
   const packagingTemplates =
@@ -91,6 +91,12 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
     string | null
   >(null);
   const [formErrors, setFormErrors] = useState<string[]>([]);
+  const [ageCategory, setAgeCategory] = useState<string>("");
+
+  const sizes = useMemo(() => {
+    if (!ageCategory) return allSizes;
+    return allSizes.filter((s) => s.ageCategory === ageCategory);
+  }, [ageCategory, allSizes]);
 
   const form = useForm<BulkTransferIndividualSchemaType>({
     resolver: zodResolver(bulkTransferIndividualSchema),
@@ -135,16 +141,14 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
   useEffect(() => { packagingForm.setValue("productBrand", ""); }, [packagingTypeValue]);
 
   const ensureSizeDistribution = () => {
-    const current = form.getValues("sizeDistribution") ?? [];
-    if (current.length !== sizes.length) {
-      form.setValue(
-        "sizeDistribution",
-        sizes.map((s) => {
-          const existing = current.find((c) => c.size === s.value);
-          return { size: s.value, quantity: existing?.quantity ?? 0 };
-        }),
-      );
-    }
+    form.setValue(
+      "sizeDistribution",
+      sizes.map((s) => {
+        const current = form.getValues("sizeDistribution") ?? [];
+        const existing = current.find((c) => c.size === s.value);
+        return { size: s.value, quantity: existing?.quantity ?? 0 };
+      }),
+    );
   };
 
   useEffect(() => {
@@ -152,6 +156,14 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
       ensureSizeDistribution();
     }
   }, [sizes.length]);
+
+  // Reset size distribution when ageCategory changes
+  useEffect(() => {
+    form.setValue(
+      "sizeDistribution",
+      sizes.map((s) => ({ size: s.value, quantity: 0 })),
+    );
+  }, [ageCategory]);
 
   function callbackOnSuccess() {
     form.reset();
@@ -642,6 +654,22 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
                       />
                     </div>
                   )}
+                </div>
+
+                <div className="grid gap-1">
+                  <Label>Catégorie</Label>
+                  <SelectUI
+                    value={ageCategory || undefined}
+                    onValueChange={(val) => setAgeCategory(val)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Adulte / Enfant" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="adult">Adulte</SelectItem>
+                      <SelectItem value="child">Enfant</SelectItem>
+                    </SelectContent>
+                  </SelectUI>
                 </div>
 
                 <SizeDistributionGrid

@@ -6,6 +6,7 @@ import { api } from "../../../../convex/_generated/api";
 import PageHeader from "@/components/custom/PageHeader";
 import AttributeTable from "./AttributeTable";
 import BrandTable from "./BrandTable";
+import SizeTable from "./SizeTable";
 import PackagingTemplateTable from "./PackagingTemplateTable";
 
 const tabs = [
@@ -79,13 +80,7 @@ const ConfigurationPage: FC = () => {
       )}
 
       {activeTab === "sizes" && (
-        <AttributeTable
-          categoryLabel="Taille"
-          items={sizes}
-          createMutation={api.functions.productSizes.create}
-          updateMutation={api.functions.productSizes.update}
-          removeMutation={api.functions.productSizes.remove}
-        />
+        <SizeTable sizes={sizes as any} />
       )}
 
       {activeTab === "packaging" && (

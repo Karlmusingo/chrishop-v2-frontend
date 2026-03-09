@@ -32,7 +32,7 @@ const AddProduct: FC<AddProductProps> = ({ callback }) => {
     api.functions.products.create,
   );
   const { userRole } = usePermission();
-  const { types, brands, typeOptions, colorOptions, sizeOptions } =
+  const { types, brands, sizes, typeOptions, colorOptions } =
     useProductAttributes();
 
   const [isOpened, setOpened] = useState(false);
@@ -42,6 +42,7 @@ const AddProduct: FC<AddProductProps> = ({ callback }) => {
   });
   const typeValue = form.watch("type");
   const codeValue = form.watch("code");
+  const ageCategoryValue = form.watch("ageCategory");
 
   // Filter brands by selected type
   const filteredBrandOptions = useMemo(() => {
@@ -53,10 +54,23 @@ const AddProduct: FC<AddProductProps> = ({ callback }) => {
       .map((b) => ({ label: b.value, value: b.value }));
   }, [typeValue, types, brands]);
 
+  // Filter sizes by selected ageCategory
+  const filteredSizeOptions = useMemo(() => {
+    if (!ageCategoryValue) return sizes.map((s) => ({ label: s.value, value: s.value }));
+    return sizes
+      .filter((s) => s.ageCategory === ageCategoryValue)
+      .map((s) => ({ label: s.value, value: s.value }));
+  }, [ageCategoryValue, sizes]);
+
   // Reset brand when type changes
   useEffect(() => {
     form.setValue("brand", "");
   }, [typeValue]);
+
+  // Reset size selection when ageCategory changes
+  useEffect(() => {
+    form.setValue("size", []);
+  }, [ageCategoryValue]);
 
   function callbackOnSuccess() {
     form.reset();
@@ -162,15 +176,29 @@ const AddProduct: FC<AddProductProps> = ({ callback }) => {
             )}
           </div>
           {!codeValue && (
-            <div className="grid gap-1">
-              <MultiSelect
-                control={form.control}
-                name="size"
-                label="Taille"
-                placeholder="Sélectionnez les tailles"
-                options={sizeOptions}
-              />
-            </div>
+            <>
+              <div className="grid gap-1">
+                <SelectInput
+                  control={form.control}
+                  name="ageCategory"
+                  label="Catégorie"
+                  placeholder="Adulte / Enfant"
+                  options={[
+                    { label: "Adulte", value: "adult" },
+                    { label: "Enfant", value: "child" },
+                  ]}
+                />
+              </div>
+              <div className="grid gap-1">
+                <MultiSelect
+                  control={form.control}
+                  name="size"
+                  label="Taille"
+                  placeholder="Sélectionnez les tailles"
+                  options={filteredSizeOptions}
+                />
+              </div>
+            </>
           )}
 
           <div className="grid gap-1">
