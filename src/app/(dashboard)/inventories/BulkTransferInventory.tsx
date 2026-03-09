@@ -258,8 +258,16 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
           availableQuantity: inventory.quantity,
         },
       ]);
-      form.reset();
-      ensureSizeDistribution();
+      const currentValues = form.getValues();
+      form.reset({
+        type: currentValues.type,
+        brand: currentValues.brand,
+        code: currentValues.code,
+        color: currentValues.color,
+        collarColor: currentValues.collarColor,
+        transferQuantity: "",
+        sizeDistribution: sizes.map((s) => ({ size: s.value, quantity: 0 })),
+      });
       return;
     }
 
@@ -325,8 +333,16 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
     }
 
     setItems([...items, ...newItems]);
-    form.reset();
-    ensureSizeDistribution();
+    const currentValues = form.getValues();
+    form.reset({
+      type: currentValues.type,
+      brand: currentValues.brand,
+      code: currentValues.code,
+      color: currentValues.color,
+      collarColor: currentValues.collarColor,
+      transferQuantity: "",
+      sizeDistribution: sizes.map((s) => ({ size: s.value, quantity: 0 })),
+    });
   }
 
   async function onAddPackagingTransfer(
@@ -392,9 +408,16 @@ const BulkTransferInventory: FC<BulkTransferInventoryProps> = ({
       }));
 
       setItems([...items, ...newItems]);
-      packagingForm.reset();
-      // @ts-ignore
-      packagingForm.setValue("numberOfPackages", "1");
+      const currentValues = packagingForm.getValues();
+      packagingForm.reset({
+        templateId: currentValues.templateId,
+        numberOfPackages: "1",
+        productType: currentValues.productType,
+        productBrand: currentValues.productBrand,
+        color: "",
+        collarColor: "",
+        price: currentValues.price,
+      });
     } catch (error: any) {
       toast.error(error.message || "Erreur lors de l'expansion du modèle");
     }
