@@ -179,9 +179,7 @@ export const create = mutation({
         }
       }
 
-      for (const product of codeProducts) {
-        await ctx.db.insert("products", product);
-      }
+      await Promise.all(codeProducts.map((product) => ctx.db.insert("products", product)));
       return { count: codeProducts.length };
     }
 
@@ -234,11 +232,7 @@ export const create = mutation({
       []
     );
 
-    const ids = [];
-    for (const product of insertProducts) {
-      const id = await ctx.db.insert("products", product);
-      ids.push(id);
-    }
+    const ids = await Promise.all(insertProducts.map((product) => ctx.db.insert("products", product)));
 
     return { count: ids.length };
   },
