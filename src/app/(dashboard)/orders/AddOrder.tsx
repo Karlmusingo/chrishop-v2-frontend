@@ -91,8 +91,7 @@ const AddOrder: FC<AddOrderProps> = ({
   const isAdmin = profile?.role === ROLES.ADMIN;
   const locations =
     useQuery(api.functions.locations.list, isAdmin ? {} : "skip") ?? [];
-  const { types, brands, typeOptions, colorOptions } =
-    useProductAttributes();
+  const { types, brands, typeOptions, colorOptions } = useProductAttributes();
   const allSizes = useQuery(api.functions.productSizes.list, {}) ?? [];
 
   const [orders, setOrders] = useState<OrderItemType[]>([]);
@@ -132,26 +131,34 @@ const AddOrder: FC<AddOrderProps> = ({
 
   // Filter brands by selected type
   const filteredBrandOptions = useMemo(() => {
-    if (!typeValue) return brands.map((b) => ({ label: b.value, value: b.value }));
+    if (!typeValue)
+      return brands.map((b) => ({ label: b.value, value: b.value }));
     const selectedType = types.find((t) => t.value === typeValue);
-    if (!selectedType) return brands.map((b) => ({ label: b.value, value: b.value }));
+    if (!selectedType)
+      return brands.map((b) => ({ label: b.value, value: b.value }));
     return brands
       .filter((b) => b.typeId === selectedType._id || !b.typeId)
       .map((b) => ({ label: b.value, value: b.value }));
   }, [typeValue, types, brands]);
 
   const filteredPackagingBrandOptions = useMemo(() => {
-    if (!packagingTypeValue) return brands.map((b) => ({ label: b.value, value: b.value }));
+    if (!packagingTypeValue)
+      return brands.map((b) => ({ label: b.value, value: b.value }));
     const selectedType = types.find((t) => t.value === packagingTypeValue);
-    if (!selectedType) return brands.map((b) => ({ label: b.value, value: b.value }));
+    if (!selectedType)
+      return brands.map((b) => ({ label: b.value, value: b.value }));
     return brands
       .filter((b) => b.typeId === selectedType._id || !b.typeId)
       .map((b) => ({ label: b.value, value: b.value }));
   }, [packagingTypeValue, types, brands]);
 
   // Reset brand when type changes
-  useEffect(() => { form.setValue("brand", ""); }, [typeValue]);
-  useEffect(() => { packagingForm.setValue("productBrand", ""); }, [packagingTypeValue]);
+  useEffect(() => {
+    form.setValue("brand", "");
+  }, [typeValue]);
+  useEffect(() => {
+    packagingForm.setValue("productBrand", "");
+  }, [packagingTypeValue]);
 
   const isEditing = !!orderData?._id;
 
@@ -457,31 +464,29 @@ const AddOrder: FC<AddOrderProps> = ({
         return;
       }
 
-      const newItems: OrderItemType[] = result.items.map(
-        (item: any) => ({
-          type: item.type,
-          brand: item.brand,
-          color: item.color,
-          size: item.size,
-          collarColor: item.collarColor,
-          code: undefined,
-          quantity: item.quantity,
-          productId: item.productId,
-          price: item.inventoryPrice ?? 0,
-          total: (item.inventoryPrice ?? 0) * item.quantity,
-        }),
-      );
+      const newItems: OrderItemType[] = result.items.map((item: any) => ({
+        type: item.type,
+        brand: item.brand,
+        color: item.color,
+        size: item.size,
+        collarColor: item.collarColor,
+        code: undefined,
+        quantity: item.quantity,
+        productId: item.productId,
+        price: item.inventoryPrice ?? 0,
+        total: (item.inventoryPrice ?? 0) * item.quantity,
+      }));
 
       setOrders([...orders, ...newItems]);
       const currentValues = packagingForm.getValues();
       packagingForm.reset({
         templateId: currentValues.templateId,
-        numberOfPackages: "1",
+        numberOfPackages: "1" as any,
         productType: currentValues.productType,
         productBrand: currentValues.productBrand,
         color: "",
         collarColor: "",
-        price: currentValues.price,
+        // price: currentValues.price,
       });
     } catch (error: any) {
       toast.error(error.message || "Erreur lors de l'expansion du modèle");
@@ -585,7 +590,10 @@ const AddOrder: FC<AddOrderProps> = ({
       <div className="mb-4 flex gap-1 rounded-lg border bg-[#F8F8F8] p-1">
         <button
           type="button"
-          onClick={() => { setMode("individual"); setFormErrors([]); }}
+          onClick={() => {
+            setMode("individual");
+            setFormErrors([]);
+          }}
           className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
             mode === "individual"
               ? "bg-white text-[var(--text-primary)] shadow-sm"
@@ -596,7 +604,10 @@ const AddOrder: FC<AddOrderProps> = ({
         </button>
         <button
           type="button"
-          onClick={() => { setMode("packaging"); setFormErrors([]); }}
+          onClick={() => {
+            setMode("packaging");
+            setFormErrors([]);
+          }}
           className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
             mode === "packaging"
               ? "bg-white text-[var(--text-primary)] shadow-sm"
@@ -692,7 +703,10 @@ const AddOrder: FC<AddOrderProps> = ({
                   values={sizeDistribution}
                   onChange={(index, size, quantity) => {
                     form.setValue(`sizeDistribution.${index}.size`, size);
-                    form.setValue(`sizeDistribution.${index}.quantity`, quantity);
+                    form.setValue(
+                      `sizeDistribution.${index}.quantity`,
+                      quantity,
+                    );
                   }}
                 />
               </>
@@ -710,7 +724,10 @@ const AddOrder: FC<AddOrderProps> = ({
               </div>
             )}
 
-            <FormErrorAlert errors={formErrors} onDismiss={() => setFormErrors([])} />
+            <FormErrorAlert
+              errors={formErrors}
+              onDismiss={() => setFormErrors([])}
+            />
 
             <Button
               type="submit"

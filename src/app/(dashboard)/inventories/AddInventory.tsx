@@ -77,8 +77,7 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
     api.functions.packagingTemplates.ensureProductsExist,
   );
   const { userRole } = usePermission();
-  const { types, brands, typeOptions, colorOptions } =
-    useProductAttributes();
+  const { types, brands, typeOptions, colorOptions } = useProductAttributes();
   const allSizes = useQuery(api.functions.productSizes.list, {}) ?? [];
 
   const [isOpened, setOpened] = useState(false);
@@ -118,26 +117,34 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
 
   // Filter brands by selected type
   const filteredBrandOptions = useMemo(() => {
-    if (!typeValue) return brands.map((b) => ({ label: b.value, value: b.value }));
+    if (!typeValue)
+      return brands.map((b) => ({ label: b.value, value: b.value }));
     const selectedType = types.find((t) => t.value === typeValue);
-    if (!selectedType) return brands.map((b) => ({ label: b.value, value: b.value }));
+    if (!selectedType)
+      return brands.map((b) => ({ label: b.value, value: b.value }));
     return brands
       .filter((b) => b.typeId === selectedType._id || !b.typeId)
       .map((b) => ({ label: b.value, value: b.value }));
   }, [typeValue, types, brands]);
 
   const filteredPackagingBrandOptions = useMemo(() => {
-    if (!packagingTypeValue) return brands.map((b) => ({ label: b.value, value: b.value }));
+    if (!packagingTypeValue)
+      return brands.map((b) => ({ label: b.value, value: b.value }));
     const selectedType = types.find((t) => t.value === packagingTypeValue);
-    if (!selectedType) return brands.map((b) => ({ label: b.value, value: b.value }));
+    if (!selectedType)
+      return brands.map((b) => ({ label: b.value, value: b.value }));
     return brands
       .filter((b) => b.typeId === selectedType._id || !b.typeId)
       .map((b) => ({ label: b.value, value: b.value }));
   }, [packagingTypeValue, types, brands]);
 
   // Reset brand when type changes
-  useEffect(() => { form.setValue("brand", ""); }, [typeValue]);
-  useEffect(() => { packagingForm.setValue("productBrand", ""); }, [packagingTypeValue]);
+  useEffect(() => {
+    form.setValue("brand", "");
+  }, [typeValue]);
+  useEffect(() => {
+    packagingForm.setValue("productBrand", "");
+  }, [packagingTypeValue]);
 
   const ensureSizeDistribution = () => {
     form.setValue(
@@ -371,25 +378,23 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
         return;
       }
 
-      const newItems: InventoryItemType[] = result.items.map(
-        (item: any) => ({
-          type: item.type,
-          brand: item.brand,
-          color: item.color,
-          size: item.size,
-          collarColor: item.collarColor,
-          code: undefined,
-          quantity: item.quantity,
-          price: values.price,
-          productId: item.productId,
-        }),
-      );
+      const newItems: InventoryItemType[] = result.items.map((item: any) => ({
+        type: item.type,
+        brand: item.brand,
+        color: item.color,
+        size: item.size,
+        collarColor: item.collarColor,
+        code: undefined,
+        quantity: item.quantity,
+        price: values.price,
+        productId: item.productId,
+      }));
 
       setInventory([...inventory, ...newItems]);
       const currentValues = packagingForm.getValues();
       packagingForm.reset({
         templateId: currentValues.templateId,
-        numberOfPackages: "1",
+        numberOfPackages: "1" as any,
         productType: currentValues.productType,
         productBrand: currentValues.productBrand,
         color: "",
@@ -478,7 +483,10 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
       <div className="mb-4 flex gap-1 rounded-lg border bg-[#F8F8F8] p-1">
         <button
           type="button"
-          onClick={() => { setMode("packaging"); setFormErrors([]); }}
+          onClick={() => {
+            setMode("packaging");
+            setFormErrors([]);
+          }}
           className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
             mode === "packaging"
               ? "bg-white text-[var(--text-primary)] shadow-sm"
@@ -489,7 +497,10 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
         </button>
         <button
           type="button"
-          onClick={() => { setMode("individual"); setFormErrors([]); }}
+          onClick={() => {
+            setMode("individual");
+            setFormErrors([]);
+          }}
           className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
             mode === "individual"
               ? "bg-white text-[var(--text-primary)] shadow-sm"
@@ -585,7 +596,10 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
                   values={sizeDistribution}
                   onChange={(index, size, quantity) => {
                     form.setValue(`sizeDistribution.${index}.size`, size);
-                    form.setValue(`sizeDistribution.${index}.quantity`, quantity);
+                    form.setValue(
+                      `sizeDistribution.${index}.quantity`,
+                      quantity,
+                    );
                   }}
                 />
               </>
@@ -613,7 +627,10 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
               />
             </div>
 
-            <FormErrorAlert errors={formErrors} onDismiss={() => setFormErrors([])} />
+            <FormErrorAlert
+              errors={formErrors}
+              onDismiss={() => setFormErrors([])}
+            />
 
             <Button type="submit" className="w-full" loading={isPending}>
               Ajouter
@@ -689,7 +706,11 @@ const AddInventory: FC<AddInventoryProps> = ({ callback }) => {
               />
             </div>
 
-            <Button type="submit" className="w-full" loading={isAddingPackaging}>
+            <Button
+              type="submit"
+              className="w-full"
+              loading={isAddingPackaging}
+            >
               Ajouter les articles
             </Button>
           </form>
