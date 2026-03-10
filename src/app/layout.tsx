@@ -7,12 +7,18 @@ import Modals from "@/components/custom/modal";
 import Providers from "./Providers";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const newsreader = Newsreader({ subsets: ["latin"], variable: "--font-newsreader" });
-const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
+const newsreader = Newsreader({
+  subsets: ["latin"],
+  variable: "--font-newsreader",
+});
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+});
 
 export const metadata: Metadata = {
-  title: "ThreadCraft",
-  description: "Gestion de boutique - ThreadCraft",
+  title: "Family mini shop",
+  description: "Gestion de boutique - Family mini shop",
 };
 
 export default function RootLayout({
@@ -22,7 +28,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body className={`${inter.variable} ${newsreader.variable} ${jetbrainsMono.variable} font-sans`}>
+      <body
+        className={`${inter.variable} ${newsreader.variable} ${jetbrainsMono.variable} font-sans`}
+      >
         <Providers>
           {children}
           <Modals />
