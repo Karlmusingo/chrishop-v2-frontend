@@ -44,7 +44,7 @@ export const addInventoriesSchema = z.object({
       invalid_type_error: "Le prix doit être un nombre supérieur à 0",
     })
     .transform((v, ctx) => {
-      const parsed = parseInt(v);
+      const parsed = parseFloat(v);
       const zValid = validateNumber(ctx, parsed, "Le prix");
       if (zValid) {
         return zValid;

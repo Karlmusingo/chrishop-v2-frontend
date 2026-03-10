@@ -14,7 +14,7 @@ export const addExistingInventoriesSchema = z.object({
       invalid_type_error: "La quantité doit être un nombre supérieur à 0",
     })
     .transform((v, ctx) => {
-      const parsed = parseInt(v);
+      const parsed = parseFloat(v);
       const zValid = validateNumber(ctx, parsed, "La quantité");
       if (zValid) {
         return zValid;
