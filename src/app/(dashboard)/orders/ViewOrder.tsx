@@ -7,8 +7,9 @@ import { Switch } from "@/components/ui/switch";
 import { FC, useEffect, useRef, useState } from "react";
 
 import { IUnknown } from "@/interface/Iunknown";
-import { Printer } from "lucide-react";
+import { Download } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { PDFExport } from "@progress/kendo-react-pdf";
 import {
   Card,
   CardContent,
@@ -43,10 +44,10 @@ const ViewOrder: FC<ViewOrderProps> = ({
   isOpen = false,
 }) => {
   const [isPaid, setIsPaid] = useState(false);
-  const printRef = useRef<HTMLDivElement>(null);
+  const pdfExportRef = useRef<PDFExport>(null);
 
   const handlePrint = () => {
-    window.print();
+    pdfExportRef.current?.save();
   };
 
   const { mutate, isPending } = useMutationWithToast(api.functions.orders.buy);
@@ -119,7 +120,13 @@ const ViewOrder: FC<ViewOrderProps> = ({
     >
       <div className="w-full max-w-3xl mx-auto relative">
         <Card className="w-full">
-          <div ref={printRef} id="print-invoice">
+          <PDFExport
+            ref={pdfExportRef}
+            paperSize="auto"
+            margin="5mm"
+            fileName={`${title}-${(orderData?._id || "").toString().slice(0, 8).toUpperCase()}.pdf`}
+          >
+          <div id="print-invoice">
             <CardHeader className="flex flex-row justify-between items-start gap-2 pb-1">
               <div>
                 <CardTitle className="text-lg font-bold leading-tight">
@@ -231,6 +238,7 @@ const ViewOrder: FC<ViewOrderProps> = ({
               )}
             </CardContent>
           </div>
+          </PDFExport>
           <CardFooter className="flex justify-between items-center">
             <div className="flex items-center space-x-2 no-print">
               <Switch
@@ -247,11 +255,10 @@ const ViewOrder: FC<ViewOrderProps> = ({
             </div>
             <Button
               onClick={handlePrint}
-              className="no-print"
               loading={isPending}
               disabled={orderData?.status === "CANCEL"}
             >
-              <Printer className="mr-2 h-4 w-4" /> Imprimer
+              <Download className="mr-2 h-4 w-4" /> Télécharger PDF
             </Button>
           </CardFooter>
         </Card>
