@@ -25,6 +25,102 @@
   font-family: "InterPDF", sans-serif !important;
 }
 
+/* ── Thermal receipt printer styles (58-80mm) ── */
+@media print {
+  /* Hide everything except the receipt */
+  body * {
+    visibility: hidden;
+  }
+  #print-invoice,
+  #print-invoice * {
+    visibility: visible;
+  }
+  #print-invoice {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 72mm;
+    padding: 2mm 3mm;
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.3;
+    color: #000 !important;
+    background: #fff !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  /* Strip card / shadow / border decorations */
+  #print-invoice,
+  #print-invoice > *,
+  #print-invoice [class*="border"],
+  #print-invoice [class*="rounded"],
+  #print-invoice [class*="shadow"] {
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  /* Zero out card section padding */
+  #print-invoice [data-slot="card-header"],
+  #print-invoice [data-slot="card-content"],
+  #print-invoice [data-slot="card-footer"] {
+    padding: 0 !important;
+  }
+
+  /* Table: compact, no dark header */
+  #print-invoice table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 11px !important;
+  }
+  #print-invoice th {
+    background: transparent !important;
+    color: #000 !important;
+    font-weight: 700 !important;
+    border: none !important;
+    border-bottom: 1px dashed #000 !important;
+    padding: 2px 2px !important;
+    text-align: left;
+    font-size: 11px !important;
+    height: auto !important;
+  }
+  #print-invoice td {
+    border: none !important;
+    padding: 4px 2px !important;
+    vertical-align: middle;
+    font-size: 11px !important;
+  }
+  #print-invoice tr + tr td {
+    border-top: 1px dotted #aaa !important;
+  }
+
+  /* Dashed separators */
+  #print-invoice .receipt-line {
+    border: none;
+    border-top: 1px dashed #000;
+    margin: 2mm 0;
+  }
+
+  /* PAYÉ watermark — subtle on thermal */
+  #print-invoice .pointer-events-none p {
+    opacity: 0.08 !important;
+    font-size: 40px !important;
+  }
+
+  #print-invoice {
+    page-break-inside: avoid;
+  }
+
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 98%;

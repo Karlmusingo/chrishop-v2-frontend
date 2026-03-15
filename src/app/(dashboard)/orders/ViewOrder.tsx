@@ -3,7 +3,6 @@
 import Modal from "@/components/ui/modal";
 import Button from "@/components/custom/Button";
 import { Switch } from "@/components/ui/switch";
-import { savePDF } from "@progress/kendo-react-pdf";
 
 import { FC, useEffect, useRef, useState } from "react";
 
@@ -47,23 +46,7 @@ const ViewOrder: FC<ViewOrderProps> = ({
   const printRef = useRef<HTMLDivElement>(null);
 
   const handlePrint = () => {
-    const receiptElement = document.getElementById("print-invoice");
-
-    if (receiptElement) {
-      savePDF(
-        receiptElement,
-        {
-          paperSize: "A6",
-          margin: 0,
-          scale: 0.7,
-          fileName: title.toLowerCase(),
-        },
-        () =>
-          setTimeout(() => {
-            onClose();
-          }, 1000),
-      );
-    }
+    window.print();
   };
 
   const { mutate, isPending } = useMutationWithToast(api.functions.orders.buy);
@@ -137,45 +120,42 @@ const ViewOrder: FC<ViewOrderProps> = ({
       <div className="w-full max-w-3xl mx-auto relative">
         <Card className="w-full">
           <div ref={printRef} id="print-invoice">
-            <CardHeader className="flex flex-row justify-between items-center">
+            <CardHeader className="flex flex-row justify-between items-start gap-2 pb-1">
               <div>
-                <CardTitle className="text-2xl font-bold">{title}</CardTitle>
-                <p className="text-sm">
-                  Numero: #
-                  {`${(orderData?._id || "")?.toString().slice(0, 8).toUpperCase()}`}
-                </p>
-                <p className="text-sm">
-                  Statut:{" "}
+                <CardTitle className="text-lg font-bold leading-tight">
+                  {title}
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  #{`${(orderData?._id || "")?.toString().slice(0, 8).toUpperCase()}`}
+                  {" | "}
                   {{ PAID: "PAYÉ", PENDING: "EN ATTENTE", CANCEL: "ANNULÉ" }[
                     orderData.status as string
                   ] || orderData.status}
                 </p>
               </div>
-              <div className="text-right">
-                <p className="text-sm">
-                  {new Date(
-                    orderData?._creationTime ||
-                      orderData?.createdAt ||
-                      new Date(),
-                  ).toLocaleString("fr-FR", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    second: "2-digit",
-                    hour12: false,
-                  })}
-                </p>
-              </div>
+              <p className="text-xs text-muted-foreground whitespace-nowrap">
+                {new Date(
+                  orderData?._creationTime ||
+                    orderData?.createdAt ||
+                    new Date(),
+                ).toLocaleString("fr-FR", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                })}
+              </p>
             </CardHeader>
-            <CardContent className="relative">
-              <div className="mb-4">
-                <h2 className="text-xl font-semibold">
-                  Boutique: {orderData?.location?.name}
-                </h2>
+            <CardContent className="relative pt-0">
+              <hr className="receipt-line my-1 border-dashed" />
+              <div className="mb-2">
+                <p className="text-sm font-semibold">
+                  {orderData?.location?.name}
+                </p>
                 {orderData?.seller && (
-                  <p className="text-sm">
+                  <p className="text-xs text-muted-foreground">
                     Vendeur:{" "}
                     {orderData.seller.firstName || orderData.seller.lastName
                       ? `${orderData.seller.firstName ?? ""} ${orderData.seller.lastName ?? ""}`.trim()
@@ -183,46 +163,65 @@ const ViewOrder: FC<ViewOrderProps> = ({
                   </p>
                 )}
               </div>
+              <hr className="receipt-line my-1 border-dashed" />
 
-              <Table className="border-collapse [&_td]:border-x [&_th]:border-x [&_td]:p-1 [&_th]:p-1">
-                <TableHeader className="border-b bg-[var(--bg-sidebar)] text-white">
-                  <TableRow>
-                    <TableHead className="text-white h-auto">Article</TableHead>
-                    <TableHead className="text-white h-auto">Taille</TableHead>
-                    <TableHead className="text-white h-auto">
-                      Quantite
+              <Table className="border-collapse [&_td]:p-1 [&_th]:p-1">
+                <TableHeader>
+                  <TableRow className="border-b border-dashed border-black">
+                    <TableHead className="h-auto text-xs font-bold px-1">
+                      Article
                     </TableHead>
-                    <TableHead className="text-white h-auto">Prix</TableHead>
-                    <TableHead className="text-white h-auto">Total</TableHead>
+                    <TableHead className="h-auto text-xs font-bold px-1 text-center">
+                      Qté
+                    </TableHead>
+                    <TableHead className="h-auto text-xs font-bold px-1 text-right">
+                      P.U
+                    </TableHead>
+                    <TableHead className="h-auto text-xs font-bold px-1 text-right">
+                      Total
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {orderData?.orderItems?.map((item: IUnknown) => (
-                    <TableRow key={item._id || item.id}>
-                      <TableCell>
-                        <div className="text-xs leading-tight">
-                          <div>{item?.product?.type}</div>
-                          <div>{item?.product?.brand}</div>
-                          <div>{item?.product?.color}</div>
-                          {item?.product?.collarColor && (
-                            <div>{item?.product?.collarColor}</div>
-                          )}
+                  {orderData?.orderItems?.map((item: IUnknown) => {
+                    const parts = [
+                      item?.product?.type,
+                      item?.product?.brand,
+                      item?.product?.size,
+                      item?.product?.color,
+                      item?.product?.collarColor,
+                    ].filter(Boolean);
+                    return (
+                      <TableRow key={item._id || item.id} className="border-b border-dotted">
+                        <TableCell className="text-xs py-1 px-1 leading-snug">
+                          {parts.join(" ")}
                           {item?.product?.code && (
-                            <div>{item?.product?.code}</div>
+                            <span className="text-muted-foreground ml-1">
+                              ({item.product.code})
+                            </span>
                           )}
-                        </div>
-                      </TableCell>
-                      <TableCell>{item?.product?.size}</TableCell>
-                      <TableCell>{item.quantity}</TableCell>
-                      <TableCell>{item.unitPrice}$</TableCell>
-                      <TableCell>{item.totalPrice}$</TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell className="text-xs py-1 px-1 text-center">
+                          {item.quantity}
+                        </TableCell>
+                        <TableCell className="text-xs py-1 px-1 text-right whitespace-nowrap">
+                          {item.unitPrice}$
+                        </TableCell>
+                        <TableCell className="text-xs py-1 px-1 text-right whitespace-nowrap font-medium">
+                          {item.totalPrice}$
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
-              <div className="mt-4 text-xl font-bold text-right">
-                Total: {totalInvoicePrice} $
+
+              <hr className="receipt-line my-1 border-dashed" />
+              <div className="flex justify-between items-center mt-1">
+                <span className="text-sm font-bold">Total</span>
+                <span className="text-lg font-bold">{totalInvoicePrice} $</span>
               </div>
+
               {(orderData?.status === "PAID" || isPaid) && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <p className="text-green-500 text-8xl font-bold opacity-20 rotate-[-45deg] -translate-y-16">
