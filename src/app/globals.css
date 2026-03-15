@@ -23,6 +23,7 @@
 #print-invoice,
 #print-invoice * {
   font-family: "InterPDF", sans-serif !important;
+  color: #000 !important;
 }
 
 /* ── Thermal receipt printer styles (58-80mm) ── */

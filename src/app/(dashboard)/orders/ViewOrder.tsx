@@ -132,7 +132,7 @@ const ViewOrder: FC<ViewOrderProps> = ({
                 <CardTitle className="text-lg font-bold leading-tight">
                   {title}
                 </CardTitle>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs">
                   #{`${(orderData?._id || "")?.toString().slice(0, 8).toUpperCase()}`}
                   {" | "}
                   {{ PAID: "PAYÉ", PENDING: "EN ATTENTE", CANCEL: "ANNULÉ" }[
@@ -140,7 +140,7 @@ const ViewOrder: FC<ViewOrderProps> = ({
                   ] || orderData.status}
                 </p>
               </div>
-              <p className="text-xs text-muted-foreground whitespace-nowrap">
+              <p className="text-xs whitespace-nowrap">
                 {new Date(
                   orderData?._creationTime ||
                     orderData?.createdAt ||
@@ -162,7 +162,7 @@ const ViewOrder: FC<ViewOrderProps> = ({
                   {orderData?.location?.name}
                 </p>
                 {orderData?.seller && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs">
                     Vendeur:{" "}
                     {orderData.seller.firstName || orderData.seller.lastName
                       ? `${orderData.seller.firstName ?? ""} ${orderData.seller.lastName ?? ""}`.trim()
@@ -177,6 +177,9 @@ const ViewOrder: FC<ViewOrderProps> = ({
                   <TableRow className="border-b border-dashed border-black">
                     <TableHead className="h-auto text-xs font-bold px-1">
                       Article
+                    </TableHead>
+                    <TableHead className="h-auto text-xs font-bold px-1 text-center">
+                      Taille
                     </TableHead>
                     <TableHead className="h-auto text-xs font-bold px-1 text-center">
                       Qté
@@ -194,7 +197,6 @@ const ViewOrder: FC<ViewOrderProps> = ({
                     const parts = [
                       item?.product?.type,
                       item?.product?.brand,
-                      item?.product?.size,
                       item?.product?.color,
                       item?.product?.collarColor,
                     ].filter(Boolean);
@@ -203,10 +205,13 @@ const ViewOrder: FC<ViewOrderProps> = ({
                         <TableCell className="text-xs py-1 px-1 leading-snug">
                           {parts.join(" ")}
                           {item?.product?.code && (
-                            <span className="text-muted-foreground ml-1">
+                            <span className="ml-1">
                               ({item.product.code})
                             </span>
                           )}
+                        </TableCell>
+                        <TableCell className="text-xs py-1 px-1 text-center">
+                          {item?.product?.size}
                         </TableCell>
                         <TableCell className="text-xs py-1 px-1 text-center">
                           {item.quantity}
