@@ -20,15 +20,16 @@
   src: url("/fonts/Inter-Bold.ttf") format("truetype");
 }
 
+/* ── Thermal receipt: force black, no gray, no transparency ── */
 #print-invoice,
 #print-invoice * {
-  font-family: "InterPDF", sans-serif !important;
-  color: #000 !important;
+  font-family: "InterPDF", Arial, Helvetica, sans-serif !important;
+  color: #000000 !important;
+  -webkit-print-color-adjust: exact;
 }
 
-/* ── Thermal receipt printer styles (58-80mm) ── */
+/* ── Thermal receipt printer styles (80mm / 576px @ 203dpi) ── */
 @media print {
-  /* Hide everything except the receipt */
   body * {
     visibility: hidden;
   }
@@ -40,20 +41,21 @@
     position: absolute;
     top: 0;
     left: 0;
-    width: 72mm;
-    padding: 2mm 3mm;
+    width: 576px;
+    padding: 4px 8px;
     margin: 0;
     font-size: 12px;
-    line-height: 1.3;
-    color: #000 !important;
-    background: #fff !important;
+    font-weight: bold;
+    line-height: 1.4;
+    color: #000000 !important;
+    background: #ffffff !important;
   }
 
   .no-print {
     display: none !important;
   }
 
-  /* Strip card / shadow / border decorations */
+  /* Strip card decorations */
   #print-invoice,
   #print-invoice > *,
   #print-invoice [class*="border"],
@@ -72,44 +74,47 @@
     padding: 0 !important;
   }
 
-  /* Table: compact, no dark header */
+  /* Table */
   #print-invoice table {
     width: 100% !important;
     border-collapse: collapse !important;
-    font-size: 11px !important;
+    font-size: 12px !important;
+    font-weight: bold !important;
   }
   #print-invoice th {
     background: transparent !important;
-    color: #000 !important;
-    font-weight: 700 !important;
+    color: #000000 !important;
+    font-weight: 900 !important;
     border: none !important;
-    border-bottom: 1px dashed #000 !important;
-    padding: 2px 2px !important;
+    border-bottom: 2px solid #000000 !important;
+    padding: 4px 2px !important;
     text-align: left;
-    font-size: 11px !important;
+    font-size: 12px !important;
     height: auto !important;
+    text-transform: uppercase;
   }
   #print-invoice td {
     border: none !important;
     padding: 4px 2px !important;
     vertical-align: middle;
-    font-size: 11px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
   }
   #print-invoice tr + tr td {
-    border-top: 1px dotted #aaa !important;
+    border-top: 1px solid #000000 !important;
   }
 
-  /* Dashed separators */
+  /* Dashed separators — 2px for visibility */
   #print-invoice .receipt-line {
     border: none;
-    border-top: 1px dashed #000;
-    margin: 2mm 0;
+    border-top: 2px dashed #000000;
+    margin: 4px 0;
   }
 
-  /* PAYÉ watermark — subtle on thermal */
+  /* PAYÉ watermark — no transparency, use solid light color */
   #print-invoice .pointer-events-none p {
-    opacity: 0.08 !important;
-    font-size: 40px !important;
+    opacity: 0.1 !important;
+    font-size: 48px !important;
   }
 
   #print-invoice {

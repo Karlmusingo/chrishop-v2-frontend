@@ -99,7 +99,7 @@ const ViewOrder: FC<ViewOrderProps> = ({
     );
   };
 
-  const title = (orderData?.status === "PAID" || isPaid) ? "Reçu" : "Facture";
+  const title = orderData?.status === "PAID" || isPaid ? "Reçu" : "Facture";
 
   const totalInvoicePrice = orderData?.orderItems?.reduce(
     (acc: number, curr: IUnknown) => acc + curr.totalPrice,
@@ -122,127 +122,208 @@ const ViewOrder: FC<ViewOrderProps> = ({
         <Card className="w-full">
           <PDFExport
             ref={pdfExportRef}
-            paperSize="auto"
-            margin="5mm"
+            paperSize={[226.77, 841.89]}
+            margin="2mm"
             fileName={`${title}-${(orderData?._id || "").toString().slice(0, 8).toUpperCase()}.pdf`}
           >
-          <div id="print-invoice">
-            <CardHeader className="flex flex-row justify-between items-start gap-2 pb-1">
-              <div>
-                <CardTitle className="text-lg font-bold leading-tight">
-                  {title}
-                </CardTitle>
-                <p className="text-xs">
-                  #{`${(orderData?._id || "")?.toString().slice(0, 8).toUpperCase()}`}
-                  {" | "}
-                  {{ PAID: "PAYÉ", PENDING: "EN ATTENTE", CANCEL: "ANNULÉ" }[
-                    orderData.status as string
-                  ] || orderData.status}
-                </p>
-              </div>
-              <p className="text-xs whitespace-nowrap">
-                {new Date(
-                  orderData?._creationTime ||
-                    orderData?.createdAt ||
-                    new Date(),
-                ).toLocaleString("fr-FR", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: false,
-                })}
-              </p>
-            </CardHeader>
-            <CardContent className="relative pt-0">
-              <hr className="receipt-line my-1 border-dashed" />
-              <div className="mb-2">
-                <p className="text-sm font-semibold">
-                  {orderData?.location?.name}
-                </p>
-                {orderData?.seller && (
-                  <p className="text-xs">
-                    Vendeur:{" "}
-                    {orderData.seller.firstName || orderData.seller.lastName
-                      ? `${orderData.seller.firstName ?? ""} ${orderData.seller.lastName ?? ""}`.trim()
-                      : (orderData.seller.name ?? "")}
-                  </p>
-                )}
-              </div>
-              <hr className="receipt-line my-1 border-dashed" />
-
-              <Table className="border-collapse [&_td]:p-1 [&_th]:p-1">
-                <TableHeader>
-                  <TableRow className="border-b border-dashed border-black">
-                    <TableHead className="h-auto text-xs font-bold px-1">
-                      Article
-                    </TableHead>
-                    <TableHead className="h-auto text-xs font-bold px-1 text-center">
-                      Taille
-                    </TableHead>
-                    <TableHead className="h-auto text-xs font-bold px-1 text-center">
-                      Qté
-                    </TableHead>
-                    <TableHead className="h-auto text-xs font-bold px-1 text-right">
-                      P.U
-                    </TableHead>
-                    <TableHead className="h-auto text-xs font-bold px-1 text-right">
-                      Total
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {orderData?.orderItems?.map((item: IUnknown) => {
-                    const parts = [
-                      item?.product?.type,
-                      item?.product?.brand,
-                      item?.product?.color,
-                      item?.product?.collarColor,
-                    ].filter(Boolean);
-                    return (
-                      <TableRow key={item._id || item.id} className="border-b border-dotted">
-                        <TableCell className="text-xs py-1 px-1 leading-snug">
-                          {parts.join(" ")}
-                          {item?.product?.code && (
-                            <span className="ml-1">
-                              ({item.product.code})
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-xs py-1 px-1 text-center">
-                          {item?.product?.size}
-                        </TableCell>
-                        <TableCell className="text-xs py-1 px-1 text-center">
-                          {item.quantity}
-                        </TableCell>
-                        <TableCell className="text-xs py-1 px-1 text-right whitespace-nowrap">
-                          {item.unitPrice}$
-                        </TableCell>
-                        <TableCell className="text-xs py-1 px-1 text-right whitespace-nowrap font-medium">
-                          {item.totalPrice}$
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-
-              <hr className="receipt-line my-1 border-dashed" />
-              <div className="flex justify-between items-center mt-1">
-                <span className="text-sm font-bold">Total</span>
-                <span className="text-lg font-bold">{totalInvoicePrice} $</span>
-              </div>
-
-              {(orderData?.status === "PAID" || isPaid) && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <p className="text-green-500 text-8xl font-bold opacity-20 rotate-[-45deg] -translate-y-16">
-                    PAYE
+            <div
+              id="print-invoice"
+              style={{ color: "#000000", maxWidth: "576px" }}
+            >
+              <CardHeader className="flex flex-row justify-between items-start gap-2 pb-1">
+                <div>
+                  <CardTitle
+                    className="font-bold leading-tight"
+                    style={{ fontSize: "20px", color: "#000000" }}
+                  >
+                    {title}
+                  </CardTitle>
+                  <p
+                    className="font-bold"
+                    style={{ fontSize: "12px", color: "#000000" }}
+                  >
+                    #
+                    {`${(orderData?._id || "")?.toString().slice(0, 8).toUpperCase()}`}
+                    {" | "}
+                    {{ PAID: "PAYÉ", PENDING: "EN ATTENTE", CANCEL: "ANNULÉ" }[
+                      orderData.status as string
+                    ] || orderData.status}
                   </p>
                 </div>
-              )}
-            </CardContent>
-          </div>
+                <p
+                  className="whitespace-nowrap font-bold"
+                  style={{ fontSize: "12px", color: "#000000" }}
+                >
+                  {new Date(
+                    orderData?._creationTime ||
+                      orderData?.createdAt ||
+                      new Date(),
+                  ).toLocaleString("fr-FR", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                  })}
+                </p>
+              </CardHeader>
+              <CardContent className="relative pt-0">
+                <hr
+                  className="receipt-line my-1"
+                  style={{ borderTop: "2px dashed #000000" }}
+                />
+                <div className="mb-2">
+                  <p
+                    className="font-bold"
+                    style={{ fontSize: "14px", color: "#000000" }}
+                  >
+                    {orderData?.location?.name}
+                  </p>
+                  {orderData?.seller && (
+                    <p
+                      className="font-bold"
+                      style={{ fontSize: "12px", color: "#000000" }}
+                    >
+                      Vendeur:{" "}
+                      {orderData.seller.firstName || orderData.seller.lastName
+                        ? `${orderData.seller.firstName ?? ""} ${orderData.seller.lastName ?? ""}`.trim()
+                        : (orderData.seller.name ?? "")}
+                    </p>
+                  )}
+                </div>
+                <hr
+                  className="receipt-line my-1"
+                  style={{ borderTop: "2px dashed #000000" }}
+                />
+
+                <Table className="border-collapse [&_td]:p-1 [&_th]:p-1">
+                  <TableHeader>
+                    <TableRow style={{ borderBottom: "2px solid #000000" }}>
+                      <TableHead
+                        className="h-auto font-black px-1"
+                        style={{ fontSize: "12px", color: "#000000" }}
+                      >
+                        Article
+                      </TableHead>
+                      {/* <TableHead
+                        className="h-auto font-black px-1 text-center"
+                        style={{ fontSize: "12px", color: "#000000" }}
+                      >
+                        Taille
+                      </TableHead> */}
+                      <TableHead
+                        className="h-auto font-black px-1 text-center"
+                        style={{ fontSize: "12px", color: "#000000" }}
+                      >
+                        P.U
+                      </TableHead>
+                      <TableHead
+                        className="h-auto font-black px-1 text-right"
+                        style={{ fontSize: "12px", color: "#000000" }}
+                      >
+                        Total
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {orderData?.orderItems?.map((item: IUnknown) => {
+                      const parts = [
+                        item?.product?.type,
+                        item?.product?.brand,
+                        item?.product?.color,
+                        item?.product?.collarColor,
+                      ].filter(Boolean);
+                      return (
+                        <TableRow
+                          key={item._id || item.id}
+                          style={{ borderBottom: "1px solid #000000" }}
+                        >
+                          <TableCell
+                            className="py-1 px-1 whitespace-nowrap"
+                            style={{
+                              fontSize: "11px",
+                              color: "#000000",
+                              fontWeight: "normal",
+                            }}
+                          >
+                            {parts.map((part) => (
+                              <div key={part}>{part}</div>
+                            ))}
+                            {item?.product?.code && (
+                              <div className="ml-1">({item.product.code})</div>
+                            )}
+                            {item?.product?.size && (
+                              <div className="ml-1">{item?.product?.size}</div>
+                            )}
+                          </TableCell>
+                          {/* <TableCell
+                            className="py-1 px-1 text-center"
+                            style={{
+                              fontSize: "11px",
+                              color: "#000000",
+                              fontWeight: "normal",
+                            }}
+                          >
+                            {item?.product?.size}
+                          </TableCell> */}
+                          <TableCell
+                            className="py-1 px-1 text-center whitespace-nowrap"
+                            style={{
+                              fontSize: "11px",
+                              color: "#000000",
+                              fontWeight: "normal",
+                            }}
+                          >
+                            {item.quantity} x {item.unitPrice}$
+                          </TableCell>
+                          <TableCell
+                            className="py-1 px-1 text-right whitespace-nowrap font-bold"
+                            style={{ fontSize: "11px", color: "#000000" }}
+                          >
+                            {item.totalPrice}$
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+
+                <hr
+                  className="receipt-line my-1"
+                  style={{ borderTop: "2px dashed #000000" }}
+                />
+                <div className="flex justify-between items-center mt-1">
+                  <span
+                    className="font-black"
+                    style={{ fontSize: "16px", color: "#000000" }}
+                  >
+                    Total
+                  </span>
+                  <span
+                    className="font-black"
+                    style={{ fontSize: "18px", color: "#000000" }}
+                  >
+                    {totalInvoicePrice} $
+                  </span>
+                </div>
+
+                {(orderData?.status === "PAID" || isPaid) && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <p
+                      className="font-black rotate-[-45deg] -translate-y-16"
+                      style={{
+                        fontSize: "48px",
+                        color: "#000000",
+                        opacity: 0.1,
+                      }}
+                    >
+                      PAYE
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </div>
           </PDFExport>
           <CardFooter className="flex justify-between items-center">
             <div className="flex items-center space-x-2 no-print">
